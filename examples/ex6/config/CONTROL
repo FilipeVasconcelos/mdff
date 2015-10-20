@@ -1,0 +1,22 @@
+ex8
+
+temperature       119.8
+steps             40000
+timestep          0.006
+
+no elec 
+delr 1.0
+cutoff 8.5 
+rvdw 8.5
+rdf 5 0.05
+print rdf
+
+ensemble nvt hoover 2.0
+
+print               100
+stats               1
+
+job time 3600
+close time 1000
+
+finish
