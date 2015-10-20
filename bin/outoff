@@ -1,0 +1,132 @@
+#!/bin/bash
+# ===============================================================
+# date       : 30 avril 2013 
+# author     : fmv
+# decription : convert OUTCAR (vasp) to EFGALL (mdff)
+#            : extract efg's from VASP OUTCAR
+# ===============================================================
+separator="=========================================================="
+echo $separator
+date
+echo "author : filipe.manuel.vasconcelos@gmail.com"
+echo $separator
+echo "Running outoff ..."
+echo "This script generate EFGALL file from OUTCAR file"
+USAGE="Usage: -i [inputfile] -o [outputfile] "
+if [ $# -eq 0 ]
+then
+    echo "$USAGE"
+    exit 1
+fi
+while getopts ":i:o:" opt
+do
+    case $opt in
+        i)
+            outcar="$OPTARG"
+            ;;
+        o)
+            efgall="$OPTARG"
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            exit 1
+            ;;
+        :)
+            echo "Option -$OPTARG requires an argument." >&2
+            exit 1
+            ;;
+    esac
+done
+
+# OUTCAR file look like : 
+#EFG:   Na   1       0.0147     0.9967     0.0196   CQ :     -4.256           lr            i=1
+#                                                                             lr + 1
+#      9.2795     -2.5084     -5.4099                                         lr + 2        
+#     -2.5084      5.9846     -2.9929                                         lr + 3
+#     -5.4099     -2.9929    -15.2641                                         lr + 4
+#                                                                             lr + 5
+#    eigenvalue V_xx       5.7900 V/A^2                                       lr + 6
+#    eigenvalue V_yy      11.1347 V/A^2                                       lr + 7
+#    eigenvalue V_zz     -16.9247 V/A^2                                       lr + 8
+#     asymmetry  eta       0.3158                                             lr + 9
+#                 Cq      -4.2561 MHz                                         lr + 10
+#  quadrupole moment     104.0000 mb                                          lr + 10
+#                                                                             lr + 11
+#   eigenvector V_xx       0.2136      0.3279      0.9202                     lr + 12 
+#   eigenvector V_yy       0.1495      0.9199     -0.3625                     lr + 13  
+#   eigenvector V_zz       0.9654     -0.2150     -0.1475                     lr + 14
+#                                                                             lr + 15
+#EFG:   Na   2       0.0098     0.2609     0.2497   CQ :      4.342           lr + 16  == > lr + 0 + ( i - 1)*16  i=2
+#                                                                             lr + 17  == > lr + 1 + ( i - 1)*16  i=2
+#                                                                             lr + 18  == > lr + 2 + ( i - 1)*16  i=2 
+# ===========================================================================================================================
+
+#EFGALL file look like :
+#64
+# NaCl_t=1
+#        11.2399997711000008    0.0000000000000000    0.0000000000000000
+#         0.0000000000000000   11.2399997711000008    0.0000000000000000
+#         0.0000000000000000    0.0000000000000000   11.2399997711000008
+#          2
+#    Na   Cl
+#   32    32
+# ia type         vxx         vyy         vzz         vxy         vxz         vyz
+# 1    Na    -2.7335     -7.7127      10.4462       -0.9876      0.0483      -7.9558
+# 2    Na   -10.1666     12.5364      -2.3697       -1.1860     -1.5115      -2.8780
+# 3    Na    -6.6061      6.8861      -0.2801       -2.4940     -0.2691       2.4338
+# 4    Na    -0.6852      8.6545      -7.9693        2.1996      2.8736      -3.6055
+# 5    Na   -12.0150      6.8645       5.1505        6.2578      2.7119       0.2534
+# 6    Na     3.4855      7.9959     -11.4814        2.7757     -2.8526       6.6725
+
+
+
+# ===========================================================================================================================
+#extract system name
+system=`grep "SYSTEM =" $outcar | awk '{print $NF}'`
+echo "system = $system"
+#extract natm
+natm=`grep "NIONS =" $outcar | awk '{print $12}'`
+echo "natm = $natm"
+#extract ntype
+ntype=`grep "ions per type =" $outcar | awk '{print NF-4}'` 
+echo "ntype = $ntype"
+#extract itype labels
+for ((i=1;i<=$ntype;i++))
+do
+	l[$i]=`grep "TITEL" $outcar | head -n $i | tail -n 1 | awk '{ print $(NF-1) }'`
+        n[$i]=`grep "ions per type =" $outcar | awk -v k=$i '{ print $(k+4)}'`
+done
+echo "ions labels = ${l[*]}"
+echo "ions per type = ${n[*]}"
+labels=`echo "${l[*]}"`
+itype=`echo "${n[*]}"`
+echo $labels
+echo $itype
+#extract nconf
+nconf=`grep "free  en" $outcar | wc | awk '{print $1}'`
+echo "nconf = $nconf"
+echo "Reading $outcar file"
+
+
+awk -v sys="$system" -v ntype=$ntype -v labels="${l[*]}" -v itype="${n[*]}" -v natm=$natm -v nconf=$nconf 'BEGIN {step;pct=0} {
+
+       { if (($1=="direct")&&($2=="lattice")&&($3=="vectors")) { step+=1 }  }
+       { if (($1=="direct")&&($2=="lattice")&&($3=="vectors")&&(step != 1)) { cell=NR ; nconfig=0 ; printf("%15s\n %20s\n",natm,sys"="step) ; r=int(nconf/10)+1; if ( step%r==0 ) { pct+=10 ; printf("%9s \r","config readed " pct"%") | "cat 1>&2" }} }
+       { if ((NR == cell + 1 ) && ( cell != 0 )) { print $1,$2,$3} }
+       { if ((NR == cell + 2 ) && ( cell != 0 )) { print $1,$2,$3} }
+       { if ((NR == cell + 3 ) && ( cell != 0 )) { print $1,$2,$3} }
+       { if ((NR == cell + 3 ) && ( cell != 0 )) { print ntype   } }
+       { if ((NR == cell + 3 ) && ( cell != 0 )) { print labels  } }
+       { if ((NR == cell + 3 ) && ( cell != 0 )) { print itype   } }
+       { if ((NR == cell + 3 ) && ( cell != 0 )) { print "ia type         vxx         vyy         vzz         vxy         vxz         vyz"      } }
+       { if (($1=="EFG:")&&($7=="CQ")) { nconfig=NR;label=$2;ia=$3} }
+      		{ if ( (NR==nconfig+2) && (nconfig!=0) )              { vxx=$1;vxy=$2;vxz=$3} }
+      		{ if ( (NR==nconfig+3) && (nconfig!=0) )              {        vyy=$2;vyz=$3} }
+       		{ if ( (NR==nconfig+4) && (nconfig!=0) )              {               vzz=$3} }
+      		{ if ( (NR==nconfig+4) && (nconfig!=0) )              { printf("%2s  %4s %10s  %10s   %10s    %10s  %10s   %10s  \n",ia,label,vxx,vyy,vzz,vxy,vxz,vyz)} }
+}'  $outcar > $efgall
+pct=100
+echo "config readed "$pct"%"
+echo "file $efgall generated"
+echo $separator
+exit 0;

@@ -1,0 +1,24 @@
+MDFF est accompagné d'un nombre important de script 
+facilitant la génération des fichiers d'inputs.
+
+averoszi
+cartoff
+fftocar
+fftoconf
+fftohis
+forcecp2k
+forceoutcar
+gen_quench_controls
+histoff
+live-gnuplot
+mdff.x
+outoff
+poszi
+random_struct.p
+random_struct+stochio
+README
+read_quench_table.py
+read_statis
+xdatcartoff
+xyztoff
+

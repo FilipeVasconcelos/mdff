@@ -1,0 +1,121 @@
+#!/bin/bash
+# ==================================================================
+#date        : 25 abril 2013
+#author      : fmv
+#description : convert HISTORY (dl_poly) file to TRAJFF (mdff)
+#note        : one needs to define an input with type information 
+#              three lines file as found POSFF :
+#
+#              ntype 
+#              atype[]
+#              itype[]
+# ==================================================================
+separator="=========================================================="
+echo $separator
+date
+echo "author : filipe.manuel.vasconcelos@gmail.com"
+echo $separator
+echo "Running histoff ..."
+echo "This script generate TRAJFF file from HISTORY file"
+USAGE="Usage: -i [inputfile] -o [outputfile] -t [typeinfo] "
+
+if [ $# -eq 0 ]
+then
+    echo "$USAGE"
+    exit 1
+fi
+while getopts ":i:o:t:" opt
+do
+    case $opt in
+        i)
+            histo="$OPTARG"
+            ;;
+        o)
+            trajff="$OPTARG"
+            ;;
+        t)
+            typeinfo="$OPTARG"
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            exit 1
+            ;;
+        :)
+            echo "Option -$OPTARG requires an argument." >&2
+            exit 1
+            ;;
+    esac
+done
+echo $histo
+echo $trajff
+echo $typeinfo
+# ==================================================================
+#HISTORY file :
+#New structure                                                                   
+#         0         3        64
+#timestep        20        64         0         3    0.001000
+#   11.13       0.000       0.000    
+#   0.000       11.13       0.000    
+#   0.000       0.000       11.13    
+#Ge               1   72.640000    0.000000
+#  5.3043E+00 -5.3722E+00  5.5288E+00
+#Ge               2   72.640000    0.000000
+# -5.3559E+00 -2.8425E+00 -2.7566E+00
+# ==================================================================
+
+#TRAJFF file :
+#7
+#Wannier centres, written by Wannier90 on29Mar2013 at 12:26:53
+#10.6 0.0 0.0
+# 0.0 10.6 0.0
+# 0.0 0.0 10.6
+#2
+#O H 
+#1 1 
+#Cartesian
+#O          5.30000020       5.30000020       5.30000020 0.0 0.0 0.0   0.0 0.0 0.0
+#H          6.06674680       5.89377770       5.30000020 0.0 0.0 0.0   0.0 0.0 0.0
+# ==================================================================
+
+
+
+         
+# ==================================================================
+#ectract system name                                                                        
+system=`head -n 1 $histo | awk '{print $0}'`
+echo "system = $system"
+#extract natm
+natm=`head -n 2 $histo | tail -n 1 | awk '{print $3}'`
+echo "natm = $natm"
+
+#extract type info
+#extract ntype
+ntype=`head -n 1 $typeinfo | awk '{print $1}'`
+echo "ntype = $ntype"
+#extract labels 
+labels=`head -n 2 $typeinfo | tail -n 1 | awk '{print $0}'`
+echo "labels = $labels"
+#extract itype
+itype=`head -n 3 $typeinfo | tail -n 1 | awk '{print $0}'`
+echo "itype = $itype"
+# ==================================================================
+
+
+awk -v natm=$natm -v sys="$system" -v labels="$labels" -v ntype=$ntype -v itype="$itype" '{
+       if ( $1 == "timestep" ) { nconfig=NR;step=$2; printf("%5s\n %10s\n",natm,"t="step)}  
+       if (( NR==nconfig+1   )&&(nconfig!=0)) { print $0     }
+       if (( NR==nconfig+2   )&&(nconfig!=0)) { print $0     }
+       if ( ( NR==nconfig+3   )&&(nconfig!=0)) { print $0     }
+       if ( ( NR==nconfig+3   )&&(nconfig!=0)) { print ntype  }
+       if ( ( NR==nconfig+3   )&&(nconfig!=0)) { print labels }
+       if ( ( NR==nconfig+3   )&&(nconfig!=0)) { print itype  }
+       if ( ( NR==nconfig+3   )&&(nconfig!=0)) { print "Cartesian" }
+       for ( i=0;i<2*natm;i+=2) {
+				       if ( NR==nconfig+4+i    ) { label=$1}
+				       if ( NR==nconfig+5+i    ) { print label,$0,"   0.0 0.0 0.0   0.0 0.0 0.0"}
+                                }
+                                    }' $histo > $trajff
+
+echo "file $trajff generated"
+echo $separator
+exit 0;

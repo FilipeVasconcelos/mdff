@@ -1,0 +1,10 @@
+# Example 0 : Minimum settings with FCC structure
+# FCC LJ a=1.5414
+# natm = 256
+# more details in config/control.F file
+
+set executables for DL_POLY and CP2K programs 
+
+execute : 
+./run_ex0.sh
+

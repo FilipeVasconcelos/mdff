@@ -1,0 +1,187 @@
+#!/bin/bash
+# ==================================================================
+# date        : feb 2014
+# author      : fmv
+# description : convert xyz pos trajectory file (cp2k) to TRAJFF (mdff)
+# ==================================================================
+separator="=========================================================="
+echo $separator
+date
+echo "author : filipe.manuel.vasconcelos@gmail.com"
+echo $separator
+echo "Running xyztoff ..."
+echo "This script generate TRAJFF file from xyz pos file (cp2k) "
+USAGE="Usage: -i [inputfile] -o [outputfile] "
+
+if [ $# -eq 0 ]
+then
+    echo "$USAGE"
+    exit 1
+fi
+while getopts ":i:o:" opt
+do
+    case $opt in
+        i)
+            xyzpos="$OPTARG"
+            ;;
+        o)
+            trajff="$OPTARG"
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            exit 1
+            ;;
+        :)
+            echo "Option -$OPTARG requires an argument." >&2
+            exit 1
+            ;;
+    esac
+done
+
+file=$(basename "$xyzpos")
+seed="${file%.*}"
+cell=$seed.cell
+
+echo "WARNING cell info from local $seed.cell file : make sure it is OK"
+nconf=`grep "i =" $xyzpos | wc | awk '{print $1}'`
+natm=`head -n 1 $xyzpos`
+nlines=$((natm+2))
+echo "reading $nconf configs in $xyzpos"
+echo "with $natm ions"
+
+
+#process first config to get type info
+echo "$natm"  >  $trajff
+echo "file generated from $xyxpos by xyztoconf script" >> $trajff
+head -n $nlines $xyzpos | tail -n $natm > tmpposfile
+
+declare -a type_info=('')
+declare -a typei
+
+ntype=1
+kline=0
+awk '{print $1}' tmpposfile > typesi
+while read line 
+do
+
+#debug	kline=$((kline+1))
+#debug	echo $kline $line ${typei[@]} ${type_info[@]}
+	if [ "${type_info[0]}" == '' ]
+	then
+		type_info[0]=$line
+		echo "first type" ${type_info[@]}
+	fi
+	new=true
+	for ((tp=0;tp<=$((ntype-1));tp++))
+	do
+		
+		if [ "$line" == "${type_info[$tp]}" ] 
+		then
+			typei[$tp]=$((${typei[$tp]} + 1))
+			new=false
+		fi
+	done
+	if $new  
+	then
+		echo "found newtype" $line 
+		type_info[$ntype]=$line
+		typei[$ntype]+=1
+		ntype=$((ntype+1))
+	fi
+	
+done < typesi
+echo "found $ntype types"
+echo "types :" ${type_info[@]}
+echo "ions per types : " ${typei[@]}    
+echo $separator
+
+head -n 2 $cell | tail -n 1 > celltmp
+a=`awk '{print $3}' celltmp`
+b=`awk '{print $7}' celltmp`
+c=`awk '{print $11}' celltmp`
+echo "$a  0.0000000000  0.0000000000" >> $trajff 
+echo " 0.0000000000 $b  0.0000000000" >> $trajff
+echo " 0.0000000000  0.0000000000 $c" >> $trajff
+echo $ntype           >> $trajff
+echo ${type_info[@]}  >> $trajff
+echo ${typei[@]}      >> $trajff
+echo "Cartesian"      >> $trajff
+cat tmpposfile        >> $trajff
+
+
+# old version was too slow
+#echo "too slow !!!!!!"
+#===== test ======
+#nconf=2
+#=================
+#start=0
+#for ((i=2;i<=$nconf;i++))
+#do
+#	echo -e -n "conf : [ $i / $nconf ]\r"
+#	end=$((nlines+$start))
+	#echo $start $end
+	
+#	head -n $end $xyzpos | tail -n $nlines > tmpposfile 
+#	head -n 1 tmpposfile             >>  $trajff
+#	head -n 2 tmpposfile | tail -n 1 >>  $trajff
+#	# get cell from *.cell
+#	head -n $((i+1)) *.cell | tail -n 1 > celltmp
+#	a=`awk '{print $3}' celltmp`
+#	b=`awk '{print $7}' celltmp`
+#	c=`awk '{print $11}' celltmp`
+#	echo "$a  0.0000000000  0.0000000000" >> $trajff 
+#	echo " 0.0000000000 $b  0.0000000000" >> $trajff
+#	echo " 0.0000000000  0.0000000000 $c" >> $trajff
+#	echo $ntype           >> $trajff
+#	echo ${type_info[@]}  >> $trajff
+#	echo ${typei[@]}      >> $trajff
+#	echo "Cartesian"      >> $trajff
+#	tail -n $natm  tmpposfile >> $trajff
+#	start=$end
+#	
+#done
+
+#new version 
+#not ready yet !!!
+kline=0
+start=1
+conf=1
+echo -e -n "conf : [ $conf / $nconf ]\r"
+while read line
+do
+	end=$((nlines+$start))
+	kline=$((kline+1))
+	if [ $kline -gt $end ] && [ $((conf+1)) -le $nconf ] ; then
+		conf=$((conf+1))
+		echo -e -n "conf : [ $conf / $nconf ]\r"
+		start=$end
+		echo $natm                                             >> $trajff
+		echo "file generated from $xyzpos by xyztoconf script" >> $trajff
+		head -n $((conf+1)) $seed.cell | tail -n 1 > celltmp
+		a=`awk '{print $3}' celltmp`
+		b=`awk '{print $7}' celltmp`
+		c=`awk '{print $11}' celltmp`
+		echo "$a  0.0000000000  0.0000000000"                  >> $trajff 
+		echo " 0.0000000000 $b  0.0000000000"                  >> $trajff
+		echo " 0.0000000000  0.0000000000 $c"                  >> $trajff
+		echo $ntype                                            >> $trajff
+		echo ${type_info[@]}                                   >> $trajff
+		echo ${typei[@]}                                       >> $trajff
+		echo "Cartesian"                                       >> $trajff
+	fi
+	if [ $kline -lt $end ] && [ $kline -ge $start ] && [ $conf -ge 2 ]; then
+#		echo $start $end $kline $line
+		printf "%3s %20s %19s %19s\n" $line >> $trajff
+	fi
+	
+
+done < $xyzpos 
+
+
+
+echo "file $trajff generated"
+echo $separator
+#rm celltmp tmpposfile typesi
+exit 0;
+
+

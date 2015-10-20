@@ -1,0 +1,101 @@
+#!/bin/bash
+
+usage()
+{
+
+cat quench.config
+
+}
+
+
+init()
+{
+	echo "--------------------------------------------------------------------------------"
+	echo " generate scripts from quench.config                                            "
+	echo "--------------------------------------------------------------------------------"
+	read_quench_table.py
+	echo " "
+
+}
+
+include()
+{
+sed -e '\_!INCLUDE <'"$1"'>_{
+        r '"$1"'
+        d
+}'
+}
+
+
+Docontrol()
+{
+	controlfile=$2
+	ensemble=$3
+	pot=$4
+	flag=$5
+	run_index=$6
+	echo "generating control file for run " $run_index " (" $controlfile ") "
+
+	if   [ $pot == "RI" ] ; then	
+		include IONS.POT < control_template.F | include BMHFTD.POT > tmp1
+	elif [ $pot == "PIM" ] ; then
+		include IONS.POT < control_template.F | include BMHFTD.POT | include PIM.POT > tmp1
+	fi
+	if [ $flag == "rescaling" ]; then
+		cat > rescaling << EOF
+        temp          = __TEMP__
+        nequil        = __NEQUIL__
+        nequil_period = __NEQUIL_PERIOD__
+EOF
+		include rescaling < tmp1 > tmp2
+	fi
+	if [ $flag == "QUENCH" ]; then
+		cat > rescaling << EOF
+        annealing     = __ANNEALING__
+EOF
+		include rescaling < tmp1 > tmp2
+	fi
+	if [ $ensemble == "NVT" ] ; then
+		cat > thermostat << EOF
+        temp           = __TEMP__
+        timesca_thermo = __TIME_THERMO__
+        nhc_n          = __NHC_N__ 
+        nhc_yosh_order = __NHC_YOSH_ORDER__
+        nhc_mults      = __NHC_MULTS__
+EOF
+		include thermostat < tmp1 > tmp2
+	fi
+
+        if [ $ensemble == "NPT_I" ] ; then
+                cat > barostat << EOF
+        temp           = __TEMP__
+        press          = __PRESS__
+        timesca_thermo = __TIME_THERMO__
+        timesca_baro   = __TIME_BARO__
+        nhc_n          = __NHC_N__ 
+        nhc_yosh_order = __NHC_YOSH_ORDER__
+        nhc_mults      = __NHC_MULTS__
+EOF
+                include barostat < tmp1 > tmp2
+        fi
+	if [ $ensemble != "NVE" ] || [ $flag == "rescaling" ] ||  [ $flag == "QUENCH" ] ; then
+		mv tmp2 tmp1	
+	fi
+	source scr$run_index > $controlfile 
+	
+}
+
+DoALL()
+{
+	source DOALLC
+}
+
+
+init
+echo "--------------------------------------------------------------------------------"
+DoALL
+echo "--------------------------------------------------------------------------------"
+
+
+rm -f scr* tmp* barostat thermostat rescaling 
+exit 0;

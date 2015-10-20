@@ -1,0 +1,125 @@
+#!/bin/bash
+# ------------------------------------------------------------
+# name        : random_struct+stochio
+# auteur      : fmv
+# date        : debut 2014
+# description : génère des strcutures désordonnés à partir 
+#               d'une stochiométrie donné. La stochiométrie 
+#               permet de calculer les parametres de mailles 
+#               de la boite cubique par MDFF.
+# notes       : execute random_struct qui peut etre appeler séparement
+#
+# ------------------------------------------------------------
+separator="=========================================================="
+echo $separator
+date
+echo "author : filipe.manuel.vasconcelos@gmail.com"
+echo $separator
+echo "Running random_struct+stochio ..."
+echo "This script generate POSFF random structures according to the "
+echo "stochiometry defined in control_stochio.F"
+echo "the only options are the number of nions targeted between "
+echo "<nions_min> and nions_max> "
+USAGE="Usage: -s <nions_min> -f <nions_max> -v (POSCAR output default no)"
+# default 
+tgt_min=0
+tgt_max=0
+vasp_output=false
+
+if [ $# -eq 0 ]
+then
+    echo "$USAGE"
+    exit 1
+fi
+while getopts ":s:f:" opt
+do
+    case $opt in
+        s)
+            tgt_min=$OPTARG
+            ;;
+        f)
+            tgt_max=$OPTARG
+            ;;
+	v)	
+	    vasp_output=true
+	    ;;
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            exit 1
+            ;;
+        :)
+            echo "Option -$OPTARG requires an argument." >&2
+            exit 1
+            ;;
+    esac
+done
+if [ "$tgt_min" -eq 0 ] && [ "$tgt_max" -eq 0 ]
+then
+	echo " ERROR  | gives <nions_min> and <nions_max> : the number of ions targeted"
+fi
+# check that __TARGET_NIONS__ is present
+grep "__TARGET_NIONS__" control_stochio.F > check
+if [ ! -s check ]
+then
+	echo "__TARGET_NIONS__ should be present in control.F"
+	exit 1
+else
+	rm check
+fi
+
+# main loop
+for ((tgt=$tgt_min;tgt<=$tgt_max;tgt++)) 
+do
+
+
+sed -e s/__TARGET_NIONS__/$tgt/g control_stochio.F > control.F
+
+mdff.x control.F > log
+grep EXACT log > exact
+grep APPROXIMATED log > appro
+if [ -s exact ]; then
+	echo "found exact stochiometry for $tgt ions"
+	mv log log.$tgt	
+	nox=`grep "number of oxydes" log.$tgt | awk '{print $NF}'`
+	total=`grep total log.$tgt | head -n 1 | awk '{print $NF}'`
+	box=`grep "cell param. a" log.$tgt | awk '{print $(NF-1)}'`
+	echo "cell parameter of cubic box : " $box
+	
+	awk -v kel=$nox '{   { if ($1=="#elem") {lr=NR} }
+                               { for (k=1;k<=kel+1;k++) { 
+                                                           if ((NR==lr+k)&&(lr!=0)) { printf("%4s",$1) } 
+                                                        }
+                               }
+                           }' log.$tgt > atype 
+	awk -v kel=$nox '{   { if ($1=="#elem") {lr=NR} }
+                               { for (k=1;k<=kel+1;k++) { 
+                                                           if ((NR==lr+k)&&(lr!=0)) { printf("%4s",$2) } 
+                                                        }
+                               }
+                           }' log.$tgt > itype 
+	t=`cat atype`
+	i=`cat itype`
+        echo "type info : "
+	echo "$t"
+	echo "$i"
+	echo "generate random structure for $tgt ions, executing :"
+	echo "random_struct.py -q -n $total -i \"$i\" -t \"$t\" -a \"$box 0.0 0.0\" -b \"0.0 $box 0.0\" -c \"0.0 0.0 $box\" "
+	random_struct.py -q -n $total -i "$i" -t "$t" -a "$box 0.0 0.0" -b "0.0 $box 0.0" -c "0.0 0.0 $box" 
+	mv POSFF.randomPY POSFF.randomPY.$tgt
+	if [ "vasp_output " = true ]; then
+		echo "creating equivqlent POSCAR output"
+		fftocar -i POSFF.randomPY.$tgt -o POSCAR.randomPY.$tgt -q
+	else
+		echo "=========================================================="
+	fi
+fi
+if [ -s appro ]; then
+	echo "found approximated stochiometry for $tgt ions"
+fi
+
+done
+rm control.F appro exact atype itype  
+exit 0;
+echo $separator
+
+

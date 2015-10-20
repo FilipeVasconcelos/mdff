@@ -1,0 +1,72 @@
+#!/bin/bash
+# ==================================================================
+# date        : feb 2014
+# author      : fmv
+# description : convert POSFF file (mdff) to CONFIG (dl_poly)
+# ==================================================================
+separator="=========================================================="
+echo $separator
+date
+echo "author : filipe.manuel.vasconcelos@gmail.com"
+echo $separator
+echo "Running fftoconf ..."
+echo "This script generate CONFIG file from POSFF file"
+USAGE="Usage: -i [inputfile] -o [outputfile] -s <scale> "
+
+scale=1.0
+if [ $# -eq 0 ]
+then
+    echo "$USAGE"
+    exit 1
+fi
+while getopts ":i:o:s:" opt
+do
+    case $opt in
+        i)
+            posff="$OPTARG"
+            ;;
+        o)
+            config="$OPTARG"
+            ;;
+	s)
+	    scale="$OPTARG"
+	    ;;
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            exit 1
+            ;;
+        :)
+            echo "Option -$OPTARG requires an argument." >&2
+            exit 1
+            ;;
+    esac
+done
+
+
+
+
+
+head -n 2 $posff | tail -n 1                                                                                           > $config
+natm=`head -n 1 $posff`
+echo "         0         1       $natm  0.0"                                                                          >> $config
+head -n 5 $posff | tail -n 3  | awk -v s=$scale '{printf("%20.12f %20.12f %20.12f\n",$1*s,$2*s,$3*s)}'                >> $config
+cell=`head -n 3 $posff | tail -n 1  | awk '{print $1}'`
+echo "found cell parameter : " $cell
+cpos=`head -n 9 $posff | tail -n 1`
+echo "coordinates in : " $cpos
+if [ "$cpos" == "Cartesian" ] ; then
+	awk -v s=$scale -v c=$cell '{ 
+	        if ((NF==10)||(NF==4)) { printf ("%2s %15s\n%15.9f %20.9f %20.9f\n",$1,NR-9,$2,$3,$4)  }
+	                            }' $posff                                                                         >> $config
+else
+	awk -v s=$scale -v c=$cell '{ 
+	        if ((NF==10)||(NF==4)) { printf ("%2s %15s\n%15.9f %20.9f %20.9f\n",$1,NR-9,$2*s*c,$3*s*c,$4*s*c)  }
+	                            }' $posff                                                                         >> $config
+fi
+	
+
+echo "file $config generated"
+echo $separator
+exit 0;
+
+

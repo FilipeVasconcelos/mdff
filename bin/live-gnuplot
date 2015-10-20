@@ -1,0 +1,38 @@
+#!/bin/bash
+
+window=100
+#title="U_lj"
+title=$1
+echo "reset"
+echo "set xrange[0:$window]"
+echo "set title '$title' "
+echo "set xlabel 'time step' "
+echo "set ylabel '$title' "
+cc=0
+ss=0
+while read line
+do
+	echo $line | grep "$title" > log 
+	l=`echo $line | grep "$title" | awk -v cc=$cc '{print " ",$1,$2,$3,$4}'`
+	if [ -s log ];then
+		if [ $cc -ge $window ] ; then
+			let ss++
+			echo "set xrange[$ss:$ss+$window]"
+		fi
+		let cc++
+
+# version 1
+ 		lines="$lines$l\\n"
+	        echo "plot \"-\" w lp" 
+	        printf "$lines" | tail -n $window 
+
+# version 2
+#		declare -a lines=("${lines[@]}" "$l" )
+#	        echo "plot \"-\" w lp" 
+#		for ((mm=$ss;mm<=$ss+$window;mm++))
+#		do
+#			echo "${lines[$mm]}"
+#		done
+	        echo "e"
+	fi
+done

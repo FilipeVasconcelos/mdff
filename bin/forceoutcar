@@ -1,0 +1,77 @@
+#!/bin/bash
+# ===============================================================
+# date       : 22 maio 2013 12h29
+# author     : fmv
+# decription : extract forces from OUTCAR file given in input 
+# ===============================================================
+separator="=========================================================="
+USAGE="Usage: -i [inputfile] "
+echo $separator
+date
+echo "author : filipe.manuel.vasconcelos@gmail.com"
+echo $separator
+echo "Running forceoutcar ..."
+echo "This script extract forces from OUTCAR file given in input"
+
+if [ $# -eq 0 ]
+then
+    echo "$USAGE"
+    exit 1
+fi
+while getopts ":i:l:n:" opt
+do
+    case $opt in
+        i)
+            outcar="$OPTARG"
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            exit 1
+            ;;
+        :)
+            echo "Option -$OPTARG requires an argument." >&2
+            exit 1
+            ;;
+    esac
+done
+
+poscar=POSCAR
+echo "WARNING some infos from POSCAR are needed"
+#natm
+natm=`grep NIONS $outcar | awk '{print $NF}'`
+echo "number of ions : $natm "
+#ntype
+ntype=`head -n 7 $poscar | tail -n 1 | awk '{ print NF }'`
+echo "found $ntype number of types"
+#labels
+cc=0
+for ((i=1;i<=$ntype;i++))
+do
+        l[$i]=`head -n 6 $poscar | tail -n 1  | awk -v l=$i '{ print $l}'`
+        n[$i]=`head -n 7 $poscar | tail -n 1  | awk -v n=$i '{ print $n}'`
+        ccs=$cc
+        cc=$((cc+n[$i]))
+        for ((j=$((ccs+1));j<=$cc;j++))
+        do
+                ll[$j]=${l[$i]}
+        done
+done
+echo "${l[*]}"
+echo "${n[*]}"
+
+echo ""
+echo "forces (eV/Angst) :"
+awk -v natm=$natm -v l1="${ll[*]}" 'BEGIN{ split(l1,l," "); 
+     } 
+     {
+	if ( ( $1 == "POSITION") && ( $2 == "TOTAL-FORCE") ) { ls = NR }
+	for ( i=1;i<=natm;i++)
+        {
+		if ( ( NR == ls + 1 + i )    && ( ls !=0 ) ) { printf("%5s %10s %10s %10s \n",l[i],$4,$5,$6) }
+	}
+	
+
+     }' $outcar
+
+echo $separator
+exit 0;

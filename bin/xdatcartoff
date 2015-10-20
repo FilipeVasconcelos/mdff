@@ -1,0 +1,195 @@
+#!/bin/bash
+# ==================================================================
+# date        : 25 abril 2013
+# author      : fmv
+# description : convert XDATCAR file (vasp) to TRAJFF ( mdff )
+# ==================================================================
+separator="=========================================================="
+echo $separator
+date
+echo "author : filipe.manuel.vasconcelos@gmail.com"
+echo $separator
+echo "Running xdatcartoff ..."
+echo "This script generate TRAJFF file from XDATCAR file"
+USAGE="Usage: -i [inputfile] -o [outputfile]" 
+
+if [ $# -eq 0 ]
+then
+    echo "$USAGE"
+    exit 1
+fi
+while getopts ":i:o:" opt
+do
+    case $opt in
+        i)
+            xdatcar="$OPTARG"
+            ;;
+        o)
+            trajff="$OPTARG"
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            exit 1
+            ;;
+        :)
+            echo "Option -$OPTARG requires an argument." >&2
+            exit 1
+            ;;
+    esac
+done
+# ==================================================================
+# XDATCAR file :
+#unknown system
+#           1
+#    11.126602    0.000000    0.000000
+#     0.000000   11.126602    0.000000
+#     0.000000    0.000000   11.126602
+#   Ge
+#  64
+#Direct configuration=     1
+#   0.10653976  0.67031086  0.97861507
+#   0.26339798  0.86203665  0.31552795
+
+# ==================================================================
+
+#TRAJFF file :
+#7
+#Wannier centres, written by Wannier90 on29Mar2013 at 12:26:53
+#10.6 0.0 0.0
+# 0.0 10.6 0.0
+# 0.0 0.0 10.6
+#2
+#O H 
+#1 1 
+#Cartesian
+#O          5.30000020       5.30000020       5.30000020 0.0 0.0 0.0   0.0 0.0 0.0
+#H          6.06674680       5.89377770       5.30000020 0.0 0.0 0.0   0.0 0.0 0.0
+# ==================================================================
+
+
+
+         
+# ==================================================================
+#ectract system name                                                                        
+echo "system = `head -n 1 $xdatcar | awk '{print $0}'`"
+system=`head -n 1 $xdatcar | awk '{print $0}'`
+echo $system
+#extract a b c vectors
+echo "a = `head -n 3 $xdatcar | tail -n 1 | awk '{print $0}'`"
+acell=`head -n 3 $xdatcar | tail -n 1 | awk '{print $0}'`
+echo "b = `head -n 4 $xdatcar | tail -n 1 | awk '{print $0}'`"
+bcell=`head -n 4 $xdatcar | tail -n 1 | awk '{print $0}'`
+echo "c = `head -n 5 $xdatcar | tail -n 1 | awk '{print $0}'`"
+ccell=`head -n 5 $xdatcar | tail -n 1 | awk '{print $0}'`
+
+#ntype
+ntype=`head -n 7 $xdatcar | tail -n 1 | awk '{ print NF }'`
+echo "found $ntype kind of types"
+#extract labels and itype
+for ((i=1;i<=$ntype;i++))
+do
+        l[$i]=`head -n 6 $xdatcar | tail -n 1  | awk -v l=$i '{ print $l}'`
+        n[$i]=`head -n 7 $xdatcar | tail -n 1  | awk -v n=$i '{ print $n}'`
+done
+echo "${l[*]}"
+echo "${n[*]}"
+labels=`echo "${l[*]}"`
+itype=`echo "${n[*]}"`
+natm=0
+for (( i=1;i<=$ntype;i++))
+do
+  natm=$(($natm + ${n[$i]}))
+done
+#extract natm
+echo "natm = $natm"
+
+cat > script.awk << eof
+BEGIN{ split(l1,l," ");split(n1,n," ");end[0]=8 
+
+        for (i=1;i<=ntype;i++ )
+        {
+                start[i]=(end[i-1]+1);
+                end[i]=start[i]+n[i]-1;
+        }
+     } 
+{
+	if (\$1=="Direct" ) { 
+		{ if (NR!=8) {  for (i=1;i<=ntype;i++ )
+						        {
+						                start[i]=start[i]+natm+1;
+						                end[i]=end[i]+natm+1;
+						        }
+			} }
+      
+
+
+        nconfig=NR;step=\$3 }
+	if ( ( NR==nconfig+1 ) && (nconfig!=0)) { print natm       } 
+	if ( ( NR==nconfig+1 ) && (nconfig!=0)) { print "t = ",step} 
+	if ( ( NR==nconfig+1 ) && (nconfig!=0)) { print acell      } 
+	if ( ( NR==nconfig+1 ) && (nconfig!=0)) { print bcell      } 
+	if ( ( NR==nconfig+1 ) && (nconfig!=0)) { print ccell      } 
+	if ( ( NR==nconfig+1 ) && (nconfig!=0)) { print ntype      } 
+	if ( ( NR==nconfig+1 ) && (nconfig!=0)) { print labels     } 
+        if ( ( NR==nconfig+1 ) && (nconfig!=0)) { print itype      }
+        if ( ( NR==nconfig+1 ) && (nconfig!=0)) { print "Direct"   }
+        for (i=1;i<=ntype;i++ )
+        { 
+                if ((NF==3)&&(NR>=start[i])&&(NR<=end[i]))
+                { 
+                                printf ("%4s %20s %20s %20s %20s\n",l[i],\$1,\$2,\$3," 0.0 0.0 0.0   0.0 0.0 0.0")  
+                }
+        }
+
+}
+eof
+cat > script2.awk << eof
+BEGIN{ split(l1,l," ");split(n1,n," ");end[0]=8 
+
+        for (i=1;i<=ntype;i++ )
+        {
+                start[i]=(end[i-1]+1);
+                end[i]=start[i]+n[i]-1;
+        }
+}
+{
+	if (\$1=="Direct" ) { 
+		{ if (NR!=8) {  for (i=1;i<=ntype;i++ )
+						        {
+						                start[i]=start[i]+natm+1;
+						                end[i]=end[i]+natm+1;
+						        }
+			} }
+      
+
+
+        nconfig=NR;step=\$3 }
+	if ( ( NR==nconfig+1 ) && (nconfig!=0)) { print natm       } 
+	if ( ( NR==nconfig+1 ) && (nconfig!=0)) { print "t = ",step} 
+	if ( ( NR==nconfig+1 ) && (nconfig!=0)) { print acell      } 
+	if ( ( NR==nconfig+1 ) && (nconfig!=0)) { print bcell      } 
+	if ( ( NR==nconfig+1 ) && (nconfig!=0)) { print ccell      } 
+	if ( ( NR==nconfig+1 ) && (nconfig!=0)) { print ntype      } 
+	if ( ( NR==nconfig+1 ) && (nconfig!=0)) { print labels     } 
+        if ( ( NR==nconfig+1 ) && (nconfig!=0)) { print itype      }
+        if ( ( NR==nconfig+1 ) && (nconfig!=0)) { print "Direct"   }
+        for (i=1;i<=ntype;i++ )
+        { 
+                if ((NF==3)&&(NR>=start[i])&&(NR<=end[i]))
+                { 
+                                printf ("%4s %20s %20s %20s %20s\n",l[i],\$1,\$2,\$3," 0.0 0.0 0.0   0.0 0.0 0.0")  
+                }
+        }
+
+
+}
+eof
+
+#awk -v l1="${l[*]}" -v n1="${n[*]}" -v sys="$system" -v ntype=$ntype -v natm=$natm -v acell="$acell" -v bcell="$bcell" -v ccell="$ccell" -v labels=$labels -v itype=$itype -f "script.awk" $xdatcar #> $trajff
+
+awk -v l1="${l[*]}" -v n1="${n[*]}" -v ntype=$ntype -v acell="$acell" -v bcell="$bcell" -v ccell="$ccell" -v natm="$natm" -v labels="$labels" -v itype="$itype" -f "script2.awk" $xdatcar > $trajff
+
+rm script.awk
+echo "file $trajff generated"
+echo $separator
+exit 0;

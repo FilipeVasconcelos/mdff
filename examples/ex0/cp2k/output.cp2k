@@ -1,0 +1,3539 @@
+ DBCSR| Multiplication driver                                                SMM
+ DBCSR| Multrec recursion limit                                              512
+ DBCSR| Multiplication stack size                                           1000
+ DBCSR| Multiplication size stacks                                             3
+ DBCSR| Use subcommunicators                                                   T
+ DBCSR| Use MPI combined types                                                 F
+ DBCSR| Use MPI memory allocation                                              T
+ DBCSR| Use Communication thread                                               T
+ DBCSR| Communication thread load                                             87
+
+
+  **** **** ******  **  PROGRAM STARTED AT               2015-10-20 14:44:20.350
+ ***** ** ***  *** **   PROGRAM STARTED ON                               charrue
+ **    ****   ******    PROGRAM STARTED BY                                filipe
+ ***** **    ** ** **   PROGRAM PROCESS ID                                   371
+  **** **  *******  **  PROGRAM STARTED IN /home/filipe/dev/github/mdff/examples
+                                           /ex0/cp2k
+
+ CP2K| version string:                                        CP2K version 2.5.1
+ CP2K| source code revision number:                                    svn:13632
+ CP2K| is freely available from                             http://www.cp2k.org/
+ CP2K| Program compiled at                          Sat Oct 11 19:03:13 UTC 2014
+ CP2K| Program compiled on                                                 binet
+ CP2K| Program compiled for                                  Linux-i686-gfortran
+ CP2K| Input file name                                                input.cp2k
+
+ GLOBAL| Force Environment number                                              1
+ GLOBAL| Basis set file name                                           BASIS_SET
+ GLOBAL| Geminal file name                                         BASIS_GEMINAL
+ GLOBAL| Potential file name                                           POTENTIAL
+ GLOBAL| MM Potential file name                                     MM_POTENTIAL
+ GLOBAL| Coordinate file name                                      __STD_INPUT__
+ GLOBAL| Method name                                                        CP2K
+ GLOBAL| Project name                                                     FCC_LJ
+ GLOBAL| Preferred FFT library                                             FFTW3
+ GLOBAL| Preferred diagonalization lib.                                       SL
+ GLOBAL| Run type                                                             MD
+ GLOBAL| All-to-all communication in single precision                          F
+ GLOBAL| FFTs using library dependent lengths                                  F
+ GLOBAL| Global print level                                                 HIGH
+ GLOBAL| Total number of message passing processes                             1
+ GLOBAL| Number of threads for this process                                    1
+ GLOBAL| This output is from process                                           0
+
+ MEMORY| system memory details [Kb]
+ MEMORY|                        rank 0           min           max       average
+ MEMORY| MemTotal              3527456       3527456       3527456       3527456
+ MEMORY| MemFree                272480        272480        272480        272480
+ MEMORY| Buffers                 83660         83660         83660         83660
+ MEMORY| Cached                 724296        724296        724296        724296
+ MEMORY| Slab                    88272         88272         88272         88272
+ MEMORY| SReclaimable            61312         61312         61312         61312
+ MEMORY| MemLikelyFree         1141748       1141748       1141748       1141748
+
+
+ *** Fundamental physical constants (SI units) ***
+
+ *** Literature: B. J. Mohr and B. N. Taylor,
+ ***             CODATA recommended values of the fundamental physical
+ ***             constants: 2006, Web Version 5.1
+ ***             http://physics.nist.gov/constants
+
+ Speed of light in vacuum [m/s]                             2.99792458000000E+08
+ Magnetic constant or permeability of vacuum [N/A**2]       1.25663706143592E-06
+ Electric constant or permittivity of vacuum [F/m]          8.85418781762039E-12
+ Planck constant (h) [J*s]                                  6.62606896000000E-34
+ Planck constant (h-bar) [J*s]                              1.05457162825177E-34
+ Elementary charge [C]                                      1.60217648700000E-19
+ Electron mass [kg]                                         9.10938215000000E-31
+ Electron g factor [ ]                                     -2.00231930436220E+00
+ Proton mass [kg]                                           1.67262163700000E-27
+ Fine-structure constant                                    7.29735253760000E-03
+ Rydberg constant [1/m]                                     1.09737315685270E+07
+ Avogadro constant [1/mol]                                  6.02214179000000E+23
+ Boltzmann constant [J/K]                                   1.38065040000000E-23
+ Atomic mass unit [kg]                                      1.66053878200000E-27
+ Bohr radius [m]                                            5.29177208590000E-11
+
+ *** Conversion factors ***
+
+ [u] -> [a.u.]                                              1.82288848426455E+03
+ [Angstrom] -> [Bohr] = [a.u.]                              1.88972613288564E+00
+ [a.u.] = [Bohr] -> [Angstrom]                              5.29177208590000E-01
+ [a.u.] -> [s]                                              2.41888432650478E-17
+ [a.u.] -> [fs]                                             2.41888432650478E-02
+ [a.u.] -> [J]                                              4.35974393937059E-18
+ [a.u.] -> [N]                                              8.23872205491840E-08
+ [a.u.] -> [K]                                              3.15774647902944E+05
+ [a.u.] -> [kJ/mol]                                         2.62549961709828E+03
+ [a.u.] -> [kcal/mol]                                       6.27509468713739E+02
+ [a.u.] -> [Pa]                                             2.94210107994716E+13
+ [a.u.] -> [bar]                                            2.94210107994716E+08
+ [a.u.] -> [atm]                                            2.90362800883016E+08
+ [a.u.] -> [eV]                                             2.72113838565563E+01
+ [a.u.] -> [Hz]                                             6.57968392072181E+15
+ [a.u.] -> [1/cm] (wave numbers)                            2.19474631370540E+05
+ [a.u./Bohr**2] -> [1/cm]                                   5.14048714338585E+03
+ 
+
+
+                      ************* ******** ***********   
+                     ************* **********************  
+                     ****     **** ****      ***********   
+                     ******** ****  *******     ****       
+                     *******  ****   *******   ****        
+                     ****     ****       ****  ****        
+                     ****     **** **********  ****        
+                      ****     **** ********    ****       
+                     FRONTIERS IN SIMULATION TECHNOLOGY    
+                                                           
+                        C.J. Mundy, S. Balasubramanian,    
+                     Ken Bagchi, J. Hutter, Ari Seitsonen  
+                      IFW Kuo, T. Laino, J. VandeVondele   
+                                 Version 1.0               
+
+                                                           
+
+
+ CELL| Volume [angstrom^3]:                                             9252.890
+ CELL| Vector a [angstrom]:      20.994     0.000     0.000    |a| =      20.994
+ CELL| Vector b [angstrom]:       0.000    20.994     0.000    |b| =      20.994
+ CELL| Vector c [angstrom]:       0.000     0.000    20.994    |c| =      20.994
+ CELL| Angle (b,c), alpha [degree]:                                       90.000
+ CELL| Angle (a,c), beta  [degree]:                                       90.000
+ CELL| Angle (a,b), gamma [degree]:                                       90.000
+ CELL| Numerically orthorhombic:                                             YES
+
+ CELL_REF| Volume [angstrom^3]:                                         9252.890
+ CELL_REF| Vector a [angstrom    20.994     0.000     0.000    |a| =      20.994
+ CELL_REF| Vector b [angstrom     0.000    20.994     0.000    |b| =      20.994
+ CELL_REF| Vector c [angstrom     0.000     0.000    20.994    |c| =      20.994
+ CELL_REF| Angle (b,c), alpha [degree]:                                   90.000
+ CELL_REF| Angle (a,c), beta  [degree]:                                   90.000
+ CELL_REF| Angle (a,b), gamma [degree]:                                   90.000
+ CELL_REF| Numerically orthorhombic:                                         YES
+ EWALD|                                                                 not used
+
+ CELL_TOP| Volume [angstrom^3]:                                         9252.890
+ CELL_TOP| Vector a [angstrom    20.994     0.000     0.000    |a| =      20.994
+ CELL_TOP| Vector b [angstrom     0.000    20.994     0.000    |b| =      20.994
+ CELL_TOP| Vector c [angstrom     0.000     0.000    20.994    |c| =      20.994
+ CELL_TOP| Angle (b,c), alpha [degree]:                                   90.000
+ CELL_TOP| Angle (a,c), beta  [degree]:                                   90.000
+ CELL_TOP| Angle (a,b), gamma [degree]:                                   90.000
+ CELL_TOP| Numerically orthorhombic:                                         YES
+
+
+ SUBCELL GRID  INFO FOR THE NONBONDED NEIGHBOR LISTS
+
+    NUMBER OF SUBCELLS             ::                   7         7         7
+    NUMBER OF PERIODIC      IMAGES ::                   1         1         1
+    NUMBER OF INTERACTING SUBCELLS ::                   2         2         2
+
+ GENERATE|  Preliminary Number of Bonds generated:                             0
+ GENERATE|  Achieved consistency in connectivity generation.
+ CHARGE_INFO| Total Charge of the Classical System:                     0.000000
+
+ FORCEFIELD| WARNING: A non Critical ForceField parameter is missing! CP2K GOES!
+ FORCEFIELD| Non critical parameters are:Urey-Bradley,Torsions,Impropers, Opbends and 1-4
+ FORCEFIELD| All missing parameters will not contribute to the potential energy!
+
+ FORCEFIELD| Missing Charge            (  AR)                                   
+
+ FORCEFIELD| WARNING: Ignoring missing critical FF parameters! CP2K GOES!
+ FORCEFIELD| Critical parameters are: Bonds, Bends and Charges
+ FORCEFIELD| All missing parameters will not contribute to the potential energy!
+ Total number of particles with a shell ::            0
+
+ FORCEFIELD| WARNING: A non Critical ForceField parameter is missing! CP2K GOES!
+ FORCEFIELD| Non critical parameters are:Urey-Bradley,Torsions,Impropers, Opbends and 1-4
+ FORCEFIELD| All missing parameters will not contribute to the potential energy!
+
+ FORCEFIELD| Missing Spline_Bond_Env   (  AR,  AR)                              
+
+ FORCEFIELD| WARNING: Ignoring missing critical FF parameters! CP2K GOES!
+ FORCEFIELD| Critical parameters are: Bonds, Bends and Charges
+ FORCEFIELD| All missing parameters will not contribute to the potential energy!
+
+ SPLINE_INFO| Generating 1 splines for the NONBONDED14 interactions due to 1 different atomic kinds
+
+ SPLINE_INFO| Spline number:                                1
+ SPLINE_INFO| Unique spline number:                         1
+ SPLINE_INFO| Atomic kind numbers:                          1 1
+ SPLINE_INFO| Atomic kind names:                            Ar Ar
+ SPLINE_INFO| Number of spline points:                      2
+ SPLINE_INFO| Requested accuracy [Hartree]:                 1.000000E-09
+ SPLINE_INFO| Achieved accuracy [Hartree]:                  0.000000E+00
+ SPLINE_INFO| Spline range [bohr]:                          9.000000E-01 1.889726E+01
+ SPLINE_INFO| Spline range used to achieve accuracy [bohr]: 2.536115E+00 1.889726E+01
+ SPLINE_INFO| Spline value at RMIN [Hartree]:               0.000000000E+00
+ SPLINE_INFO| Spline value at RMAX [Hartree]:               0.000000000E+00
+ SPLINE_INFO| Non-bonded energy cutoff [Hartree]:           0.000000000E+00
+
+ SPLINE_INFO| Number of pair potential splines allocated:   1
+
+ SPLINE_INFO| Number of unique splines computed:            1
+
+ SPLINE_INFO| Done
+     TESTING ARAR with ARAR
+     FOUND AR AR
+
+ FORCEFIELD| WARNING: Ignoring missing critical FF parameters! CP2K GOES!
+ FORCEFIELD| Critical parameters are: Bonds, Bends and Charges
+ FORCEFIELD| All missing parameters will not contribute to the potential energy!
+
+ SPLINE_INFO| Generating 1 splines for the NONBONDED interactions due to 1 different atomic kinds
+
+ SPLINE_INFO| Spline number:                                1
+ SPLINE_INFO| Unique spline number:                         1
+ SPLINE_INFO| Atomic kind numbers:                          1 1
+ SPLINE_INFO| Atomic kind names:                            Ar Ar
+ SPLINE_INFO| Number of spline points:                      681
+ SPLINE_INFO| Requested accuracy [Hartree]:                 1.000000E-09
+ SPLINE_INFO| Achieved accuracy [Hartree]:                  7.136337E-10
+ SPLINE_INFO| Spline range [bohr]:                          3.950536E+00 1.889726E+01
+ SPLINE_INFO| Spline range used to achieve accuracy [bohr]: 5.073954E+00 1.889726E+01
+ SPLINE_INFO| Spline value at RMIN [Hartree]:               4.676172381E-01
+ SPLINE_INFO| Spline value at RMAX [Hartree]:              -2.361374396E-06
+ SPLINE_INFO| Non-bonded energy cutoff [Hartree]:           0.000000000E+00
+
+ SPLINE_INFO| Number of pair potential splines allocated:   1
+
+ SPLINE_INFO| Number of unique splines computed:            1
+
+ SPLINE_INFO| Done
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar1 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar2 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar3 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar4 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar5 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar6 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar7 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar8 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar9 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar10 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar11 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar12 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar13 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar14 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar15 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar16 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar17 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar18 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar19 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar20 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar21 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar22 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar23 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar24 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar25 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar26 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar27 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar28 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar29 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar30 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar31 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar32 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar33 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar34 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar35 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar36 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar37 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar38 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar39 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar40 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar41 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar42 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar43 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar44 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar45 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar46 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar47 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar48 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar49 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar50 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar51 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar52 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar53 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar54 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar55 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar56 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar57 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar58 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar59 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar60 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar61 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar62 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar63 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar64 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar65 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar66 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar67 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar68 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar69 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar70 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar71 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar72 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar73 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar74 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar75 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar76 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar77 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar78 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar79 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar80 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar81 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar82 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar83 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar84 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar85 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar86 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar87 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar88 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar89 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar90 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar91 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar92 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar93 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar94 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar95 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar96 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar97 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar98 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar99 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar100 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar101 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar102 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar103 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar104 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar105 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar106 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar107 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar108 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar109 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar110 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar111 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar112 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar113 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar114 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar115 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar116 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar117 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar118 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar119 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar120 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar121 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar122 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar123 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar124 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar125 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar126 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar127 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar128 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar129 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar130 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar131 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar132 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar133 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar134 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar135 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar136 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar137 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar138 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar139 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar140 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar141 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar142 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar143 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar144 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar145 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar146 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar147 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar148 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar149 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar150 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar151 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar152 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar153 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar154 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar155 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar156 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar157 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar158 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar159 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar160 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar161 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar162 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar163 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar164 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar165 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar166 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar167 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar168 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar169 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar170 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar171 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar172 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar173 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar174 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar175 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar176 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar177 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar178 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar179 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar180 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar181 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar182 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar183 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar184 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar185 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar186 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar187 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar188 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar189 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar190 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar191 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar192 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar193 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar194 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar195 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar196 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar197 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar198 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar199 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar200 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar201 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar202 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar203 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar204 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar205 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar206 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar207 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar208 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar209 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar210 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar211 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar212 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar213 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar214 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar215 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar216 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar217 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar218 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar219 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar220 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar221 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar222 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar223 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar224 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar225 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar226 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar227 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar228 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar229 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar230 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar231 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar232 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar233 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar234 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar235 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar236 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar237 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar238 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar239 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar240 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar241 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar242 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar243 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar244 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar245 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar246 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar247 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar248 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar249 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar250 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar251 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar252 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar253 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar254 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar255 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+     Mol Kind Ar256 charge =    0.0000000000000000     
+       atom            1  Ar charge =    0.0000000000000000     
+       atom            2  Ar charge =    0.0000000000000000     
+       atom            3  Ar charge =    0.0000000000000000     
+       atom            4  Ar charge =    0.0000000000000000     
+       atom            5  Ar charge =    0.0000000000000000     
+       atom            6  Ar charge =    0.0000000000000000     
+       atom            7  Ar charge =    0.0000000000000000     
+       atom            8  Ar charge =    0.0000000000000000     
+       atom            9  Ar charge =    0.0000000000000000     
+       atom           10  Ar charge =    0.0000000000000000     
+       atom           11  Ar charge =    0.0000000000000000     
+       atom           12  Ar charge =    0.0000000000000000     
+       atom           13  Ar charge =    0.0000000000000000     
+       atom           14  Ar charge =    0.0000000000000000     
+       atom           15  Ar charge =    0.0000000000000000     
+       atom           16  Ar charge =    0.0000000000000000     
+       atom           17  Ar charge =    0.0000000000000000     
+       atom           18  Ar charge =    0.0000000000000000     
+       atom           19  Ar charge =    0.0000000000000000     
+       atom           20  Ar charge =    0.0000000000000000     
+       atom           21  Ar charge =    0.0000000000000000     
+       atom           22  Ar charge =    0.0000000000000000     
+       atom           23  Ar charge =    0.0000000000000000     
+       atom           24  Ar charge =    0.0000000000000000     
+       atom           25  Ar charge =    0.0000000000000000     
+       atom           26  Ar charge =    0.0000000000000000     
+       atom           27  Ar charge =    0.0000000000000000     
+       atom           28  Ar charge =    0.0000000000000000     
+       atom           29  Ar charge =    0.0000000000000000     
+       atom           30  Ar charge =    0.0000000000000000     
+       atom           31  Ar charge =    0.0000000000000000     
+       atom           32  Ar charge =    0.0000000000000000     
+       atom           33  Ar charge =    0.0000000000000000     
+       atom           34  Ar charge =    0.0000000000000000     
+       atom           35  Ar charge =    0.0000000000000000     
+       atom           36  Ar charge =    0.0000000000000000     
+       atom           37  Ar charge =    0.0000000000000000     
+       atom           38  Ar charge =    0.0000000000000000     
+       atom           39  Ar charge =    0.0000000000000000     
+       atom           40  Ar charge =    0.0000000000000000     
+       atom           41  Ar charge =    0.0000000000000000     
+       atom           42  Ar charge =    0.0000000000000000     
+       atom           43  Ar charge =    0.0000000000000000     
+       atom           44  Ar charge =    0.0000000000000000     
+       atom           45  Ar charge =    0.0000000000000000     
+       atom           46  Ar charge =    0.0000000000000000     
+       atom           47  Ar charge =    0.0000000000000000     
+       atom           48  Ar charge =    0.0000000000000000     
+       atom           49  Ar charge =    0.0000000000000000     
+       atom           50  Ar charge =    0.0000000000000000     
+       atom           51  Ar charge =    0.0000000000000000     
+       atom           52  Ar charge =    0.0000000000000000     
+       atom           53  Ar charge =    0.0000000000000000     
+       atom           54  Ar charge =    0.0000000000000000     
+       atom           55  Ar charge =    0.0000000000000000     
+       atom           56  Ar charge =    0.0000000000000000     
+       atom           57  Ar charge =    0.0000000000000000     
+       atom           58  Ar charge =    0.0000000000000000     
+       atom           59  Ar charge =    0.0000000000000000     
+       atom           60  Ar charge =    0.0000000000000000     
+       atom           61  Ar charge =    0.0000000000000000     
+       atom           62  Ar charge =    0.0000000000000000     
+       atom           63  Ar charge =    0.0000000000000000     
+       atom           64  Ar charge =    0.0000000000000000     
+       atom           65  Ar charge =    0.0000000000000000     
+       atom           66  Ar charge =    0.0000000000000000     
+       atom           67  Ar charge =    0.0000000000000000     
+       atom           68  Ar charge =    0.0000000000000000     
+       atom           69  Ar charge =    0.0000000000000000     
+       atom           70  Ar charge =    0.0000000000000000     
+       atom           71  Ar charge =    0.0000000000000000     
+       atom           72  Ar charge =    0.0000000000000000     
+       atom           73  Ar charge =    0.0000000000000000     
+       atom           74  Ar charge =    0.0000000000000000     
+       atom           75  Ar charge =    0.0000000000000000     
+       atom           76  Ar charge =    0.0000000000000000     
+       atom           77  Ar charge =    0.0000000000000000     
+       atom           78  Ar charge =    0.0000000000000000     
+       atom           79  Ar charge =    0.0000000000000000     
+       atom           80  Ar charge =    0.0000000000000000     
+       atom           81  Ar charge =    0.0000000000000000     
+       atom           82  Ar charge =    0.0000000000000000     
+       atom           83  Ar charge =    0.0000000000000000     
+       atom           84  Ar charge =    0.0000000000000000     
+       atom           85  Ar charge =    0.0000000000000000     
+       atom           86  Ar charge =    0.0000000000000000     
+       atom           87  Ar charge =    0.0000000000000000     
+       atom           88  Ar charge =    0.0000000000000000     
+       atom           89  Ar charge =    0.0000000000000000     
+       atom           90  Ar charge =    0.0000000000000000     
+       atom           91  Ar charge =    0.0000000000000000     
+       atom           92  Ar charge =    0.0000000000000000     
+       atom           93  Ar charge =    0.0000000000000000     
+       atom           94  Ar charge =    0.0000000000000000     
+       atom           95  Ar charge =    0.0000000000000000     
+       atom           96  Ar charge =    0.0000000000000000     
+       atom           97  Ar charge =    0.0000000000000000     
+       atom           98  Ar charge =    0.0000000000000000     
+       atom           99  Ar charge =    0.0000000000000000     
+       atom          100  Ar charge =    0.0000000000000000     
+       atom          101  Ar charge =    0.0000000000000000     
+       atom          102  Ar charge =    0.0000000000000000     
+       atom          103  Ar charge =    0.0000000000000000     
+       atom          104  Ar charge =    0.0000000000000000     
+       atom          105  Ar charge =    0.0000000000000000     
+       atom          106  Ar charge =    0.0000000000000000     
+       atom          107  Ar charge =    0.0000000000000000     
+       atom          108  Ar charge =    0.0000000000000000     
+       atom          109  Ar charge =    0.0000000000000000     
+       atom          110  Ar charge =    0.0000000000000000     
+       atom          111  Ar charge =    0.0000000000000000     
+       atom          112  Ar charge =    0.0000000000000000     
+       atom          113  Ar charge =    0.0000000000000000     
+       atom          114  Ar charge =    0.0000000000000000     
+       atom          115  Ar charge =    0.0000000000000000     
+       atom          116  Ar charge =    0.0000000000000000     
+       atom          117  Ar charge =    0.0000000000000000     
+       atom          118  Ar charge =    0.0000000000000000     
+       atom          119  Ar charge =    0.0000000000000000     
+       atom          120  Ar charge =    0.0000000000000000     
+       atom          121  Ar charge =    0.0000000000000000     
+       atom          122  Ar charge =    0.0000000000000000     
+       atom          123  Ar charge =    0.0000000000000000     
+       atom          124  Ar charge =    0.0000000000000000     
+       atom          125  Ar charge =    0.0000000000000000     
+       atom          126  Ar charge =    0.0000000000000000     
+       atom          127  Ar charge =    0.0000000000000000     
+       atom          128  Ar charge =    0.0000000000000000     
+       atom          129  Ar charge =    0.0000000000000000     
+       atom          130  Ar charge =    0.0000000000000000     
+       atom          131  Ar charge =    0.0000000000000000     
+       atom          132  Ar charge =    0.0000000000000000     
+       atom          133  Ar charge =    0.0000000000000000     
+       atom          134  Ar charge =    0.0000000000000000     
+       atom          135  Ar charge =    0.0000000000000000     
+       atom          136  Ar charge =    0.0000000000000000     
+       atom          137  Ar charge =    0.0000000000000000     
+       atom          138  Ar charge =    0.0000000000000000     
+       atom          139  Ar charge =    0.0000000000000000     
+       atom          140  Ar charge =    0.0000000000000000     
+       atom          141  Ar charge =    0.0000000000000000     
+       atom          142  Ar charge =    0.0000000000000000     
+       atom          143  Ar charge =    0.0000000000000000     
+       atom          144  Ar charge =    0.0000000000000000     
+       atom          145  Ar charge =    0.0000000000000000     
+       atom          146  Ar charge =    0.0000000000000000     
+       atom          147  Ar charge =    0.0000000000000000     
+       atom          148  Ar charge =    0.0000000000000000     
+       atom          149  Ar charge =    0.0000000000000000     
+       atom          150  Ar charge =    0.0000000000000000     
+       atom          151  Ar charge =    0.0000000000000000     
+       atom          152  Ar charge =    0.0000000000000000     
+       atom          153  Ar charge =    0.0000000000000000     
+       atom          154  Ar charge =    0.0000000000000000     
+       atom          155  Ar charge =    0.0000000000000000     
+       atom          156  Ar charge =    0.0000000000000000     
+       atom          157  Ar charge =    0.0000000000000000     
+       atom          158  Ar charge =    0.0000000000000000     
+       atom          159  Ar charge =    0.0000000000000000     
+       atom          160  Ar charge =    0.0000000000000000     
+       atom          161  Ar charge =    0.0000000000000000     
+       atom          162  Ar charge =    0.0000000000000000     
+       atom          163  Ar charge =    0.0000000000000000     
+       atom          164  Ar charge =    0.0000000000000000     
+       atom          165  Ar charge =    0.0000000000000000     
+       atom          166  Ar charge =    0.0000000000000000     
+       atom          167  Ar charge =    0.0000000000000000     
+       atom          168  Ar charge =    0.0000000000000000     
+       atom          169  Ar charge =    0.0000000000000000     
+       atom          170  Ar charge =    0.0000000000000000     
+       atom          171  Ar charge =    0.0000000000000000     
+       atom          172  Ar charge =    0.0000000000000000     
+       atom          173  Ar charge =    0.0000000000000000     
+       atom          174  Ar charge =    0.0000000000000000     
+       atom          175  Ar charge =    0.0000000000000000     
+       atom          176  Ar charge =    0.0000000000000000     
+       atom          177  Ar charge =    0.0000000000000000     
+       atom          178  Ar charge =    0.0000000000000000     
+       atom          179  Ar charge =    0.0000000000000000     
+       atom          180  Ar charge =    0.0000000000000000     
+       atom          181  Ar charge =    0.0000000000000000     
+       atom          182  Ar charge =    0.0000000000000000     
+       atom          183  Ar charge =    0.0000000000000000     
+       atom          184  Ar charge =    0.0000000000000000     
+       atom          185  Ar charge =    0.0000000000000000     
+       atom          186  Ar charge =    0.0000000000000000     
+       atom          187  Ar charge =    0.0000000000000000     
+       atom          188  Ar charge =    0.0000000000000000     
+       atom          189  Ar charge =    0.0000000000000000     
+       atom          190  Ar charge =    0.0000000000000000     
+       atom          191  Ar charge =    0.0000000000000000     
+       atom          192  Ar charge =    0.0000000000000000     
+       atom          193  Ar charge =    0.0000000000000000     
+       atom          194  Ar charge =    0.0000000000000000     
+       atom          195  Ar charge =    0.0000000000000000     
+       atom          196  Ar charge =    0.0000000000000000     
+       atom          197  Ar charge =    0.0000000000000000     
+       atom          198  Ar charge =    0.0000000000000000     
+       atom          199  Ar charge =    0.0000000000000000     
+       atom          200  Ar charge =    0.0000000000000000     
+       atom          201  Ar charge =    0.0000000000000000     
+       atom          202  Ar charge =    0.0000000000000000     
+       atom          203  Ar charge =    0.0000000000000000     
+       atom          204  Ar charge =    0.0000000000000000     
+       atom          205  Ar charge =    0.0000000000000000     
+       atom          206  Ar charge =    0.0000000000000000     
+       atom          207  Ar charge =    0.0000000000000000     
+       atom          208  Ar charge =    0.0000000000000000     
+       atom          209  Ar charge =    0.0000000000000000     
+       atom          210  Ar charge =    0.0000000000000000     
+       atom          211  Ar charge =    0.0000000000000000     
+       atom          212  Ar charge =    0.0000000000000000     
+       atom          213  Ar charge =    0.0000000000000000     
+       atom          214  Ar charge =    0.0000000000000000     
+       atom          215  Ar charge =    0.0000000000000000     
+       atom          216  Ar charge =    0.0000000000000000     
+       atom          217  Ar charge =    0.0000000000000000     
+       atom          218  Ar charge =    0.0000000000000000     
+       atom          219  Ar charge =    0.0000000000000000     
+       atom          220  Ar charge =    0.0000000000000000     
+       atom          221  Ar charge =    0.0000000000000000     
+       atom          222  Ar charge =    0.0000000000000000     
+       atom          223  Ar charge =    0.0000000000000000     
+       atom          224  Ar charge =    0.0000000000000000     
+       atom          225  Ar charge =    0.0000000000000000     
+       atom          226  Ar charge =    0.0000000000000000     
+       atom          227  Ar charge =    0.0000000000000000     
+       atom          228  Ar charge =    0.0000000000000000     
+       atom          229  Ar charge =    0.0000000000000000     
+       atom          230  Ar charge =    0.0000000000000000     
+       atom          231  Ar charge =    0.0000000000000000     
+       atom          232  Ar charge =    0.0000000000000000     
+       atom          233  Ar charge =    0.0000000000000000     
+       atom          234  Ar charge =    0.0000000000000000     
+       atom          235  Ar charge =    0.0000000000000000     
+       atom          236  Ar charge =    0.0000000000000000     
+       atom          237  Ar charge =    0.0000000000000000     
+       atom          238  Ar charge =    0.0000000000000000     
+       atom          239  Ar charge =    0.0000000000000000     
+       atom          240  Ar charge =    0.0000000000000000     
+       atom          241  Ar charge =    0.0000000000000000     
+       atom          242  Ar charge =    0.0000000000000000     
+       atom          243  Ar charge =    0.0000000000000000     
+       atom          244  Ar charge =    0.0000000000000000     
+       atom          245  Ar charge =    0.0000000000000000     
+       atom          246  Ar charge =    0.0000000000000000     
+       atom          247  Ar charge =    0.0000000000000000     
+       atom          248  Ar charge =    0.0000000000000000     
+       atom          249  Ar charge =    0.0000000000000000     
+       atom          250  Ar charge =    0.0000000000000000     
+       atom          251  Ar charge =    0.0000000000000000     
+       atom          252  Ar charge =    0.0000000000000000     
+       atom          253  Ar charge =    0.0000000000000000     
+       atom          254  Ar charge =    0.0000000000000000     
+       atom          255  Ar charge =    0.0000000000000000     
+       atom          256  Ar charge =    0.0000000000000000     
+    Total system charge =         0.0000000000
+    Total system mass   =  18642111.7873664387
+
+
+ MOLECULE KIND INFORMATION
+
+
+ All atoms are their own molecule, skipping detailed information
+
+
+ MODULE FIST:  ATOMIC COORDINATES IN angstrom
+
+  Atom  Kind  ATM_TYP       X           Y           Z          q(eff)       Mass
+
+     1    1   Ar         0.000000    0.000000    0.000000      0.00      39.9480
+     2    1   Ar         2.624233    2.624233    0.000000      0.00      39.9480
+     3    1   Ar         2.624233    0.000000    2.624233      0.00      39.9480
+     4    1   Ar         0.000000    2.624233    2.624233      0.00      39.9480
+     5    1   Ar         0.000000    0.000000    5.248467      0.00      39.9480
+     6    1   Ar         2.624233    2.624233    5.248467      0.00      39.9480
+     7    1   Ar         2.624233    0.000000    7.872700      0.00      39.9480
+     8    1   Ar         0.000000    2.624233    7.872700      0.00      39.9480
+     9    1   Ar         0.000000    0.000000   10.496934      0.00      39.9480
+    10    1   Ar         2.624233    2.624233   10.496934      0.00      39.9480
+    11    1   Ar         2.624233    0.000000   13.121168      0.00      39.9480
+    12    1   Ar         0.000000    2.624233   13.121168      0.00      39.9480
+    13    1   Ar         0.000000    0.000000   15.745401      0.00      39.9480
+    14    1   Ar         2.624233    2.624233   15.745401      0.00      39.9480
+    15    1   Ar         2.624233    0.000000   18.369635      0.00      39.9480
+    16    1   Ar         0.000000    2.624233   18.369635      0.00      39.9480
+    17    1   Ar         0.000000    5.248467    0.000000      0.00      39.9480
+    18    1   Ar         2.624233    7.872700    0.000000      0.00      39.9480
+    19    1   Ar         2.624233    5.248467    2.624233      0.00      39.9480
+    20    1   Ar         0.000000    7.872700    2.624233      0.00      39.9480
+    21    1   Ar         0.000000    5.248467    5.248467      0.00      39.9480
+    22    1   Ar         2.624233    7.872700    5.248467      0.00      39.9480
+    23    1   Ar         2.624233    5.248467    7.872700      0.00      39.9480
+    24    1   Ar         0.000000    7.872700    7.872700      0.00      39.9480
+    25    1   Ar         0.000000    5.248467   10.496934      0.00      39.9480
+    26    1   Ar         2.624233    7.872700   10.496934      0.00      39.9480
+    27    1   Ar         2.624233    5.248467   13.121168      0.00      39.9480
+    28    1   Ar         0.000000    7.872700   13.121168      0.00      39.9480
+    29    1   Ar         0.000000    5.248467   15.745401      0.00      39.9480
+    30    1   Ar         2.624233    7.872700   15.745401      0.00      39.9480
+    31    1   Ar         2.624233    5.248467   18.369635      0.00      39.9480
+    32    1   Ar         0.000000    7.872700   18.369635      0.00      39.9480
+    33    1   Ar         0.000000   10.496934    0.000000      0.00      39.9480
+    34    1   Ar         2.624233   13.121168    0.000000      0.00      39.9480
+    35    1   Ar         2.624233   10.496934    2.624233      0.00      39.9480
+    36    1   Ar         0.000000   13.121168    2.624233      0.00      39.9480
+    37    1   Ar         0.000000   10.496934    5.248467      0.00      39.9480
+    38    1   Ar         2.624233   13.121168    5.248467      0.00      39.9480
+    39    1   Ar         2.624233   10.496934    7.872700      0.00      39.9480
+    40    1   Ar         0.000000   13.121168    7.872700      0.00      39.9480
+    41    1   Ar         0.000000   10.496934   10.496934      0.00      39.9480
+    42    1   Ar         2.624233   13.121168   10.496934      0.00      39.9480
+    43    1   Ar         2.624233   10.496934   13.121168      0.00      39.9480
+    44    1   Ar         0.000000   13.121168   13.121168      0.00      39.9480
+    45    1   Ar         0.000000   10.496934   15.745401      0.00      39.9480
+    46    1   Ar         2.624233   13.121168   15.745401      0.00      39.9480
+    47    1   Ar         2.624233   10.496934   18.369635      0.00      39.9480
+    48    1   Ar         0.000000   13.121168   18.369635      0.00      39.9480
+    49    1   Ar         0.000000   15.745401    0.000000      0.00      39.9480
+    50    1   Ar         2.624233   18.369635    0.000000      0.00      39.9480
+    51    1   Ar         2.624233   15.745401    2.624233      0.00      39.9480
+    52    1   Ar         0.000000   18.369635    2.624233      0.00      39.9480
+    53    1   Ar         0.000000   15.745401    5.248467      0.00      39.9480
+    54    1   Ar         2.624233   18.369635    5.248467      0.00      39.9480
+    55    1   Ar         2.624233   15.745401    7.872700      0.00      39.9480
+    56    1   Ar         0.000000   18.369635    7.872700      0.00      39.9480
+    57    1   Ar         0.000000   15.745401   10.496934      0.00      39.9480
+    58    1   Ar         2.624233   18.369635   10.496934      0.00      39.9480
+    59    1   Ar         2.624233   15.745401   13.121168      0.00      39.9480
+    60    1   Ar         0.000000   18.369635   13.121168      0.00      39.9480
+    61    1   Ar         0.000000   15.745401   15.745401      0.00      39.9480
+    62    1   Ar         2.624233   18.369635   15.745401      0.00      39.9480
+    63    1   Ar         2.624233   15.745401   18.369635      0.00      39.9480
+    64    1   Ar         0.000000   18.369635   18.369635      0.00      39.9480
+    65    1   Ar         5.248467    0.000000    0.000000      0.00      39.9480
+    66    1   Ar         7.872700    2.624233    0.000000      0.00      39.9480
+    67    1   Ar         7.872700    0.000000    2.624233      0.00      39.9480
+    68    1   Ar         5.248467    2.624233    2.624233      0.00      39.9480
+    69    1   Ar         5.248467    0.000000    5.248467      0.00      39.9480
+    70    1   Ar         7.872700    2.624233    5.248467      0.00      39.9480
+    71    1   Ar         7.872700    0.000000    7.872700      0.00      39.9480
+    72    1   Ar         5.248467    2.624233    7.872700      0.00      39.9480
+    73    1   Ar         5.248467    0.000000   10.496934      0.00      39.9480
+    74    1   Ar         7.872700    2.624233   10.496934      0.00      39.9480
+    75    1   Ar         7.872700    0.000000   13.121168      0.00      39.9480
+    76    1   Ar         5.248467    2.624233   13.121168      0.00      39.9480
+    77    1   Ar         5.248467    0.000000   15.745401      0.00      39.9480
+    78    1   Ar         7.872700    2.624233   15.745401      0.00      39.9480
+    79    1   Ar         7.872700    0.000000   18.369635      0.00      39.9480
+    80    1   Ar         5.248467    2.624233   18.369635      0.00      39.9480
+    81    1   Ar         5.248467    5.248467    0.000000      0.00      39.9480
+    82    1   Ar         7.872700    7.872700    0.000000      0.00      39.9480
+    83    1   Ar         7.872700    5.248467    2.624233      0.00      39.9480
+    84    1   Ar         5.248467    7.872700    2.624233      0.00      39.9480
+    85    1   Ar         5.248467    5.248467    5.248467      0.00      39.9480
+    86    1   Ar         7.872700    7.872700    5.248467      0.00      39.9480
+    87    1   Ar         7.872700    5.248467    7.872700      0.00      39.9480
+    88    1   Ar         5.248467    7.872700    7.872700      0.00      39.9480
+    89    1   Ar         5.248467    5.248467   10.496934      0.00      39.9480
+    90    1   Ar         7.872700    7.872700   10.496934      0.00      39.9480
+    91    1   Ar         7.872700    5.248467   13.121168      0.00      39.9480
+    92    1   Ar         5.248467    7.872700   13.121168      0.00      39.9480
+    93    1   Ar         5.248467    5.248467   15.745401      0.00      39.9480
+    94    1   Ar         7.872700    7.872700   15.745401      0.00      39.9480
+    95    1   Ar         7.872700    5.248467   18.369635      0.00      39.9480
+    96    1   Ar         5.248467    7.872700   18.369635      0.00      39.9480
+    97    1   Ar         5.248467   10.496934    0.000000      0.00      39.9480
+    98    1   Ar         7.872700   13.121168    0.000000      0.00      39.9480
+    99    1   Ar         7.872700   10.496934    2.624233      0.00      39.9480
+   100    1   Ar         5.248467   13.121168    2.624233      0.00      39.9480
+   101    1   Ar         5.248467   10.496934    5.248467      0.00      39.9480
+   102    1   Ar         7.872700   13.121168    5.248467      0.00      39.9480
+   103    1   Ar         7.872700   10.496934    7.872700      0.00      39.9480
+   104    1   Ar         5.248467   13.121168    7.872700      0.00      39.9480
+   105    1   Ar         5.248467   10.496934   10.496934      0.00      39.9480
+   106    1   Ar         7.872700   13.121168   10.496934      0.00      39.9480
+   107    1   Ar         7.872700   10.496934   13.121168      0.00      39.9480
+   108    1   Ar         5.248467   13.121168   13.121168      0.00      39.9480
+   109    1   Ar         5.248467   10.496934   15.745401      0.00      39.9480
+   110    1   Ar         7.872700   13.121168   15.745401      0.00      39.9480
+   111    1   Ar         7.872700   10.496934   18.369635      0.00      39.9480
+   112    1   Ar         5.248467   13.121168   18.369635      0.00      39.9480
+   113    1   Ar         5.248467   15.745401    0.000000      0.00      39.9480
+   114    1   Ar         7.872700   18.369635    0.000000      0.00      39.9480
+   115    1   Ar         7.872700   15.745401    2.624233      0.00      39.9480
+   116    1   Ar         5.248467   18.369635    2.624233      0.00      39.9480
+   117    1   Ar         5.248467   15.745401    5.248467      0.00      39.9480
+   118    1   Ar         7.872700   18.369635    5.248467      0.00      39.9480
+   119    1   Ar         7.872700   15.745401    7.872700      0.00      39.9480
+   120    1   Ar         5.248467   18.369635    7.872700      0.00      39.9480
+   121    1   Ar         5.248467   15.745401   10.496934      0.00      39.9480
+   122    1   Ar         7.872700   18.369635   10.496934      0.00      39.9480
+   123    1   Ar         7.872700   15.745401   13.121168      0.00      39.9480
+   124    1   Ar         5.248467   18.369635   13.121168      0.00      39.9480
+   125    1   Ar         5.248467   15.745401   15.745401      0.00      39.9480
+   126    1   Ar         7.872700   18.369635   15.745401      0.00      39.9480
+   127    1   Ar         7.872700   15.745401   18.369635      0.00      39.9480
+   128    1   Ar         5.248467   18.369635   18.369635      0.00      39.9480
+   129    1   Ar        10.496934    0.000000    0.000000      0.00      39.9480
+   130    1   Ar        13.121168    2.624233    0.000000      0.00      39.9480
+   131    1   Ar        13.121168    0.000000    2.624233      0.00      39.9480
+   132    1   Ar        10.496934    2.624233    2.624233      0.00      39.9480
+   133    1   Ar        10.496934    0.000000    5.248467      0.00      39.9480
+   134    1   Ar        13.121168    2.624233    5.248467      0.00      39.9480
+   135    1   Ar        13.121168    0.000000    7.872700      0.00      39.9480
+   136    1   Ar        10.496934    2.624233    7.872700      0.00      39.9480
+   137    1   Ar        10.496934    0.000000   10.496934      0.00      39.9480
+   138    1   Ar        13.121168    2.624233   10.496934      0.00      39.9480
+   139    1   Ar        13.121168    0.000000   13.121168      0.00      39.9480
+   140    1   Ar        10.496934    2.624233   13.121168      0.00      39.9480
+   141    1   Ar        10.496934    0.000000   15.745401      0.00      39.9480
+   142    1   Ar        13.121168    2.624233   15.745401      0.00      39.9480
+   143    1   Ar        13.121168    0.000000   18.369635      0.00      39.9480
+   144    1   Ar        10.496934    2.624233   18.369635      0.00      39.9480
+   145    1   Ar        10.496934    5.248467    0.000000      0.00      39.9480
+   146    1   Ar        13.121168    7.872700    0.000000      0.00      39.9480
+   147    1   Ar        13.121168    5.248467    2.624233      0.00      39.9480
+   148    1   Ar        10.496934    7.872700    2.624233      0.00      39.9480
+   149    1   Ar        10.496934    5.248467    5.248467      0.00      39.9480
+   150    1   Ar        13.121168    7.872700    5.248467      0.00      39.9480
+   151    1   Ar        13.121168    5.248467    7.872700      0.00      39.9480
+   152    1   Ar        10.496934    7.872700    7.872700      0.00      39.9480
+   153    1   Ar        10.496934    5.248467   10.496934      0.00      39.9480
+   154    1   Ar        13.121168    7.872700   10.496934      0.00      39.9480
+   155    1   Ar        13.121168    5.248467   13.121168      0.00      39.9480
+   156    1   Ar        10.496934    7.872700   13.121168      0.00      39.9480
+   157    1   Ar        10.496934    5.248467   15.745401      0.00      39.9480
+   158    1   Ar        13.121168    7.872700   15.745401      0.00      39.9480
+   159    1   Ar        13.121168    5.248467   18.369635      0.00      39.9480
+   160    1   Ar        10.496934    7.872700   18.369635      0.00      39.9480
+   161    1   Ar        10.496934   10.496934    0.000000      0.00      39.9480
+   162    1   Ar        13.121168   13.121168    0.000000      0.00      39.9480
+   163    1   Ar        13.121168   10.496934    2.624233      0.00      39.9480
+   164    1   Ar        10.496934   13.121168    2.624233      0.00      39.9480
+   165    1   Ar        10.496934   10.496934    5.248467      0.00      39.9480
+   166    1   Ar        13.121168   13.121168    5.248467      0.00      39.9480
+   167    1   Ar        13.121168   10.496934    7.872700      0.00      39.9480
+   168    1   Ar        10.496934   13.121168    7.872700      0.00      39.9480
+   169    1   Ar        10.496934   10.496934   10.496934      0.00      39.9480
+   170    1   Ar        13.121168   13.121168   10.496934      0.00      39.9480
+   171    1   Ar        13.121168   10.496934   13.121168      0.00      39.9480
+   172    1   Ar        10.496934   13.121168   13.121168      0.00      39.9480
+   173    1   Ar        10.496934   10.496934   15.745401      0.00      39.9480
+   174    1   Ar        13.121168   13.121168   15.745401      0.00      39.9480
+   175    1   Ar        13.121168   10.496934   18.369635      0.00      39.9480
+   176    1   Ar        10.496934   13.121168   18.369635      0.00      39.9480
+   177    1   Ar        10.496934   15.745401    0.000000      0.00      39.9480
+   178    1   Ar        13.121168   18.369635    0.000000      0.00      39.9480
+   179    1   Ar        13.121168   15.745401    2.624233      0.00      39.9480
+   180    1   Ar        10.496934   18.369635    2.624233      0.00      39.9480
+   181    1   Ar        10.496934   15.745401    5.248467      0.00      39.9480
+   182    1   Ar        13.121168   18.369635    5.248467      0.00      39.9480
+   183    1   Ar        13.121168   15.745401    7.872700      0.00      39.9480
+   184    1   Ar        10.496934   18.369635    7.872700      0.00      39.9480
+   185    1   Ar        10.496934   15.745401   10.496934      0.00      39.9480
+   186    1   Ar        13.121168   18.369635   10.496934      0.00      39.9480
+   187    1   Ar        13.121168   15.745401   13.121168      0.00      39.9480
+   188    1   Ar        10.496934   18.369635   13.121168      0.00      39.9480
+   189    1   Ar        10.496934   15.745401   15.745401      0.00      39.9480
+   190    1   Ar        13.121168   18.369635   15.745401      0.00      39.9480
+   191    1   Ar        13.121168   15.745401   18.369635      0.00      39.9480
+   192    1   Ar        10.496934   18.369635   18.369635      0.00      39.9480
+   193    1   Ar        15.745401    0.000000    0.000000      0.00      39.9480
+   194    1   Ar        18.369635    2.624233    0.000000      0.00      39.9480
+   195    1   Ar        18.369635    0.000000    2.624233      0.00      39.9480
+   196    1   Ar        15.745401    2.624233    2.624233      0.00      39.9480
+   197    1   Ar        15.745401    0.000000    5.248467      0.00      39.9480
+   198    1   Ar        18.369635    2.624233    5.248467      0.00      39.9480
+   199    1   Ar        18.369635    0.000000    7.872700      0.00      39.9480
+   200    1   Ar        15.745401    2.624233    7.872700      0.00      39.9480
+   201    1   Ar        15.745401    0.000000   10.496934      0.00      39.9480
+   202    1   Ar        18.369635    2.624233   10.496934      0.00      39.9480
+   203    1   Ar        18.369635    0.000000   13.121168      0.00      39.9480
+   204    1   Ar        15.745401    2.624233   13.121168      0.00      39.9480
+   205    1   Ar        15.745401    0.000000   15.745401      0.00      39.9480
+   206    1   Ar        18.369635    2.624233   15.745401      0.00      39.9480
+   207    1   Ar        18.369635    0.000000   18.369635      0.00      39.9480
+   208    1   Ar        15.745401    2.624233   18.369635      0.00      39.9480
+   209    1   Ar        15.745401    5.248467    0.000000      0.00      39.9480
+   210    1   Ar        18.369635    7.872700    0.000000      0.00      39.9480
+   211    1   Ar        18.369635    5.248467    2.624233      0.00      39.9480
+   212    1   Ar        15.745401    7.872700    2.624233      0.00      39.9480
+   213    1   Ar        15.745401    5.248467    5.248467      0.00      39.9480
+   214    1   Ar        18.369635    7.872700    5.248467      0.00      39.9480
+   215    1   Ar        18.369635    5.248467    7.872700      0.00      39.9480
+   216    1   Ar        15.745401    7.872700    7.872700      0.00      39.9480
+   217    1   Ar        15.745401    5.248467   10.496934      0.00      39.9480
+   218    1   Ar        18.369635    7.872700   10.496934      0.00      39.9480
+   219    1   Ar        18.369635    5.248467   13.121168      0.00      39.9480
+   220    1   Ar        15.745401    7.872700   13.121168      0.00      39.9480
+   221    1   Ar        15.745401    5.248467   15.745401      0.00      39.9480
+   222    1   Ar        18.369635    7.872700   15.745401      0.00      39.9480
+   223    1   Ar        18.369635    5.248467   18.369635      0.00      39.9480
+   224    1   Ar        15.745401    7.872700   18.369635      0.00      39.9480
+   225    1   Ar        15.745401   10.496934    0.000000      0.00      39.9480
+   226    1   Ar        18.369635   13.121168    0.000000      0.00      39.9480
+   227    1   Ar        18.369635   10.496934    2.624233      0.00      39.9480
+   228    1   Ar        15.745401   13.121168    2.624233      0.00      39.9480
+   229    1   Ar        15.745401   10.496934    5.248467      0.00      39.9480
+   230    1   Ar        18.369635   13.121168    5.248467      0.00      39.9480
+   231    1   Ar        18.369635   10.496934    7.872700      0.00      39.9480
+   232    1   Ar        15.745401   13.121168    7.872700      0.00      39.9480
+   233    1   Ar        15.745401   10.496934   10.496934      0.00      39.9480
+   234    1   Ar        18.369635   13.121168   10.496934      0.00      39.9480
+   235    1   Ar        18.369635   10.496934   13.121168      0.00      39.9480
+   236    1   Ar        15.745401   13.121168   13.121168      0.00      39.9480
+   237    1   Ar        15.745401   10.496934   15.745401      0.00      39.9480
+   238    1   Ar        18.369635   13.121168   15.745401      0.00      39.9480
+   239    1   Ar        18.369635   10.496934   18.369635      0.00      39.9480
+   240    1   Ar        15.745401   13.121168   18.369635      0.00      39.9480
+   241    1   Ar        15.745401   15.745401    0.000000      0.00      39.9480
+   242    1   Ar        18.369635   18.369635    0.000000      0.00      39.9480
+   243    1   Ar        18.369635   15.745401    2.624233      0.00      39.9480
+   244    1   Ar        15.745401   18.369635    2.624233      0.00      39.9480
+   245    1   Ar        15.745401   15.745401    5.248467      0.00      39.9480
+   246    1   Ar        18.369635   18.369635    5.248467      0.00      39.9480
+   247    1   Ar        18.369635   15.745401    7.872700      0.00      39.9480
+   248    1   Ar        15.745401   18.369635    7.872700      0.00      39.9480
+   249    1   Ar        15.745401   15.745401   10.496934      0.00      39.9480
+   250    1   Ar        18.369635   18.369635   10.496934      0.00      39.9480
+   251    1   Ar        18.369635   15.745401   13.121168      0.00      39.9480
+   252    1   Ar        15.745401   18.369635   13.121168      0.00      39.9480
+   253    1   Ar        15.745401   15.745401   15.745401      0.00      39.9480
+   254    1   Ar        18.369635   18.369635   15.745401      0.00      39.9480
+   255    1   Ar        18.369635   15.745401   18.369635      0.00      39.9480
+   256    1   Ar        15.745401   18.369635   18.369635      0.00      39.9480
+
+
+
+ REQUESTED STRUCTURE DATA
+
+ DISTRIBUTION OF THE MOLECULES                    Process    Number of molecules
+                                                        0                    256
+                                                      Sum                    256
+
+  Process   Kind   Local molecules (global indices)
+        0      1         1
+               2         2
+               3         3
+               4         4
+               5         5
+               6         6
+               7         7
+               8         8
+               9         9
+              10        10
+              11        11
+              12        12
+              13        13
+              14        14
+              15        15
+              16        16
+              17        17
+              18        18
+              19        19
+              20        20
+              21        21
+              22        22
+              23        23
+              24        24
+              25        25
+              26        26
+              27        27
+              28        28
+              29        29
+              30        30
+              31        31
+              32        32
+              33        33
+              34        34
+              35        35
+              36        36
+              37        37
+              38        38
+              39        39
+              40        40
+              41        41
+              42        42
+              43        43
+              44        44
+              45        45
+              46        46
+              47        47
+              48        48
+              49        49
+              50        50
+              51        51
+              52        52
+              53        53
+              54        54
+              55        55
+              56        56
+              57        57
+              58        58
+              59        59
+              60        60
+              61        61
+              62        62
+              63        63
+              64        64
+              65        65
+              66        66
+              67        67
+              68        68
+              69        69
+              70        70
+              71        71
+              72        72
+              73        73
+              74        74
+              75        75
+              76        76
+              77        77
+              78        78
+              79        79
+              80        80
+              81        81
+              82        82
+              83        83
+              84        84
+              85        85
+              86        86
+              87        87
+              88        88
+              89        89
+              90        90
+              91        91
+              92        92
+              93        93
+              94        94
+              95        95
+              96        96
+              97        97
+              98        98
+              99        99
+             100       100
+             101       101
+             102       102
+             103       103
+             104       104
+             105       105
+             106       106
+             107       107
+             108       108
+             109       109
+             110       110
+             111       111
+             112       112
+             113       113
+             114       114
+             115       115
+             116       116
+             117       117
+             118       118
+             119       119
+             120       120
+             121       121
+             122       122
+             123       123
+             124       124
+             125       125
+             126       126
+             127       127
+             128       128
+             129       129
+             130       130
+             131       131
+             132       132
+             133       133
+             134       134
+             135       135
+             136       136
+             137       137
+             138       138
+             139       139
+             140       140
+             141       141
+             142       142
+             143       143
+             144       144
+             145       145
+             146       146
+             147       147
+             148       148
+             149       149
+             150       150
+             151       151
+             152       152
+             153       153
+             154       154
+             155       155
+             156       156
+             157       157
+             158       158
+             159       159
+             160       160
+             161       161
+             162       162
+             163       163
+             164       164
+             165       165
+             166       166
+             167       167
+             168       168
+             169       169
+             170       170
+             171       171
+             172       172
+             173       173
+             174       174
+             175       175
+             176       176
+             177       177
+             178       178
+             179       179
+             180       180
+             181       181
+             182       182
+             183       183
+             184       184
+             185       185
+             186       186
+             187       187
+             188       188
+             189       189
+             190       190
+             191       191
+             192       192
+             193       193
+             194       194
+             195       195
+             196       196
+             197       197
+             198       198
+             199       199
+             200       200
+             201       201
+             202       202
+             203       203
+             204       204
+             205       205
+             206       206
+             207       207
+             208       208
+             209       209
+             210       210
+             211       211
+             212       212
+             213       213
+             214       214
+             215       215
+             216       216
+             217       217
+             218       218
+             219       219
+             220       220
+             221       221
+             222       222
+             223       223
+             224       224
+             225       225
+             226       226
+             227       227
+             228       228
+             229       229
+             230       230
+             231       231
+             232       232
+             233       233
+             234       234
+             235       235
+             236       236
+             237       237
+             238       238
+             239       239
+             240       240
+             241       241
+             242       242
+             243       243
+             244       244
+             245       245
+             246       246
+             247       247
+             248       248
+             249       249
+             250       250
+             251       251
+             252       252
+             253       253
+             254       254
+             255       255
+             256       256
+
+ DISTRIBUTION OF THE PARTICLES                    Process    Number of particles
+                                                        0                    256
+                                                      Sum                    256
+
+  Process   Kind   Local particles (global indices)
+        0      1        1     2     3     4     5     6     7     8     9    10
+                       11    12    13    14    15    16    17    18    19    20
+                       21    22    23    24    25    26    27    28    29    30
+                       31    32    33    34    35    36    37    38    39    40
+                       41    42    43    44    45    46    47    48    49    50
+                       51    52    53    54    55    56    57    58    59    60
+                       61    62    63    64    65    66    67    68    69    70
+                       71    72    73    74    75    76    77    78    79    80
+                       81    82    83    84    85    86    87    88    89    90
+                       91    92    93    94    95    96    97    98    99   100
+                      101   102   103   104   105   106   107   108   109   110
+                      111   112   113   114   115   116   117   118   119   120
+                      121   122   123   124   125   126   127   128   129   130
+                      131   132   133   134   135   136   137   138   139   140
+                      141   142   143   144   145   146   147   148   149   150
+                      151   152   153   154   155   156   157   158   159   160
+                      161   162   163   164   165   166   167   168   169   170
+                      171   172   173   174   175   176   177   178   179   180
+                      181   182   183   184   185   186   187   188   189   190
+                      191   192   193   194   195   196   197   198   199   200
+                      201   202   203   204   205   206   207   208   209   210
+                      211   212   213   214   215   216   217   218   219   220
+                      221   222   223   224   225   226   227   228   229   230
+                      231   232   233   234   235   236   237   238   239   240
+                      241   242   243   244   245   246   247   248   249   250
+                      251   252   253   254   255   256
+
+ MD| Molecular Dynamics Protocol 
+ MD| Ensemble Type                                                           NVE
+ MD| Number of Time Steps                                                      0
+ MD| Time Step [fs]                                                         0.50
+ MD| Temperature [K]                                                        0.00
+ MD| Temperature tolerance [K]                                              0.00
+ MD| Print MD information every                                        1 step(s)
+ MD| File type     Print frequency[steps]                             File names
+ MD| Coordinates            1                                   FCC_LJ-pos-1.xyz
+ MD| Velocities             1                                   FCC_LJ-vel-1.xyz
+ MD| Energies               1                                      FCC_LJ-1.ener
+ MD| Dump                  20                                   FCC_LJ-1.restart
+
+ ROT| Rotational Analysis Info 
+ ROT| Principal axes and moments of inertia in atomic units:
+ ROT|                                1                 2                 3
+ ROT| EIGENVALUES            0.481378950E+10   0.481378950E+10   0.481378950E+10
+ ROT|      X                     0.050665175       0.998715695       0.000000000
+ ROT|      Y                    -0.998715695       0.050665175       0.000000000
+ ROT|      Z                     0.000000000       0.000000000       1.000000000
+ ROT| Numer of Rotovibrational vectors:     6
+
+ Calculation of degrees of freedom
+                                                      Number of atoms:       256
+                                 Number of Intramolecular constraints:         0
+                                 Number of Intermolecular constraints:         0
+                                  Invariants(translation + rotations):         3
+                                                   Degrees of freedom:       765
+
+
+ Restraints Information
+                                  Number of Intramolecular restraints:         0
+                                  Number of Intermolecular restraints:         0
+ ************************** Velocities initialization **************************
+ Initial Temperature                                                      0.00 K
+ COM velocity:            0.000000000000      0.000000000000      0.000000000000
+ *******************************************************************************
+
+
+
+ SUBCELL GRID  INFO FOR THE NONBONDED NEIGHBOR LISTS
+
+    NUMBER OF SUBCELLS             ::                   2         2         2
+    NUMBER OF PERIODIC      IMAGES ::                   1         1         1
+    NUMBER OF INTERACTING SUBCELLS ::                   2         2         2
+ FIST:: FORCES IN INPUT...
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+ FIST:: NONBOND + R-SPACE ELECTROSTATIC FORCES ...
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+ FIST energy contributions in kcal/mol:
+ BOND    =        0.0000  ANGLE   =        0.0000  UBRAD   =        0.0000
+ TORSION =        0.0000  IMPTORS =        0.0000  OPBEND  =        0.0000
+ FIST:: CORRECTED BONDED ELECTROSTATIC FORCES + INTERNAL FORCES...
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+ FIST::(1)INTERNAL + ELECTROSTATIC BONDED + NONBONDED
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+ FIST::(2)TOTAL FORCES(1)+ ELECTROSTATIC FORCES
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+ FIST::(3)TOTAL FORCES - THE END...
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000    0.000000000
+    0.000000000   -0.000000000    0.000000000
+    0.000000000    0.000000000   -0.000000000
+   -0.000000000   -0.000000000   -0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+    0.000000000    0.000000000    0.000000000
+   -0.000000000   -0.000000000    0.000000000
+   -0.000000000    0.000000000   -0.000000000
+    0.000000000   -0.000000000   -0.000000000
+Energy after FIST calculation.. exiting now ::   -0.806295548
+ MM DIPOLE [BERRY PHASE](A.U.)|                   0.000000   0.000000   0.000000
+ MM DIPOLE [BERRY PHASE](Debye)|                  0.000000   0.000000   0.000000
+ MM DIPOLE [BERRY PHASE] DERIVATIVE(A.U.)|        0.000000   0.000000   0.000000
+
+ ENERGY| Total FORCE_EVAL ( FIST ) energy (a.u.):             -0.806295548462117
+
+
+ ATOMIC FORCES in [a.u.]
+
+ # Atom   Kind   Element          X              Y              Z
+      1      1      Ar          0.00000000     0.00000000     0.00000000
+      2      1      Ar          0.00000000    -0.00000000     0.00000000
+      3      1      Ar          0.00000000     0.00000000     0.00000000
+      4      1      Ar          0.00000000     0.00000000     0.00000000
+      5      1      Ar          0.00000000     0.00000000    -0.00000000
+      6      1      Ar          0.00000000     0.00000000    -0.00000000
+      7      1      Ar          0.00000000     0.00000000     0.00000000
+      8      1      Ar          0.00000000     0.00000000     0.00000000
+      9      1      Ar          0.00000000     0.00000000    -0.00000000
+     10      1      Ar          0.00000000     0.00000000    -0.00000000
+     11      1      Ar          0.00000000     0.00000000    -0.00000000
+     12      1      Ar          0.00000000     0.00000000    -0.00000000
+     13      1      Ar          0.00000000     0.00000000     0.00000000
+     14      1      Ar         -0.00000000    -0.00000000     0.00000000
+     15      1      Ar          0.00000000     0.00000000    -0.00000000
+     16      1      Ar          0.00000000     0.00000000    -0.00000000
+     17      1      Ar          0.00000000    -0.00000000     0.00000000
+     18      1      Ar          0.00000000     0.00000000     0.00000000
+     19      1      Ar          0.00000000    -0.00000000     0.00000000
+     20      1      Ar          0.00000000     0.00000000     0.00000000
+     21      1      Ar          0.00000000    -0.00000000    -0.00000000
+     22      1      Ar         -0.00000000     0.00000000    -0.00000000
+     23      1      Ar          0.00000000    -0.00000000     0.00000000
+     24      1      Ar          0.00000000     0.00000000     0.00000000
+     25      1      Ar          0.00000000    -0.00000000    -0.00000000
+     26      1      Ar          0.00000000     0.00000000    -0.00000000
+     27      1      Ar          0.00000000    -0.00000000    -0.00000000
+     28      1      Ar          0.00000000     0.00000000    -0.00000000
+     29      1      Ar          0.00000000    -0.00000000     0.00000000
+     30      1      Ar          0.00000000     0.00000000     0.00000000
+     31      1      Ar          0.00000000    -0.00000000    -0.00000000
+     32      1      Ar          0.00000000     0.00000000    -0.00000000
+     33      1      Ar          0.00000000    -0.00000000     0.00000000
+     34      1      Ar         -0.00000000    -0.00000000     0.00000000
+     35      1      Ar         -0.00000000    -0.00000000     0.00000000
+     36      1      Ar          0.00000000    -0.00000000     0.00000000
+     37      1      Ar          0.00000000    -0.00000000    -0.00000000
+     38      1      Ar          0.00000000    -0.00000000    -0.00000000
+     39      1      Ar         -0.00000000    -0.00000000     0.00000000
+     40      1      Ar          0.00000000    -0.00000000     0.00000000
+     41      1      Ar          0.00000000    -0.00000000    -0.00000000
+     42      1      Ar         -0.00000000    -0.00000000    -0.00000000
+     43      1      Ar          0.00000000    -0.00000000    -0.00000000
+     44      1      Ar          0.00000000    -0.00000000    -0.00000000
+     45      1      Ar          0.00000000    -0.00000000     0.00000000
+     46      1      Ar          0.00000000    -0.00000000     0.00000000
+     47      1      Ar          0.00000000    -0.00000000    -0.00000000
+     48      1      Ar          0.00000000    -0.00000000    -0.00000000
+     49      1      Ar          0.00000000     0.00000000     0.00000000
+     50      1      Ar          0.00000000    -0.00000000     0.00000000
+     51      1      Ar          0.00000000     0.00000000    -0.00000000
+     52      1      Ar          0.00000000    -0.00000000    -0.00000000
+     53      1      Ar          0.00000000     0.00000000    -0.00000000
+     54      1      Ar          0.00000000    -0.00000000    -0.00000000
+     55      1      Ar          0.00000000     0.00000000     0.00000000
+     56      1      Ar          0.00000000    -0.00000000     0.00000000
+     57      1      Ar          0.00000000     0.00000000    -0.00000000
+     58      1      Ar          0.00000000    -0.00000000    -0.00000000
+     59      1      Ar          0.00000000     0.00000000    -0.00000000
+     60      1      Ar          0.00000000    -0.00000000    -0.00000000
+     61      1      Ar          0.00000000     0.00000000     0.00000000
+     62      1      Ar         -0.00000000    -0.00000000     0.00000000
+     63      1      Ar         -0.00000000     0.00000000    -0.00000000
+     64      1      Ar          0.00000000    -0.00000000    -0.00000000
+     65      1      Ar         -0.00000000     0.00000000     0.00000000
+     66      1      Ar          0.00000000     0.00000000     0.00000000
+     67      1      Ar          0.00000000     0.00000000     0.00000000
+     68      1      Ar         -0.00000000     0.00000000     0.00000000
+     69      1      Ar         -0.00000000     0.00000000    -0.00000000
+     70      1      Ar          0.00000000    -0.00000000    -0.00000000
+     71      1      Ar          0.00000000     0.00000000     0.00000000
+     72      1      Ar         -0.00000000     0.00000000     0.00000000
+     73      1      Ar         -0.00000000     0.00000000    -0.00000000
+     74      1      Ar          0.00000000     0.00000000    -0.00000000
+     75      1      Ar          0.00000000     0.00000000    -0.00000000
+     76      1      Ar         -0.00000000     0.00000000    -0.00000000
+     77      1      Ar         -0.00000000     0.00000000     0.00000000
+     78      1      Ar          0.00000000     0.00000000     0.00000000
+     79      1      Ar          0.00000000     0.00000000    -0.00000000
+     80      1      Ar         -0.00000000     0.00000000    -0.00000000
+     81      1      Ar         -0.00000000    -0.00000000     0.00000000
+     82      1      Ar          0.00000000     0.00000000     0.00000000
+     83      1      Ar          0.00000000    -0.00000000     0.00000000
+     84      1      Ar         -0.00000000     0.00000000     0.00000000
+     85      1      Ar         -0.00000000    -0.00000000    -0.00000000
+     86      1      Ar          0.00000000     0.00000000    -0.00000000
+     87      1      Ar          0.00000000    -0.00000000     0.00000000
+     88      1      Ar         -0.00000000     0.00000000     0.00000000
+     89      1      Ar         -0.00000000    -0.00000000    -0.00000000
+     90      1      Ar          0.00000000     0.00000000    -0.00000000
+     91      1      Ar          0.00000000    -0.00000000    -0.00000000
+     92      1      Ar         -0.00000000     0.00000000    -0.00000000
+     93      1      Ar         -0.00000000    -0.00000000     0.00000000
+     94      1      Ar          0.00000000     0.00000000     0.00000000
+     95      1      Ar          0.00000000    -0.00000000    -0.00000000
+     96      1      Ar         -0.00000000     0.00000000    -0.00000000
+     97      1      Ar         -0.00000000    -0.00000000     0.00000000
+     98      1      Ar          0.00000000    -0.00000000     0.00000000
+     99      1      Ar          0.00000000    -0.00000000     0.00000000
+    100      1      Ar         -0.00000000    -0.00000000     0.00000000
+    101      1      Ar         -0.00000000    -0.00000000    -0.00000000
+    102      1      Ar          0.00000000    -0.00000000    -0.00000000
+    103      1      Ar          0.00000000    -0.00000000     0.00000000
+    104      1      Ar         -0.00000000    -0.00000000     0.00000000
+    105      1      Ar         -0.00000000    -0.00000000    -0.00000000
+    106      1      Ar          0.00000000    -0.00000000    -0.00000000
+    107      1      Ar          0.00000000    -0.00000000    -0.00000000
+    108      1      Ar         -0.00000000    -0.00000000    -0.00000000
+    109      1      Ar         -0.00000000    -0.00000000     0.00000000
+    110      1      Ar          0.00000000    -0.00000000     0.00000000
+    111      1      Ar          0.00000000    -0.00000000    -0.00000000
+    112      1      Ar         -0.00000000    -0.00000000    -0.00000000
+    113      1      Ar         -0.00000000     0.00000000     0.00000000
+    114      1      Ar          0.00000000    -0.00000000     0.00000000
+    115      1      Ar          0.00000000     0.00000000     0.00000000
+    116      1      Ar         -0.00000000    -0.00000000     0.00000000
+    117      1      Ar         -0.00000000     0.00000000    -0.00000000
+    118      1      Ar          0.00000000    -0.00000000    -0.00000000
+    119      1      Ar          0.00000000     0.00000000     0.00000000
+    120      1      Ar         -0.00000000    -0.00000000     0.00000000
+    121      1      Ar         -0.00000000     0.00000000    -0.00000000
+    122      1      Ar          0.00000000    -0.00000000    -0.00000000
+    123      1      Ar          0.00000000     0.00000000    -0.00000000
+    124      1      Ar         -0.00000000    -0.00000000    -0.00000000
+    125      1      Ar         -0.00000000     0.00000000     0.00000000
+    126      1      Ar          0.00000000    -0.00000000     0.00000000
+    127      1      Ar          0.00000000     0.00000000    -0.00000000
+    128      1      Ar         -0.00000000    -0.00000000    -0.00000000
+    129      1      Ar         -0.00000000     0.00000000     0.00000000
+    130      1      Ar         -0.00000000     0.00000000     0.00000000
+    131      1      Ar         -0.00000000     0.00000000    -0.00000000
+    132      1      Ar         -0.00000000     0.00000000     0.00000000
+    133      1      Ar         -0.00000000     0.00000000    -0.00000000
+    134      1      Ar         -0.00000000     0.00000000    -0.00000000
+    135      1      Ar         -0.00000000     0.00000000     0.00000000
+    136      1      Ar         -0.00000000     0.00000000     0.00000000
+    137      1      Ar         -0.00000000     0.00000000    -0.00000000
+    138      1      Ar         -0.00000000     0.00000000    -0.00000000
+    139      1      Ar         -0.00000000     0.00000000    -0.00000000
+    140      1      Ar         -0.00000000     0.00000000    -0.00000000
+    141      1      Ar         -0.00000000     0.00000000     0.00000000
+    142      1      Ar         -0.00000000     0.00000000     0.00000000
+    143      1      Ar         -0.00000000     0.00000000    -0.00000000
+    144      1      Ar         -0.00000000     0.00000000    -0.00000000
+    145      1      Ar         -0.00000000    -0.00000000     0.00000000
+    146      1      Ar         -0.00000000     0.00000000     0.00000000
+    147      1      Ar         -0.00000000    -0.00000000     0.00000000
+    148      1      Ar         -0.00000000     0.00000000     0.00000000
+    149      1      Ar         -0.00000000    -0.00000000    -0.00000000
+    150      1      Ar         -0.00000000     0.00000000    -0.00000000
+    151      1      Ar         -0.00000000    -0.00000000     0.00000000
+    152      1      Ar         -0.00000000     0.00000000     0.00000000
+    153      1      Ar         -0.00000000    -0.00000000    -0.00000000
+    154      1      Ar         -0.00000000     0.00000000    -0.00000000
+    155      1      Ar         -0.00000000    -0.00000000    -0.00000000
+    156      1      Ar         -0.00000000     0.00000000    -0.00000000
+    157      1      Ar         -0.00000000    -0.00000000     0.00000000
+    158      1      Ar         -0.00000000     0.00000000     0.00000000
+    159      1      Ar         -0.00000000    -0.00000000    -0.00000000
+    160      1      Ar         -0.00000000     0.00000000    -0.00000000
+    161      1      Ar         -0.00000000    -0.00000000     0.00000000
+    162      1      Ar         -0.00000000    -0.00000000     0.00000000
+    163      1      Ar         -0.00000000    -0.00000000     0.00000000
+    164      1      Ar         -0.00000000    -0.00000000     0.00000000
+    165      1      Ar         -0.00000000    -0.00000000    -0.00000000
+    166      1      Ar         -0.00000000    -0.00000000    -0.00000000
+    167      1      Ar         -0.00000000    -0.00000000     0.00000000
+    168      1      Ar         -0.00000000    -0.00000000     0.00000000
+    169      1      Ar         -0.00000000    -0.00000000    -0.00000000
+    170      1      Ar         -0.00000000    -0.00000000    -0.00000000
+    171      1      Ar         -0.00000000    -0.00000000    -0.00000000
+    172      1      Ar         -0.00000000    -0.00000000    -0.00000000
+    173      1      Ar         -0.00000000    -0.00000000     0.00000000
+    174      1      Ar         -0.00000000    -0.00000000     0.00000000
+    175      1      Ar         -0.00000000    -0.00000000    -0.00000000
+    176      1      Ar         -0.00000000    -0.00000000    -0.00000000
+    177      1      Ar         -0.00000000     0.00000000     0.00000000
+    178      1      Ar         -0.00000000    -0.00000000     0.00000000
+    179      1      Ar         -0.00000000     0.00000000    -0.00000000
+    180      1      Ar         -0.00000000    -0.00000000     0.00000000
+    181      1      Ar         -0.00000000     0.00000000    -0.00000000
+    182      1      Ar         -0.00000000    -0.00000000    -0.00000000
+    183      1      Ar         -0.00000000     0.00000000     0.00000000
+    184      1      Ar         -0.00000000    -0.00000000     0.00000000
+    185      1      Ar         -0.00000000     0.00000000    -0.00000000
+    186      1      Ar         -0.00000000    -0.00000000    -0.00000000
+    187      1      Ar         -0.00000000     0.00000000    -0.00000000
+    188      1      Ar         -0.00000000    -0.00000000    -0.00000000
+    189      1      Ar         -0.00000000     0.00000000     0.00000000
+    190      1      Ar         -0.00000000    -0.00000000     0.00000000
+    191      1      Ar         -0.00000000     0.00000000    -0.00000000
+    192      1      Ar         -0.00000000    -0.00000000    -0.00000000
+    193      1      Ar          0.00000000     0.00000000     0.00000000
+    194      1      Ar         -0.00000000     0.00000000     0.00000000
+    195      1      Ar         -0.00000000     0.00000000     0.00000000
+    196      1      Ar          0.00000000     0.00000000    -0.00000000
+    197      1      Ar          0.00000000     0.00000000    -0.00000000
+    198      1      Ar         -0.00000000     0.00000000    -0.00000000
+    199      1      Ar         -0.00000000     0.00000000     0.00000000
+    200      1      Ar          0.00000000     0.00000000     0.00000000
+    201      1      Ar          0.00000000     0.00000000    -0.00000000
+    202      1      Ar         -0.00000000     0.00000000    -0.00000000
+    203      1      Ar         -0.00000000     0.00000000    -0.00000000
+    204      1      Ar          0.00000000     0.00000000    -0.00000000
+    205      1      Ar          0.00000000     0.00000000     0.00000000
+    206      1      Ar         -0.00000000     0.00000000     0.00000000
+    207      1      Ar         -0.00000000     0.00000000    -0.00000000
+    208      1      Ar          0.00000000     0.00000000    -0.00000000
+    209      1      Ar          0.00000000    -0.00000000     0.00000000
+    210      1      Ar         -0.00000000     0.00000000     0.00000000
+    211      1      Ar         -0.00000000    -0.00000000     0.00000000
+    212      1      Ar          0.00000000     0.00000000     0.00000000
+    213      1      Ar          0.00000000    -0.00000000    -0.00000000
+    214      1      Ar         -0.00000000     0.00000000    -0.00000000
+    215      1      Ar         -0.00000000    -0.00000000     0.00000000
+    216      1      Ar          0.00000000     0.00000000     0.00000000
+    217      1      Ar          0.00000000    -0.00000000    -0.00000000
+    218      1      Ar         -0.00000000     0.00000000    -0.00000000
+    219      1      Ar         -0.00000000    -0.00000000    -0.00000000
+    220      1      Ar          0.00000000     0.00000000    -0.00000000
+    221      1      Ar          0.00000000    -0.00000000     0.00000000
+    222      1      Ar         -0.00000000     0.00000000     0.00000000
+    223      1      Ar         -0.00000000    -0.00000000    -0.00000000
+    224      1      Ar          0.00000000     0.00000000    -0.00000000
+    225      1      Ar          0.00000000    -0.00000000     0.00000000
+    226      1      Ar         -0.00000000    -0.00000000     0.00000000
+    227      1      Ar         -0.00000000    -0.00000000     0.00000000
+    228      1      Ar          0.00000000    -0.00000000     0.00000000
+    229      1      Ar          0.00000000    -0.00000000    -0.00000000
+    230      1      Ar         -0.00000000    -0.00000000    -0.00000000
+    231      1      Ar         -0.00000000    -0.00000000     0.00000000
+    232      1      Ar          0.00000000    -0.00000000     0.00000000
+    233      1      Ar          0.00000000    -0.00000000    -0.00000000
+    234      1      Ar         -0.00000000    -0.00000000    -0.00000000
+    235      1      Ar         -0.00000000    -0.00000000    -0.00000000
+    236      1      Ar          0.00000000    -0.00000000    -0.00000000
+    237      1      Ar          0.00000000    -0.00000000     0.00000000
+    238      1      Ar         -0.00000000    -0.00000000     0.00000000
+    239      1      Ar         -0.00000000    -0.00000000    -0.00000000
+    240      1      Ar          0.00000000    -0.00000000    -0.00000000
+    241      1      Ar          0.00000000     0.00000000     0.00000000
+    242      1      Ar         -0.00000000    -0.00000000     0.00000000
+    243      1      Ar         -0.00000000     0.00000000     0.00000000
+    244      1      Ar          0.00000000    -0.00000000     0.00000000
+    245      1      Ar          0.00000000     0.00000000    -0.00000000
+    246      1      Ar         -0.00000000    -0.00000000    -0.00000000
+    247      1      Ar         -0.00000000     0.00000000     0.00000000
+    248      1      Ar          0.00000000    -0.00000000     0.00000000
+    249      1      Ar          0.00000000     0.00000000    -0.00000000
+    250      1      Ar         -0.00000000    -0.00000000    -0.00000000
+    251      1      Ar         -0.00000000     0.00000000    -0.00000000
+    252      1      Ar          0.00000000    -0.00000000    -0.00000000
+    253      1      Ar          0.00000000     0.00000000     0.00000000
+    254      1      Ar         -0.00000000    -0.00000000     0.00000000
+    255      1      Ar         -0.00000000     0.00000000    -0.00000000
+    256      1      Ar          0.00000000    -0.00000000    -0.00000000
+ SUM OF ATOMIC FORCES           0.00000000     0.00000000     0.00000000     0.00000000
+
+ STRESS TENSOR [GPa]
+
+            X               Y               Z
+  X       0.03031805      0.00000000      0.00000000
+  Y       0.00000000      0.03031805     -0.00000000
+  Z       0.00000000     -0.00000000      0.03031805
+
+  1/3 Trace(stress tensor):   3.03180453E-02
+
+  Det(stress tensor)      :   2.78678582E-05
+
+
+ EIGENVECTORS AND EIGENVALUES OF THE STRESS TENSOR
+
+          0.03031805      0.03031805      0.03031805
+
+          0.00000000      1.00000000      0.00000000
+          1.00000000      0.00000000      0.00000000
+          0.00000000      0.00000000      1.00000000
+
+ MD_ENERGIES| Initialization proceeding
+
+
+ ******************************** GO CP2K GO! **********************************
+ INITIAL POTENTIAL ENERGY[hartree]     =                     -0.806295548462E+00
+ INITIAL KINETIC ENERGY[hartree]       =                      0.000000000000E+00
+ INITIAL TEMPERATURE[K]                =                                   0.000
+ INITIAL PRESSURE[bar]                 =                      0.303180452797E+03
+ INITIAL VOLUME[bohr^3]                =                      0.624415957764E+05
+ INITIAL CELL LNTHS[bohr]   =      0.3967266E+02   0.3967266E+02   0.3967266E+02
+ INITIAL CELL ANGLS[deg]    =      0.9000000E+02   0.9000000E+02   0.9000000E+02
+ ******************************** GO CP2K GO! **********************************
+
+ REQUESTED STRUCTURE DATA
+
+ *** 14:44:21 WARNING in md_energies:md_write_output :: The print_key  ***
+ *** MD%PRINT%TEMP_KIND has been activated but the calculation of the  ***
+ *** temperature per kind has not been requested. Please switch on the ***
+ *** keyword MD%TEMP_KIND. md_energies.F line 555                      ***
+
+
+ -------------------------------------------------------------------------------
+ -                                                                             -
+ -                                DBCSR STATISTICS                             -
+ -                                                                             -
+ -------------------------------------------------------------------------------
+ COUNTER                                      CPU                  GPU      GPU%
+ number of processed stacks                     0                    0       0.0
+ matmuls inhomo. stacks                         0                    0       0.0
+ matmuls total                                  0                    0       0.0
+ flops total                                    0                    0       0.0
+ marketing flops                                0
+ -------------------------------------------------------------------------------
+
+ -------------------------------------------------------------------------------
+ -                                                                             -
+ -                         MESSAGE PASSING PERFORMANCE                         -
+ -                                                                             -
+ -------------------------------------------------------------------------------
+
+ ROUTINE             CALLS  TOT TIME [s]  AVE VOLUME [Bytes]  PERFORMANCE [MB/s]
+ MP_Allreduce           32         0.000                204.         16813405.60
+ MP_Sync                 4         0.000
+ -------------------------------------------------------------------------------
+
+
+ -------------------------------------------------------------------------------
+ -                                                                             -
+ -                           R E F E R E N C E S                               -
+ -                                                                             -
+ -------------------------------------------------------------------------------
+ 
+ CP2K version 2.5.1, the CP2K developers group (2014).
+ CP2K is freely available from http://www.cp2k.org/ .
+
+ Hutter, J; Iannuzzi, M; Schiffmann, F; VandeVondele, J. 
+ WILEY INTERDISCIPLINARY REVIEWS-COMPUTATIONAL MOLECULAR SCIENCE, 4 (1), 15-25 (2014). 
+ CP2K: atomistic simulations of condensed matter systems.
+ http://dx.doi.org/10.1002/wcms.1159
+
+
+ Frigo, M; Johnson, SG. 
+ PROCEEDINGS OF THE IEEE, 93 (2), 216-231 (2005). 
+ The design and implementation of FFTW3.
+ http://dx.doi.org/10.1109/JPROC.2004.840301
+
+
+ -------------------------------------------------------------------------------
+ -                                                                             -
+ -                                T I M I N G                                  -
+ -                                                                             -
+ -------------------------------------------------------------------------------
+ SUBROUTINE                       CALLS  ASD         SELF TIME        TOTAL TIME
+                                MAXIMUM       AVERAGE  MAXIMUM  AVERAGE  MAXIMUM
+ CP2K                                 1  1.0    0.013    0.013    0.688    0.688
+ qs_mol_dyn_low                       1  2.0    0.014    0.014    0.619    0.619
+ fist_force_control                   1  3.0    0.015    0.015    0.579    0.579
+ build_fist_neighbor_lists            2  6.5    0.525    0.525    0.559    0.559
+ list_control                         1  4.0    0.000    0.000    0.555    0.555
+ fist_init                            1  3.0    0.001    0.001    0.053    0.053
+ fist_create_force_env                1  2.0    0.000    0.000    0.053    0.053
+ build_neighbor_lists                 2  7.5    0.033    0.033    0.033    0.033
+ topology_control                     1  4.0    0.001    0.001    0.031    0.031
+ md_write_output                      1  3.0    0.008    0.008    0.024    0.024
+ read_atoms_input                     1  7.0    0.021    0.021    0.021    0.021
+ coordinate_control_READ_COORDIN      1  6.0    0.000    0.000    0.021    0.021
+ coordinate_control                   1  5.0    0.000    0.000    0.021    0.021
+ write_trajectory                     4  4.0    0.001    0.001    0.016    0.016
+ write_particle_coordinates           4  5.0    0.015    0.015    0.015    0.015
+ force_field_control                  1  4.0    0.000    0.000    0.014    0.014
+ -------------------------------------------------------------------------------
+
+  **** **** ******  **  PROGRAM ENDED AT                 2015-10-20 14:44:21.293
+ ***** ** ***  *** **   PROGRAM RAN ON                                   charrue
+ **    ****   ******    PROGRAM RAN BY                                    filipe
+ ***** **    ** ** **   PROGRAM PROCESS ID                                   371
+  **** **  *******  **  PROGRAM STOPPED IN /home/filipe/dev/github/mdff/examples
+                                           /ex0/cp2k

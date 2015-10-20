@@ -1,0 +1,147 @@
+#!/bin/bash
+# ===============================================================
+# date       : 21 maio 2013 15h53
+# author     : fmv
+# description: This script generate gnuplot plots from input OSZIFF file
+# ===============================================================
+separator="=========================================================="
+echo $separator
+date
+echo "author : filipe.manuel.vasconcelos@gmail.com"
+echo $separator
+echo "Running poszi ..."
+echo "This script generate gnuplot plots from input OSZIFF file"
+USAGE="Usage: -i [inputfile] -l [n_last_steps] -n (no plot)"
+
+if [ $# -eq 0 ]
+then
+    echo "$USAGE"
+    exit 1
+fi
+noplot=false
+while getopts ":i:l:n" opt
+do
+    case $opt in
+        i)
+            osziff="$OPTARG"
+            ;;
+        l)
+            last="$OPTARG"
+            ;;
+        n)
+            noplot=true
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            exit 1
+            ;;
+        :)
+            echo "Option -$OPTARG requires an argument." >&2
+            exit 1
+            ;;
+    esac
+done
+
+
+echo ""
+echo "running averoszi script : simple averaging"
+if [ -z "$last" ];
+then
+	averoszi -n 1 -i $osziff | tee out_aver
+else
+	averoszi -n 1 -i $osziff -l $last | tee out_aver
+fi
+echo ""
+etot_aver=`grep "<Etot>" out_aver | awk '{print $3}'`
+htot_aver=`grep "<Htot>" out_aver | awk '{print $3}'`
+epot_aver=`grep "<Upot>" out_aver | awk '{print $3}'`
+temp_aver=`grep "<Temp>" out_aver | awk '{print $3}'`
+volu_aver=`grep "<vol>"  out_aver | awk '{print $3}'`
+
+if [ "$noplot" = true ]; then
+	echo "option -n : no plot"
+else
+echo "plot total energy evolution ( and conserved quantity ) "
+cat > plot.etot << eof
+#!/usr/bin/gnuplot 
+reset
+set term x11
+set title "Total energy MD"
+set xlabel "time"
+set ylabel "E_{tot}"
+p 'etot_l' u 6:9 w l title '',\
+  $etot_aver title "",\
+  'temp_l' u 6:24 w l title '',\
+  $htot_aver title ""
+pause -1
+eof
+chmod u+x plot.etot
+./plot.etot
+
+echo "plot potential energy evolution"
+cat > plot.econf << eof
+#!/usr/bin/gnuplot 
+reset
+set term x11
+set title "Potential energy MD"
+set xlabel "time "
+set ylabel "E_{pot}"
+p 'etot_l' u 6:15 w l title '',\
+  $epot_aver title ""
+pause -1
+eof
+chmod u+x plot.econf
+./plot.econf
+
+echo "plot temperature evolution"
+cat > plot.temp << eof
+#!/usr/bin/gnuplot 
+reset
+set term x11
+set title "Temperature MD"
+set xlabel "time"
+set ylabel "T"
+p 'temp_l' u 6:9 w l title '',\
+  $temp_aver title ""
+pause -1
+eof
+chmod u+x plot.temp
+./plot.temp
+
+echo "plot all energies"
+cat > plot.all << eof
+#!/usr/bin/gnuplot 
+reset
+set term x11
+set title "Energies MD"
+set xlabel "time"
+set ylabel "E"
+p 'etot_l' u 6:9  w l title 'E',\
+  'etot_l' u 6:15 w l title 'U',\
+  'temp_l' u 6:24 w l title 'H'
+pause -1
+eof
+chmod u+x plot.all
+./plot.all
+
+
+echo "plot volume evolution"
+cat > plot.vol << eof
+#!/usr/bin/gnuplot 
+reset
+set term x11
+set title "Volume MD"
+set xlabel "volume"
+set ylabel "V"
+p 'temp_l' u 6:21 w l title '',\
+  $volu_aver title ""
+pause -1
+eof
+chmod u+x plot.vol
+./plot.vol
+fi
+
+#rm plot.temp plot.etot plot.econf  plot.all
+echo $separator
+exit 0;
+

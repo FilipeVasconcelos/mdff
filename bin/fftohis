@@ -1,0 +1,117 @@
+#!/bin/bash
+# ==================================================================
+#date        : 29 abril 2013
+#      modif   25 sept 2013     
+#author      : fmv
+#description : convert TRAJFF (mdff) file to HISTORY (dl_poly)
+# ==================================================================
+separator="=========================================================="
+echo $separator
+date
+echo "author : filipe.manuel.vasconcelos@gmail.com"
+echo $separator
+echo "Running fftohis ..."
+echo "This script generate HISTORY file from TRAJFF file"
+USAGE="Usage: -i [inputfile] -o [outputfile] -t <timestep> "
+
+#default values
+timestep=0.001
+
+if [ $# -eq 0 ]
+then
+    echo "$USAGE"
+    exit 1
+fi
+while getopts ":i:o:t:" opt
+do
+    case $opt in
+        i)
+            trajff="$OPTARG"
+            ;;
+        o)
+            histo="$OPTARG"
+            ;;
+	t)  
+	    timestep="$OPTARG"
+	    ;;
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            exit 1
+            ;;
+        :)
+            echo "Option -$OPTARG requires an argument." >&2
+            exit 1
+            ;;
+    esac
+done
+# ==================================================================
+#HISTORY file :
+#New structure                                                                   
+#         0         3        64
+#timestep        20        64         0         3    0.001000
+#   11.13       0.000       0.000    
+#   0.000       11.13       0.000    
+#   0.000       0.000       11.13    
+#Ge               1   72.640000    0.000000
+#  5.3043E+00 -5.3722E+00  5.5288E+00
+#Ge               2   72.640000    0.000000
+# -5.3559E+00 -2.8425E+00 -2.7566E+00
+# ==================================================================
+
+#TRAJFF file :
+#7
+#Wannier centres, written by Wannier90 on29Mar2013 at 12:26:53
+#10.6 0.0 0.0
+# 0.0 10.6 0.0
+# 0.0 0.0 10.6
+#2
+#O H 
+#1 1 
+#Cartesian
+#O          5.30000020       5.30000020       5.30000020 0.0 0.0 0.0   0.0 0.0 0.0
+#H          6.06674680       5.89377770       5.30000020 0.0 0.0 0.0   0.0 0.0 0.0
+# ==================================================================
+
+
+
+         
+# ==================================================================
+#extract system name
+system=`head -n 2 $trajff | tail -n 1 | awk '{print $1}'`
+echo "system = $system"
+#extract natm
+natm=`head -n 1 $trajff | tail -n 1 | awk '{print $1}'`
+echo "natm = $natm"
+echo "dt = $timestep"
+
+# ==================================================================
+
+awk -v natm=$natm -v sys="$system" -v step=0 -v dt=$timestep '{
+       if   ( ( $1 == sys ) && ( step != 0) ) { nconfig=NR; 
+                                                step+=1   ; 
+                                                printf("%10s %10s %10s %10s %10s\n","timestep",step,natm,"  0    3",dt); 
+                                                print "step = "step | "cat 1>&2" }  
+       if   ( ( $1 == sys ) && ( step == 0) ) { nconfig=NR; 
+                                                step+=1; 
+                                                printf("%15s\n%15s %10s\n%10s %10s %10s %10s %10s\n",sys,"  0    3 ",natm,"timestep",step,natm,"  0    3",dt); 
+                                                print "step = "step | "cat 1>&2" }  
+       if   ( ( NR==nconfig+1 ) && (nconfig!=0)                      ) { ax=$1;ay=$2;az=$3; print $0 }
+       if   ( ( NR==nconfig+2 ) && (nconfig!=0)                      ) { bx=$1;by=$2;bz=$3; print $0 }
+       if   ( ( NR==nconfig+3 ) && (nconfig!=0)                      ) { cx=$1;cy=$2;cz=$3; print $0 }
+       if   ( ( NR==nconfig+7 ) && (nconfig!=0) && ($1=="Direct")    ) { direct=1 }	
+       if   ( ( NR==nconfig+7 ) && (nconfig!=0) && ($1=="Cartesian") ) { direct=0 }	
+       for  ( i=0;i<=natm-1;i++ ) {
+		if(( NR==nconfig+8+i  ) && (nconfig!=0) ) { 
+   					if ( direct==1) { V1=$2*ax+$3*ay+$4*az;
+			                                  V2=$2*bx+$3*by+$4*bz;
+                                                          V3=$2*cx+$3*cy+$4*cz;
+ 	                                                  printf("%10s %10s %10s \n %16.8f %16.8f %16.8f\n",$1,i+1," 1.0000 0.0000",V1,V2,V3) 
+                                                        } 
+                                        if ( direct==0) { printf("%10s %10s %10s \n %10s %10s %10s\n",$1,i+1," 1.0000 0.0000",$2,$3,$4) } 
+                                                          }
+				  }
+                                    }' $trajff > $histo
+#
+echo "file $histo generated"
+echo $separator
+exit 0;

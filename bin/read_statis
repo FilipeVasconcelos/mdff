@@ -1,0 +1,54 @@
+#!/bin/bash
+tail -n+3 STATIS > tmpfile
+nline=`wc tmpfile | awk '{print $1}'`
+echo "## input file has $nline lines"
+nsteps=`grep steps CONTROL | awk '{print $NF}'`
+nsteps=$((nsteps+1))
+echo "## nsteps = $nsteps"
+nstat=`grep stat CONTROL | awk '{print $NF}'`
+echo "## nstat = $nstat"
+ninfo=`echo "$nsteps / $nstat" | bc `
+echo "## ninfo : $ninfo "
+line9=`echo "$ninfo*9" | bc `
+line11=`echo "$ninfo*11" | bc `
+if [ -f REVCON ] ; then
+	natom=`wc REVCON | awk '{print ($1-5)/4}'`
+else
+	echo "REVCON file is missing"
+fi
+echo "## ninfo : $ninfo $line9 $line11"
+echo "## found $natm ions"
+if [ "$nline" -eq "$line9" ]
+then
+	skey=9
+	echo "## STATIS with 9 lines"
+fi
+if [ "$nline" -eq "$line11" ] ; then
+	skey=11
+	echo "## STATIS with 11 lines"
+fi
+
+#awk -v natm=$natm '{print natm,$0}' tmpfile 
+
+
+
+
+
+awk -v skey=$skey -v natom=$natom 'BEGIN{start=0;tstep=0;htot=0.0;etot=0.0;ekin=0.0;vdw=0.0;vol=0.0;a=0.0;b=0.0;c=0.0;
+                              if (skey==9)  print "#           time             htot             etot             ekin             temp              vdw              vol            press"; 
+                              if (skey==11) print "#           time             htot             etot             ekin             temp              vdw              vol                a                b                c            press"}
+          { start+=1;  
+              
+            { if (start==1)                { tstep=$2                                                } }
+            { if (start==2)                { htot=$1; temp=$2; ekin=$2*3.0*natom*0.5*8.6173423e-05 ; vdw=$4; etot=ekin+vdw  } }
+            { if (start==5)                { vol=$4                                                  } }
+            { if ((skey==11)&&(start==9))  { a=$3                                                    } }    
+            { if ((skey==11)&&(start==10)) { b=$2                                                    } } 
+            { if ((skey==11)&&(start==11)) { c=$1                                                    } } 
+            { if ((start==7))  { press=$2                                                } } 
+            { if (start==skey) { start=0; if (skey==9)  { printf("%16.8e %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e \n",tstep, htot, etot, ekin, temp, vdw, vol,press) }
+                                          if (skey==11) { printf("%16.8e %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e\n",tstep, htot, etot, ekin, temp , vdw, vol,a,b,c,press) }
+                              }   }
+          }' tmpfile 
+
+rm tmpfile
