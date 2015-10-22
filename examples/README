@@ -1,0 +1,24 @@
+ex0: static LJ FCC (argon) 
+
+ex1: MD LJ FCC (argon) at low temperature (90K)
+
+ex2: calculation of total energy of LJ clusters reference structures and energies from : The Cambridge Cluster Database http://www-wales.ch.cam.ac.uk/CCD.html
+
+ex3:
+
+ex4: EFG ewald sum, direct sum on two charges and cluster ( comp to Nymand and Linse anf GULP )
+
+ex5: Density of states of FCC Lennard-Jones
+
+ex6: NVT lennard jones (argon)
+
+ex7:
+
+ex8: NPT_I lennard jones (argon)
+
+ex9 : BMHFTD test ( against cp2k )
+
+ex10 : Exemple de generation des fichiers inputs MDFF pour un quench
+
+ex11 : generate random structure from a given stochiometry
+
