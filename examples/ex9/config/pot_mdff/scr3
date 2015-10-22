@@ -1,2 +1,0 @@
-sed -e s/__RCUT__/7.2/g     -e s/__EPSW__/1e-12/g     -e s/__CONV_SCF__/1e-6/g tmp1 > tmp
-sed -e s/__BMH__/.false./g -e s/__FT_ON__/.false./g -e s/__COUL__/.true./g tmp
