@@ -1,24 +1,29 @@
-ex0: static LJ FCC (argon) 
+ex0  : static LJ FCC (argon) 
 
-ex1: MD LJ FCC (argon) at low temperature (90K)
+ex1  : MD LJ FCC (argon) at low temperature (90K)
 
-ex2: calculation of total energy of LJ clusters reference structures and energies from : The Cambridge Cluster Database http://www-wales.ch.cam.ac.uk/CCD.html
+ex2  : calculation of total energy of LJ clusters reference structures and energies from : The Cambridge Cluster Database http://www-wales.ch.cam.ac.uk/CCD.html
 
-ex3:
+ex3  :  ...
 
-ex4: EFG ewald sum, direct sum on two charges and cluster ( comp to Nymand and Linse anf GULP )
+ex4  : EFG ewald sum, direct sum on two charges and cluster ( comp to Nymand and Linse anf GULP ) not working anymore
 
-ex5: Density of states of FCC Lennard-Jones
+ex5  : Density of states of FCC Lennard-Jones
 
-ex6: NVT lennard jones (argon)
+ex6  : NVT   lennard jones argon (against DLPOLY) 
+ 
+ex7  : NVE   lennard jones argon (against DLPOLY)
 
-ex7:
+ex8  : NPT_I lennard jones argon (against DLPOLY)
 
-ex8: NPT_I lennard jones (argon)
+ex9  : complete PIM BMHFTD test (against cp2k)
 
-ex9 : BMHFTD test ( against cp2k )
+ex10 : Generating control.F files for a set
+       of runs. see README for more details
 
-ex10 : Exemple de generation des fichiers inputs MDFF pour un quench
-
-ex11 : generate random structure from a given stochiometry
+ex11 : Generating 5 random configuration of SiO2 with
+       102  atoms and execute  a short  equilibration
+       run for each of them.
+       (NVE ~ 2 ps Rigid Ions and Polarizable Ions models)
+ 
 

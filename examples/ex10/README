@@ -1,0 +1,77 @@
+  ==============================================================
+  Exemple de generation des fichiers inputs MDFF pour un quench
+  ==============================================================
+
+  1) préparer le fichier quench.config qui definit les parametres de DM 
+     pour l'ensemble des runs. 
+     
+cat quench.config :
+
+CUTOFF_SR   7.0
+CUTOFF_LR   7.0
+DT          0.0005
+TIME_THERMO 1.0
+TIME_BARO   1.0
+PRESS       0.0
+
+TABLE:
+   +--------+--------+--------------+-------------+----------+--------------+------+------------+
+   |  TEMP  |   ENS. |  npas [ps]   | fprint [ps] |  traj    |  period [ps] |  POT |    flag    |
+   +--------+--------+--------------+-------------+----------+--------------+------+------------+
+   | 2500K  |  NVE   |     500      |   0.05      | .false.  |    -         |  RI  |  rescaling |
+   +--------+--------+--------------+-------------+----------+--------------+------+------------+
+   | 2500K  |  NVT   |     100      |   0.05      | .false.  |    -         |  RI  |     HT     |      
+   +--------+--------+--------------+-------------+----------+--------------+------+------------+
+   | 2500K  |  NVT   |     100      |   0.05      | .true.   |   0.05       |  PIM |     HT     |       
+   +--------+--------+--------------+-------------+----------+--------------+------+------------+
+   | 2500K  |  NPT_I |     100      |   0.05      | .false.  |    -         |  PIM |     HT     |
+   +--------+--------+--------------+-------------+----------+--------------+------+------------+
+   | 2500K  |  NVE   |     500      |   0.05      | .true.   |   0.05       |  PIM |     HT     |
+   +--------+--------+--------------+-------------+----------+--------------+------+------------+
+   | QUENCH |  NVE   |    1000      |   0.05      | .false.  |    -         |  PIM |   0.999999 |
+   +--------+--------+--------------+-------------+----------+--------------+------+------------+
+   | 300K   |  NPT_I |     100      |   0.05      | .false.  |    -         |  PIM |     LT     |
+   +--------+--------+--------------+-------------+----------+--------------+------+------------+
+   | 300K   |  NVE   |     200      |   0.05      | .true.   |   0.05       |  PIM |     LT     |
+   +--------+--------+--------------+-------------+----------+--------------+------+------------+
+
+
+  les premiers parametres sont communs a tous les runs et seront remplacés dans le control_template.F
+  A partir de TABLE on definit les runs. On peut en definir autant que l'on veux, seul le nombre de colonnes est fixé (8).
+  un run commence par "|" mais tous les autres caracteres sont ignorés.
+
+  Colonnes : 
+  #1 temperature en K
+  #2 ensemble (NVE,NVT,NPT_I)
+  #3 nombre de pas en ps ( => npas = int ( val / dt )   )
+  #4 periode d'écriture des infos vers OSZIFF fprint = int ( val / dt) )
+  #5 oui ou non la trajectoire est sauvegardé
+  #6 periode de la trajectoire
+  #7 potentiels utilisés ( selon le flag PIM == PIM.POT&BMHFTD.POT ou RI == BMHFTD.POT sont utilisés )
+  #8 flag permettant de définir  NVE rescaling et la valeur de annealing pour le quench 
+
+
+  2) preparer les fichiers de potentiels :
+
+  PIM.POT
+  BMHFTD.POT
+  IONS.POT 
+
+
+  3) executer gen_quench_controls.sh
+
+     action du script ( pas forcement dans l'ordre) :
+        i) appel un script qui lis quench.config (read_quench_table.py)
+           definis les runs et creer les scripts sed pour chaque run 
+
+        ii) genere les fichiers control_<run>.F pour chaque runs 
+
+	iii) créer le DOALLMD utiliser par le script DoAll_mdff.sh 
+
+  4) pour lancer une MD executer le script DoAll_mdff.sh qui utilisera les données ainsi créé
+
+ 
+ 
+
+
+
