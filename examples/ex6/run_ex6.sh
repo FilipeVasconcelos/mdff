@@ -3,7 +3,7 @@
 EXEDLPOLY=DLPOLY.X
 EXEMDFF=mdff.x
 
-dlpoly=true
+dlpoly=false
 mdff=true
 ensemble=nvt
 
@@ -27,6 +27,7 @@ if $mdff; then
        	mkdir -p mdff	
 	cd mdff
 	cp ../config/control_* .
+	cp ../config/POSFF .
 	$EXEMDFF control_md.F > stdout_md.$ensemble
 	$EXEMDFF control_gr.F > stdout_gr.$ensemble
 	mv GRTFF GRTFF.$ensemble
@@ -36,7 +37,7 @@ fi
 cat > plot.gr << eof
 #!/usr/bin/gnuplot -persist
 reset
-p 'dl_poly/RDFDAT.$ensemble' w l ,'mdff/GRTFF.$ensemble' w l,'cp2k/GRTFF.$ensemble' w l
+p 'dlpoly/RDFDAT.$ensemble' w l ,'mdff/GRTFF.$ensemble' w l
 eof
 chmod u+x plot.gr
 ./plot.gr

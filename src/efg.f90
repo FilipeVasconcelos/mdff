@@ -1,4 +1,5 @@
 !!!!  WARNING deprecated  !!!!
+!!!!   test purpose only  !!!!
 
 
 ! MDFF parallel Molecular Dynamics ... For Fun
@@ -22,10 +23,10 @@
 ! ======= Hardware =======
 #include "symbol.h"
 !// general debug flag
-!#define debug 
-!#define debug_input
-!#define debug_es
-!#define debug_multipole
+#define debug 
+#define debug_input
+#define debug_es
+#define debug_multipole
 !#define debug_efg_stat
 !#define fix_grid
 !#define debug_non_null_trace_ewald
@@ -537,7 +538,7 @@ SUBROUTINE efgcalc
             WRITE ( kunit_EFGALL , * )  ( natmi  ( it ) , it = 1 , ntype )
           endif
           WRITE ( kunit_EFGALL ,'(a)') &
-          '      ia type                   vxx                   vyy                   vzz                   vxy                   vxz                   vyz'
+          '      iaa type                   vxx                   vyy                   vzz                   vxy                   vxz                   vyz'
           do ia = 1 , natm 
             it = itype ( ia ) 
             if ( lwfc( it ) .ge. 0 ) then 
@@ -790,19 +791,19 @@ atom : do ia = atom_dec%istart , atom_dec%iend
   !======================================
   !  MERGE tensor from different proc
   !======================================
-  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia ( 1 , 1 , : ) , natm ) 
-  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia ( 2 , 2 , : ) , natm ) 
-  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia ( 3 , 3 , : ) , natm ) 
-  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia ( 1 , 2 , : ) , natm ) 
-  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia ( 1 , 3 , : ) , natm ) 
-  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia ( 2 , 3 , : ) , natm ) 
-  efg_ia( 2, 1 , : ) = efg_ia( 1, 2, : )
-  efg_ia( 3, 1 , : ) = efg_ia( 1, 3, : )
-  efg_ia( 3, 2 , : ) = efg_ia( 2, 3, : )
+  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia ( :,1 , 1  ) , natm ) 
+  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia ( :,2 , 2  ) , natm ) 
+  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia ( :,3 , 3  ) , natm ) 
+  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia ( :,1 , 2  ) , natm ) 
+  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia ( :,1 , 3  ) , natm ) 
+  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia ( :,2 , 3  ) , natm ) 
+  efg_ia( :,2, 1 ) = efg_ia( :,1, 2 )
+  efg_ia( :,3, 1 ) = efg_ia( :,1, 3 )
+  efg_ia( :,3, 2 ) = efg_ia( :,2, 3 )
 
 #ifdef debug
-  CALL print_tensor( efg_ia( : , : , 1 ) , 'EFG_1A  ' )
-  CALL print_tensor( efg_ia( : , : , 1 ) , 'EFG_NA  ' )
+  CALL print_tensor( efg_ia( 1,: , :  ) , 'EFG_1A  ' )
+  CALL print_tensor( efg_ia( 1,: , : ) , 'EFG_NA  ' )
 #endif
 
 #ifdef MPI 
@@ -1045,21 +1046,21 @@ atom1: do ia = atom_dec%istart , atom_dec%iend
 !=============================
 !  MERGE REAL PART
 !=============================
-  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia_real ( 1 , 1 , : ) , natm ) 
-  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia_real ( 2 , 2 , : ) , natm ) 
-  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia_real ( 3 , 3 , : ) , natm ) 
-  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia_real ( 1 , 2 , : ) , natm ) 
-  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia_real ( 1 , 3 , : ) , natm ) 
-  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia_real ( 2 , 3 , : ) , natm ) 
+  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia_real ( :,1 , 1  ) , natm ) 
+  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia_real ( :,2 , 2  ) , natm ) 
+  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia_real ( :,3 , 3  ) , natm ) 
+  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia_real ( :,1 , 2  ) , natm ) 
+  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia_real ( :,1 , 3  ) , natm ) 
+  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia_real ( :,2 , 3  ) , natm ) 
 
  ! in fact we don't need this as the EFG tensor is completely define from the upper diagonal value
-  efg_ia_real( 2 , 1, : ) = efg_ia_real( 1 , 2, : ) 
-  efg_ia_real( 3 , 1, : ) = efg_ia_real( 1 , 3, : ) 
-  efg_ia_real( 3 , 2, : ) = efg_ia_real( 2 , 3, : )
+  efg_ia_real( :,2 , 1 ) = efg_ia_real( :,1 , 2 ) 
+  efg_ia_real( :,3 , 1 ) = efg_ia_real( :,1 , 3 ) 
+  efg_ia_real( :,3 , 2 ) = efg_ia_real( :,2 , 3 )
 
-  efg_ia_dual( 2 , 1 , : ) = efg_ia_dual( 1 , 2 , :) 
-  efg_ia_dual( 3 , 1 , : ) = efg_ia_dual( 1 , 3 , :) 
-  efg_ia_dual( 3 , 2 , : ) = efg_ia_dual( 2 , 3 , :)
+  efg_ia_dual( :,2 , 1  ) = efg_ia_dual( :,1 , 2 ) 
+  efg_ia_dual( :,3 , 1  ) = efg_ia_dual( :,1 , 3 ) 
+  efg_ia_dual( :,3 , 2  ) = efg_ia_dual( :,2 , 3 )
 
   ! =======
   ! 4pi/3V
@@ -1240,7 +1241,9 @@ SUBROUTINE multipole_efg_DS ( rm , mu )
               efg_ia ( ia , 1 , 2 )  = efg_ia ( ia , 1 , 2 ) - qj * Txy 
               efg_ia ( ia , 1 , 3 )  = efg_ia ( ia , 1 , 3 ) - qj * Txz  
               efg_ia ( ia , 2 , 3 )  = efg_ia ( ia , 2 , 3 ) - qj * Tyz
+#ifdef debug              
               print*,qj * Txx
+#endif
 
               ! ===========================================================
               !                  dipole-dipole interaction
@@ -1269,18 +1272,17 @@ SUBROUTINE multipole_efg_DS ( rm , mu )
   efgtimetot1 = efgtimetot1 + ( ttt2 - ttt1 )
 #endif
 
-  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia ( 1 , 1 , : ) , natm )
-  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia ( 2 , 2 , : ) , natm )
-  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia ( 3 , 3 , : ) , natm )
-  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia ( 1 , 2 , : ) , natm )
-  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia ( 1 , 3 , : ) , natm )
-  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia ( 2 , 3 , : ) , natm )
-
+  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia ( :,1 , 1  ) , natm ) 
+  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia ( :,2 , 2  ) , natm ) 
+  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia ( :,3 , 3  ) , natm ) 
+  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia ( :,1 , 2  ) , natm ) 
+  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia ( :,1 , 3  ) , natm ) 
+  CALL MPI_ALL_REDUCE_DOUBLE ( efg_ia ( :,2 , 3  ) , natm ) 
   ! EFG is symmetric
   ! not needed ... just for consistency
-  efg_ia ( 2 , 1 , : ) = efg_ia ( 1 , 2 , : )
-  efg_ia ( 3 , 1 , : ) = efg_ia ( 1 , 3 , : )
-  efg_ia ( 3 , 2 , : ) = efg_ia ( 2 , 3 , : )
+  efg_ia( :,2, 1 ) = efg_ia( :,1, 2 )
+  efg_ia( :,3, 1 ) = efg_ia( :,1, 3 )
+  efg_ia( :,3, 2 ) = efg_ia( :,2, 3 )
 
 #ifdef MPI 
   ttt3 = MPI_WTIME(ierr)
@@ -1585,19 +1587,22 @@ SUBROUTINE multipole_efg_ES ( km , alphaES , mu )
   ! ====================================================== 
   !             merge real part 
   ! ====================================================== 
-  CALL MPI_ALL_REDUCE_DOUBLE ( efg_dir ( 1 , 1 , : ) , natm )
-  CALL MPI_ALL_REDUCE_DOUBLE ( efg_dir ( 2 , 2 , : ) , natm )
-  CALL MPI_ALL_REDUCE_DOUBLE ( efg_dir ( 3 , 3 , : ) , natm )
-  CALL MPI_ALL_REDUCE_DOUBLE ( efg_dir ( 1 , 2 , : ) , natm )
-  CALL MPI_ALL_REDUCE_DOUBLE ( efg_dir ( 1 , 3 , : ) , natm )
-  CALL MPI_ALL_REDUCE_DOUBLE ( efg_dir ( 2 , 3 , : ) , natm )
 
-  CALL MPI_ALL_REDUCE_DOUBLE ( efg_rec ( 1 , 1 , : ) , natm )
-  CALL MPI_ALL_REDUCE_DOUBLE ( efg_rec ( 2 , 2 , : ) , natm )
-  CALL MPI_ALL_REDUCE_DOUBLE ( efg_rec ( 3 , 3 , : ) , natm )
-  CALL MPI_ALL_REDUCE_DOUBLE ( efg_rec ( 1 , 2 , : ) , natm )
-  CALL MPI_ALL_REDUCE_DOUBLE ( efg_rec ( 1 , 3 , : ) , natm )
-  CALL MPI_ALL_REDUCE_DOUBLE ( efg_rec ( 2 , 3 , : ) , natm )
+  CALL MPI_ALL_REDUCE_DOUBLE ( efg_dir ( :,1 , 1  ) , natm ) 
+  CALL MPI_ALL_REDUCE_DOUBLE ( efg_dir ( :,2 , 2  ) , natm ) 
+  CALL MPI_ALL_REDUCE_DOUBLE ( efg_dir ( :,3 , 3  ) , natm ) 
+  CALL MPI_ALL_REDUCE_DOUBLE ( efg_dir ( :,1 , 2  ) , natm ) 
+  CALL MPI_ALL_REDUCE_DOUBLE ( efg_dir ( :,1 , 3  ) , natm ) 
+  CALL MPI_ALL_REDUCE_DOUBLE ( efg_dir ( :,2 , 3  ) , natm ) 
+
+  CALL MPI_ALL_REDUCE_DOUBLE ( efg_rec ( :,1 , 1  ) , natm ) 
+  CALL MPI_ALL_REDUCE_DOUBLE ( efg_rec ( :,2 , 2  ) , natm ) 
+  CALL MPI_ALL_REDUCE_DOUBLE ( efg_rec ( :,3 , 3  ) , natm ) 
+  CALL MPI_ALL_REDUCE_DOUBLE ( efg_rec ( :,1 , 2  ) , natm ) 
+  CALL MPI_ALL_REDUCE_DOUBLE ( efg_rec ( :,1 , 3  ) , natm ) 
+  CALL MPI_ALL_REDUCE_DOUBLE ( efg_rec ( :,2 , 3  ) , natm ) 
+  ! EFG is symmetric
+  ! not needed ... just for consistency
 
   ! ======================================================
   ! remark on the unit :
@@ -1612,9 +1617,9 @@ SUBROUTINE multipole_efg_ES ( km , alphaES , mu )
   ! field gradient 
   do ia = 1 , natm
    if ( lefg_it_contrib .and. (itype(ia) .ne. it_efg) ) cycle
-   efg_self ( 1 , 1 , : ) = selfa * qia ( ia ) 
-   efg_self ( 2 , 2 , : ) = selfa * qia ( ia ) 
-   efg_self ( 3 , 3 , : ) = selfa * qia ( ia ) 
+   efg_self ( ia , 1 , 1  ) = selfa * qia ( ia ) 
+   efg_self ( ia , 2 , 2  ) = selfa * qia ( ia ) 
+   efg_self ( ia , 3 , 3  ) = selfa * qia ( ia ) 
   enddo
 
   ! =====================================================
@@ -1625,9 +1630,9 @@ SUBROUTINE multipole_efg_ES ( km , alphaES , mu )
   ! =====================
   ! only for consistency 
   ! =====================
-  efg_ia ( : , 2 , 1 ) = efg_ia ( : , 1 , 2 )
-  efg_ia ( : , 3 , 1 ) = efg_ia ( : , 1 , 3 )
-  efg_ia ( : , 3 , 2 ) = efg_ia ( : , 2 , 3 )
+  efg_ia( :,2, 1 ) = efg_ia( :,1, 2 )
+  efg_ia( :,3, 1 ) = efg_ia( :,1, 3 )
+  efg_ia( :,3, 2 ) = efg_ia( :,2, 3 )
 
   ! ======================================================
   !  charged systems :

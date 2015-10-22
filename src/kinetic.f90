@@ -18,7 +18,7 @@
 
 ! ======= Hardware =======
 #include "symbol.h"
-#define debug
+!#define debug
 ! ======= Hardware =======
 
 ! *********************** SUBROUTINE init_velocities ***************************

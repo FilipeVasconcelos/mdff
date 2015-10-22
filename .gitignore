@@ -15,6 +15,7 @@
 
 # Fortran module files
 *.mod
+*.F90
 
 # Compiled Static libraries
 *.lai

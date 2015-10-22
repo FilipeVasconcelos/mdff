@@ -6,6 +6,7 @@
         calc          = 'md'      ! md calculation
         lnmlj         = .true.    ! switch on lj potential
         cutshortrange = 8.5d0     ! lj short range cut off
+        lvnlist       = .false.
 &end
 ! ======================================================================
 ! parameters for the molecular dynamics 

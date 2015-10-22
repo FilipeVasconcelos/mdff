@@ -1,6 +1,6 @@
 #!/bin/bash
-MPIRUN=/home/charpent/devel/intel/bin/mpirun
-exe=/home/filipe/mdff/src/mdff.x
+MPIRUN=mpirun
+exe=mdff.x
 
 usage()
 {
@@ -108,10 +108,10 @@ DoALL()
 
 #--------------------------------------------
 if [ "$serial" == "no" ] ; then
-    CMD="$MPIRUN -n $NPROC numawrap --node --exe='$exe control.F'"
-    #CMD="$MPIRUN -n $NPROC $exe control.F"
+    #CMD="$MPIRUN -n $NPROC numawrap --node --exe='$exe control.F'"
+    CMD="$MPIRUN -n $NPROC $exe control.F"
 else
-    CMD="$exe" 
+    CMD="$exe control.F" 
 fi
 #--------------------------------------------
 #--------------------------------------------

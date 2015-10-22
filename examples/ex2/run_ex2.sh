@@ -25,8 +25,8 @@ do
 	mv tmp.file POSFF
 
 
-	$EXEMDFF control.F > stdout
-	echo "$cluster `grep "Etot" OSZIFF | awk '{print $18}'` `grep " $cluster " REFERENCE| awk '{print $2}'` " | awk '{printf(" %4i %16.5f %12.5f %12.5f\n",$1,$2,$3,$2-$3)}'
+	$EXEMDFF config/control.F > stdout
+	echo "$cluster `grep "Etot" OSZIFF | awk '{print $18}'` `grep " $cluster " config/REFERENCE| awk '{print $2}'` " | awk '{printf(" %4i %16.5f %12.5f %12.5f\n",$1,$2,$3,$2-$3)}'
 
 done
 
@@ -48,9 +48,9 @@ do
         awk '{print "A",$1,$2,$3}' config/$((cluster))i >> tmp.file
         mv tmp.file POSFF
 
-        $EXEMDFF control.F > stdout
-	echo " "$((cluster))i" `grep "Etot" OSZIFF | awk '{print $18}'` `grep " $((cluster))i " REFERENCE| awk '{print $2}'` " | awk '{printf(" %4s %16.5f %12.5f %12.5f\n",$1,$2,$3,$2-$3)}'
+        $EXEMDFF config/control.F > stdout
+	echo " "$((cluster))i" `grep "Etot" OSZIFF | awk '{print $18}'` `grep " $((cluster))i " config/REFERENCE| awk '{print $2}'` " | awk '{printf(" %4s %16.5f %12.5f %12.5f\n",$1,$2,$3,$2-$3)}'
 done
 
 
-
+rm CONTFF  OSZIFF  POSFF  stdout  tmp.file  TRAJFF

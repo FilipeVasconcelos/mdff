@@ -27,7 +27,8 @@ FC = mpif90
 $(info FC : $(shell which $(FC) ) )
 FCL=$(FC)
 # the pre-compiler
-CP =cpp
+#CP = /usr/bin/cpp-4.9
+CP = cpp
 CPPFLAGS= -P -C -CC -traditional
 
 # installation directory

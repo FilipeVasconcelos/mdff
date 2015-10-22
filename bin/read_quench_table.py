@@ -44,7 +44,7 @@ def read_quench():
 
         variables.append(line)
 
-    print "found ",len ( variables ), " variables defined in quench.config :"
+    print "found ",len ( variables ), " global variables (for all runs) defined in quench.config :"
     print
     for item in variables:
         print item[0]

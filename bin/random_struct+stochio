@@ -31,7 +31,7 @@ then
     echo "$USAGE"
     exit 1
 fi
-while getopts ":s:f:" opt
+while getopts ":s:f:vt:" opt
 do
     case $opt in
         s)
@@ -42,6 +42,9 @@ do
             ;;
 	v)	
 	    vasp_output=true
+	    ;;
+	t)	
+	    tag0=$OPTARG
 	    ;;
         \?)
             echo "Invalid option: -$OPTARG" >&2
@@ -66,6 +69,9 @@ then
 else
 	rm check
 fi
+
+tag=$tag0
+
 
 # main loop
 for ((tgt=$tgt_min;tgt<=$tgt_max;tgt++)) 
@@ -105,7 +111,12 @@ if [ -s exact ]; then
 	echo "generate random structure for $tgt ions, executing :"
 	echo "random_struct.py -q -n $total -i \"$i\" -t \"$t\" -a \"$box 0.0 0.0\" -b \"0.0 $box 0.0\" -c \"0.0 0.0 $box\" "
 	random_struct.py -q -n $total -i "$i" -t "$t" -a "$box 0.0 0.0" -b "0.0 $box 0.0" -c "0.0 0.0 $box" 
-	mv POSFF.randomPY POSFF.randomPY.$tgt
+
+	if [[ -z $tag0 ]] 
+	then
+		tag=$tgt
+	fi		
+	mv POSFF.randomPY POSFF.randomPY.$tag
 	if [ "vasp_output " = true ]; then
 		echo "creating equivqlent POSCAR output"
 		fftocar -i POSFF.randomPY.$tgt -o POSCAR.randomPY.$tgt -q

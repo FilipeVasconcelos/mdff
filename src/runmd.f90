@@ -304,7 +304,7 @@ MAIN:  do itime = 1 , npas
                     ( itime .ne. npas .and. itime .ne. 1 ) ) ) then
            io_printnode WRITE(stdout ,'(a)') ''
            io_printnode WRITE(stdout ,'(a)') ' velocities are rescaled'
-           CALL rescale_velocities(1)
+           CALL rescale_velocities(0)
          endif
          ! ================================
          !  rescale volume (NPE equil)

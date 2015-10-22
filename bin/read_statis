@@ -3,7 +3,7 @@ tail -n+3 STATIS > tmpfile
 nline=`wc tmpfile | awk '{print $1}'`
 echo "## input file has $nline lines"
 nsteps=`grep steps CONTROL | awk '{print $NF}'`
-nsteps=$((nsteps+1))
+nsteps=$((nsteps))
 echo "## nsteps = $nsteps"
 nstat=`grep stat CONTROL | awk '{print $NF}'`
 echo "## nstat = $nstat"
@@ -16,8 +16,8 @@ if [ -f REVCON ] ; then
 else
 	echo "REVCON file is missing"
 fi
-echo "## ninfo : $ninfo $line9 $line11"
-echo "## found $natm ions"
+echo "## debug : $ninfo $nline $line9 $line11"
+echo "## found $natom ions"
 if [ "$nline" -eq "$line9" ]
 then
 	skey=9
@@ -51,4 +51,4 @@ awk -v skey=$skey -v natom=$natom 'BEGIN{start=0;tstep=0;htot=0.0;etot=0.0;ekin=
                               }   }
           }' tmpfile 
 
-rm tmpfile
+#rm tmpfile
