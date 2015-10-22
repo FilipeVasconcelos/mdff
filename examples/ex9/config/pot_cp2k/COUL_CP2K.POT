@@ -1,0 +1,9 @@
+  &POISSON
+     &EWALD
+       EWALD_TYPE EWALD
+       ALPHA 0.67698
+       GMAX  31
+       RCUT 7.2
+     &END EWALD
+    &END POISSON
+

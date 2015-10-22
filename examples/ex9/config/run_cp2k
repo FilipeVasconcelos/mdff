@@ -1,0 +1,5 @@
+#!/bin/bash
+EXECP2K=$1
+
+$EXECP2K -i input.cp2k -o output.cp2k
+echo " cp2k calc complete"

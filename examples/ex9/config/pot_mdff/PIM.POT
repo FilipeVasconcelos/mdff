@@ -1,0 +1,14 @@
+       ! polar on O
+        lpolar(1)=.true.
+        pol(1,1,1)=0.93971813676926158987d0
+        pol(1,2,2)=0.93971813676926158987d0
+        pol(1,3,3)=0.93971813676926158987d0
+
+        ! O - O
+        ldip_damping(1,1,1) = .false.
+        ! O - Si
+        ldip_damping(1,1,2) = .false.
+        ! O - B 
+        ldip_damping(1,1,3) = .false.
+
+

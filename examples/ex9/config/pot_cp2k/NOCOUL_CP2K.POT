@@ -1,0 +1,6 @@
+   &POISSON
+     &EWALD
+     EWALD_TYPE NONE
+     &END EWALD
+   &END POISSON
+

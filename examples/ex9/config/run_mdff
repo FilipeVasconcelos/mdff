@@ -1,0 +1,53 @@
+#!/bin/bash
+EXEMDFF=$1
+
+test_id=$2
+install_dir=/home/filipe/dev/github
+mpirun -np 2 $EXEMDFF control.F > log
+echo " mdff calc complete"
+echo ""  > frce
+echo "" >> frce
+tail -n 200 CONTFF | awk '{print $8,$9,$10}' >> frce
+paste ../../cp2k/$test_id/BSi-frc-1.xyz frce > comp 
+echo "#!/usr/bin/gnuplot -persist"       > plot
+echo "reset"                            >> plot
+echo "set key left"                     >> plot
+echo "set title 'forces x,y,z $test_id' "        >> plot
+echo "set xlabel 'CP2K forces [eV/A]' "        >> plot
+echo "set ylabel 'MDFF forces [eV/A]' "        >> plot
+echo "p 'comp' u (\$2*51.422062):5 title 'fx', 'comp' u (\$3*51.422062):6 title 'fy' , 'comp' u (\$4*51.422062):7 title 'fz',x" >> plot
+chmod u+x plot
+echo " plot FORCES "
+./plot
+echo " ------------------------------------------------------"
+echo " ENERGY [eV] : "
+echo " "
+grep Utot log | awk '{printf("%10s %20.12e\n","  Utot (MDFF)           = ",$NF)}'
+grep "INITIAL POTENTIAL ENERGY" ../../cp2k/$test_id/output.cp2k | awk '{printf("%10s %20.12e\n","  Utot (CP2K)           = ",$5*27.211383)}'
+ef1=`grep Utot log | awk '{printf("%20.12e\n",$NF)}'`
+ef2=`grep "INITIAL POTENTIAL ENERGY" ../../cp2k/$test_id/output.cp2k | awk '{printf("%20.12e\n",$5*27.211383)}'`
+echo $ef1 $ef2 | awk '{printf("%10s %20.12e\n","  diff.                 = ",$1-$2)}'
+echo " ------------------------------------------------------"
+echo " STRESS TENSOR (GPa) "
+echo " "
+echo " (MDFF) :"
+awk 'BEGIN{ns=0} {if (($1=="total")&&($2=="stress")&&($3=="tensor")){lr=NR;ns+=1} 
+                  if ((NR==lr+1)&&(ns==2)&&(lr!=0)) {printf("%20.12e %20.12e %20.12e\n",$1,$2,$3)}
+                  if ((NR==lr+2)&&(ns==2)&&(lr!=0)) {printf("%20.12e %20.12e %20.12e\n",$1,$2,$3)}
+                  if ((NR==lr+3)&&(ns==2)&&(lr!=0)) {printf("%20.12e %20.12e %20.12e\n",$1,$2,$3)}
+
+                 }' log
+
+echo " (CP2K) : "
+for dir in X Y Z
+do
+        grep " $dir " ../../cp2k/$test_id/output.cp2k | tail -n 1 | awk '{printf("%20.12e %20.12e %20.12e\n",$2,$3,$4)}'
+done
+echo " ------------------------------------------------------"
+echo " TIMING"
+echo " "
+echo " (MDFF) :"
+grep TOTAL log
+echo " (CP2K) : "
+grep CP2K ../../cp2k/$test_id/output.cp2k | tail -n 1 | awk '{print "                           TOTAL :  cpu time    ",$NF}'
+echo " ------------------------------------------------------"

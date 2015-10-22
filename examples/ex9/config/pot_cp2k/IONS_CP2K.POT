@@ -1,0 +1,17 @@
+# ===================================================
+#                     CHARGES 
+# ===================================================
+     &CHARGE
+       atom O 
+       CHARGE -2
+     &END CHARGE
+
+     &CHARGE
+       atom Si
+       CHARGE 4
+     &END CHARGE
+
+     &CHARGE
+       atom B 
+       CHARGE 3
+     &END CHARGE

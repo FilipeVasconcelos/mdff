@@ -1,0 +1,121 @@
+#!/bin/bash
+
+
+usage()
+{
+
+cat quench.config
+
+}
+
+
+init()
+{
+        echo "--------------------------------------------------------------------------------"
+        echo " generate tests from test.config                                            "
+        echo "--------------------------------------------------------------------------------"
+        ./read_test_table.py
+        echo " "
+
+}
+
+
+include()
+{
+sed -e '\_!INCLUDE <'"$1"'>_{
+        r '"$1"'
+        d
+}'
+}
+
+
+Docontrol()
+{
+        test_index=$1
+	bmh=$2
+	ftd=$3
+	coul=$4
+	pim=$5
+        damp=$6
+#	echo "$test_index $bmh $ftd $coul $pim $damp"
+	control_file=control_test.$test_index.F
+	input_file=input_test.$test_index.cp2k
+        echo "generating control file for test."$test_index ": $control_file and $input_file"
+
+
+	cd pot_mdff/
+	mv ../scr$test_index .
+
+	if [ $pim == "YES" ] ; then
+	        if   [ $damp == "YES" ] ; then
+	                include IONS.POT < control_template.F | include BMHFTD.POT | include PIMD.POT > tmp1
+	        elif [ $damp == "NO" ] ; then
+	                include IONS.POT < control_template.F | include BMHFTD.POT | include PIM.POT > tmp1
+	        fi
+	else
+		 include IONS.POT < control_template.F | include BMHFTD.POT > tmp1	
+	fi
+        source scr$test_index > $control_file 
+
+	cd ..
+
+
+	cd pot_cp2k
+
+	cat input_template-1.cp2k                > $input_file
+	echo "&MM"                              >> $input_file
+	echo "&FORCEFIELD"                      >> $input_file
+	echo "IGNORE_MISSING_CRITICAL_PARAMS T" >> $input_file
+	echo "SHIFT_CUTOFF F"                   >> $input_file
+	if [ $pim == "YES" ] ; then
+	        if   [ $damp == "YES" ] ; then
+			echo "@INCLUDE 'PIM_DAMPING_CP2K.POT'" >> $input_file
+		elif [ $damp == "NO" ] ; then
+			echo "@INCLUDE 'PIM_CP2K.POT'"         >> $input_file
+		fi
+	fi
+	if [ $bmh == "YES" ] || [ $ftd == "YES" ]  ; then
+		if [ $ftd == "YES" ]; then
+			echo "@INCLUDE 'BMHFTD_CP2K.POT'"         >> $input_file
+		else
+			echo "@INCLUDE 'BMHFT_CP2K.POT'"         >> $input_file
+		fi
+	fi
+	if [ $coul == "YES" ] ;then
+		echo "@INCLUDE 'IONS_CP2K.POT'"         >> $input_file
+	fi	
+	echo "&END FORCEFIELD"                  >> $input_file
+	if [ $coul == "YES" ] ;then
+		if [ $pim == "YES" ] ; then
+			echo "@INCLUDE 'COUL_DIPOLE_CP2K.POT'"   >> $input_file
+		else
+			echo "@INCLUDE 'COUL_CP2K.POT'"         >> $input_file
+		fi
+	else
+		echo "@INCLUDE 'NOCOUL_CP2K.POT'"   >> $input_file
+
+	fi
+	echo "&END MM"                              >> $input_file
+	cat input_template-3.cp2k                   >> $input_file
+
+	cd ..
+
+}
+
+DoALL()
+{
+        source DOALLC
+}
+
+
+
+
+init
+echo "--------------------------------------------------------------------------------"
+DoALL
+echo "--------------------------------------------------------------------------------"
+
+rm -f scr* tmp*
+
+exit 0;
+
