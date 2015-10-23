@@ -131,8 +131,9 @@ SUBROUTINE restart_init ( MDFF )
   READ( kunit_RESTART   ) massia
   READ( kunit_RESTART   ) quadia
   READ( kunit_RESTART   ) dipia
-  READ( kunit_RESTART   ) polia
-  READ( kunit_RESTART   ) invpolia
+  READ( kunit_RESTART   ) poldipia
+  READ( kunit_RESTART   ) polquadia
+  READ( kunit_RESTART   ) invpoldipia
   READ( kunit_RESTART   ) ipolar
 
   ! ... continue reading restart (md parameters)
@@ -327,8 +328,9 @@ SUBROUTINE write_RESTART
   WRITE( kunit_RESTART   ) massia
   WRITE( kunit_RESTART   ) quadia
   WRITE( kunit_RESTART   ) dipia
-  WRITE( kunit_RESTART   ) polia
-  WRITE( kunit_RESTART   ) invpolia
+  WRITE( kunit_RESTART   ) poldipia
+  WRITE( kunit_RESTART   ) polquadia
+  WRITE( kunit_RESTART   ) invpoldipia
   WRITE( kunit_RESTART   ) ipolar
   ! ... continue reading restart (md parameters)
   WRITE( kunit_RESTART   ) dt 

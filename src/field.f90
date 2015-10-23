@@ -136,16 +136,16 @@ MODULE field
   ! type dependent properties
   real(kind=dp)    :: mass     ( ntypemax )            !< masses ( not yet tested everywhere )
   real(kind=dp)    :: qch      ( ntypemax )            !< charges 
-  !real(kind=dp)    :: quad_efg ( ntypemax )            !< quadrupolar moment
-  !real(kind=dp)    :: dip      ( 3 , ntypemax )        !< dipoles 
-  !real(kind=dp)    :: pol      ( ntypemax , 3 , 3 )    !< polarizability if lpolar( it ) = .true. 
+  !real(kind=dp)    :: quad_efg ( ntypemax )           !< quadrupolar moment
+  !real(kind=dp)    :: dip      ( 3 , ntypemax )       !< dipoles 
+  !real(kind=dp)    :: pol      ( ntypemax , 3 , 3 )   !< polarizability if lpolar( it ) = .true. 
 
   real(kind=dp)    :: dip      ( 3 , ntypemax )        !< dipoles 
-  real(kind=dp)    :: quad     ( ntypemax , 3 , 3 )    !< quadrupoles
+  real(kind=dp)    :: quad     ( 3 , 3 , ntypemax )    !< quadrupoles
   real(kind=dp)    :: poldip   ( ntypemax , 3 , 3 )    !< dipole     polarizability if ldip_polar( it ) = .true. 
-  !real(kind=dp)    :: poldip_iso ( ntypemax )          !< isotropic dipole polarizability if ldip_polar( it ) = .true.
+  !real(kind=dp)    :: poldip_iso ( ntypemax )         !< isotropic dipole polarizability if ldip_polar( it ) = .true.
   real(kind=dp)    :: polquad  ( ntypemax , 3 , 3 , 3 )!< quadrupole polarizability if ldip_polar( it ) = .true.
-  !real(kind=dp)    :: polquad_iso ( ntypemax )         !< isotropic quadrupole polarizability if ldip_polar( it ) = .true. 
+  !real(kind=dp)    :: polquad_iso ( ntypemax )        !< isotropic quadrupole polarizability if ldip_polar( it ) = .true. 
   real(kind=dp)    :: quad_efg ( ntypemax )            !< quadrupolar moment nucleus NMR
 
 
@@ -458,6 +458,7 @@ SUBROUTINE field_init
                          qch           , &
                          quad_efg      , &
                          dip           , &
+                         quad          , &
                          poldip        , &  
                          polquad       , &  
                          pol_damp_b    , &  
