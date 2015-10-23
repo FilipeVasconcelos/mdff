@@ -1,0 +1,390 @@
+                            \\|//                            
+                           -(o o)-                           
+========================oOO==(_)==OOo========================
+          ____    ____  ______   ________  ________  
+         |_   \  /   _||_   _ `.|_   __  ||_   __  | 
+           |   \/   |    | | `. \ | |_ \_|  | |_ \_| 
+           | |\  /| |    | |  | | |  _|     |  _|    
+          _| |_\/_| |_  _| |_.' /_| |_     _| |_     
+         |_____||_____||______.'|_____|   |_____|    
+
+=============================================================
+
+MOLECULAR DYNAMICS ...for fun                 
+mdff.r  (build Oct 20 2015 16:39:45) parallel                                   
+filipe.manuel.vasconcelos@gmail.com  
+Running on  :    1 nodes                  
+by user     : filipe                        
+host        : charrue
+date        : 2015/10/23    17:02:52
+
+CONTROL MODULE ... WELCOME
+
+calc        =  md                                                          
+lnmlj       =  F
+lbmhft      =  F
+lbmhftd     =  T
+lmorse      =  F
+lcoulomb    =  T
+lsurf       =  F
+lvnlist     =  F
+lstatic     =  F
+lreduced    =  F
+lrestart    =  F
+=============================================================
+
+reading configuration
+config from file POSFF
+found type information on POSFF : O  Si Ca 
+atomic positions in cartesian coordinates in POSFF
+
+=============================================================
+
+CONFIG MODULE ... WELCOME
+
+system                : test                                                        
+natm                  =              360
+ntype                 =                3
+nO                    =              216   60.00%
+nSi                   =               72   20.00%
+nCa                   =               72   20.00%
+
+-------------------------------------------------------------
+direct     basis : 
+-------------------------------------------------------------
+a_vector              =      14.7110      0.0000      0.0000
+b_vector              =       0.0000     14.7110      0.0000
+c_vector              =       0.0000      0.0000     14.7110
+cell param.           =      14.7110     14.7110     14.7110
+perpend. width        =      14.7110     14.7110     14.7110
+angles                =      90.0000     90.0000     90.0000
+volume                =    3183.6593
+
+
+-------------------------------------------------------------
+reciprocal basis : 
+-------------------------------------------------------------
+a*_vector             =       0.0680      0.0000      0.0000
+b*_vector             =       0.0000      0.0680      0.0000
+c*_vector             =       0.0000      0.0000      0.0680
+
+cell param.           =       0.0680      0.0680      0.0680
+perpend. width        =       0.0680      0.0680      0.0680
+angles                =      90.0000     90.0000     90.0000
+volume                =       1.0000
+
+-------------------------------------------------------------
+
+automatic Ewald Sum 
+ long range correction (init) energy     0.000000000000000E+000
+ long range correction (init) pressure   0.000000000000000E+000
+generate k-points arrays (full) km_coul         mesh
+(full) kpt arrays sorted    1687
+=============================================================
+
+FIELD MODULE ... WELCOME
+
+-------------------------------------------------------------
+total mass            =    8363.6424 a.m 
+density               =       0.1131      4.3623 g/cm^3 
+
+point charges: 
+-------------------------------------------------------------
+q   O                   = -0.200E+01
+quadO                   =  0.000E+00 mb
+q   Si                  =  0.400E+01
+quadSi                  =  0.000E+00 mb
+q   Ca                  =  0.200E+01
+quadCa                  =  0.000E+00 mb
+total charge            =  0.000E+00
+second moment of charge =  0.290E+06
+
+-------------------------------------------------------------
+static dipoles: 
+-------------------------------------------------------------
+muO        =    0.000E+00   0.000E+00   0.000E+00
+muSi       =    0.000E+00   0.000E+00   0.000E+00
+muCa       =    0.000E+00   0.000E+00   0.000E+00
+sum of dipoles          =    0.000E+00   0.000E+00   0.000E+00
+
+-------------------------------------------------------------
+polarizabilities on atoms
+electric field damping applied to polarizable atoms
+-------------------------------------------------------------
+polarizability on type O  : 
+      1.2992      0.0000      0.0000
+      0.0000      1.2992      0.0000
+      0.0000      0.0000      1.2992
+
+damping functions : 
+                    b           c              k
+O   - O   :       0.0000      0.0000 0 (       0.0000      0.0000 0 ) 
+O   - Si  :       4.0157      1.5933 4 (       4.0157      1.5933 4 ) 
+O   - Ca  :       3.4578      2.3592 4 (       3.4578      2.3592 4 ) 
+-------------------------------------------------------------
+
+no polarizability on type Si
+-------------------------------------------------------------
+
+polarizability on type Ca : 
+      0.5186      0.0000      0.0000
+      0.0000      0.5186      0.0000
+      0.0000      0.0000      0.5186
+
+damping functions : 
+                    b           c              k
+Ca  - O   :       6.6136      1.0037 4 (       6.6136      1.0037 4 ) 
+Ca  - Si  :       6.6136      1.0037 4 (       6.6136      1.0037 4 ) 
+Ca  - Ca  :       0.0000      0.0000 0 (       0.0000      0.0000 0 ) 
+-------------------------------------------------------------
+
+-------------------------------------------------------------
+coulombic interaction : 
+task : charge-charge T
+task : charge-dipole T
+task : dipole-dipole T
+-------------------------------------------------------------
+
+                      -->   -->               /                  -->  -->     -->   -->   \
+        qi qj      qi muj . rij          1    | -->   -->      ( mui .rij ) ( rij . muj )  |
+ Vij = ------- +  ---------------- +  ------- | mui . muj - 3 ---------------------------  |
+         rij          rij^3            rij^3  \                            rij^2          /
+
+
+
+ewald summation parameters ( automatic see field.f90 tmp construction )
+alpha                            =    0.47437
+cut-off (real)                   =    6.87930
+kmax                             =          7         7         7
+
+relative error (user defined)    :  0.10000E-05
+
+-------------------------------------------------------------
+BMHFTD potential
+Born-Huggins-Meyer-Fumi-Tossi + Damping
+-------------------------------------------------------------
+
+                                  C              D  
+ V = A  exp ( - B  r ) - f_6(r) ----- - f_8(r) -----
+                                 r^6            r^8 
+
+                             n                      
+                            ----   (BD * r)^k       
+ f_n(r) = 1 - exp(-BD r ) * \     ------------      
+                            /___       k!           
+                             k=0                    
+
+-------------------------------------------------------------
+O  -O   interactions:
+-------------------------------------------------------------
+A                                =   0.29061759E+05
+B                                =   0.50376000E+01
+C                                =   0.26512052E+02
+D                                =   0.14277542E+03
+BD                               =   0.27184000E+01
+-------------------------------------------------------------
+O  -Si  interactions:
+-------------------------------------------------------------
+A                                =   0.11776271E+04(   0.11776271E+04 )
+B                                =   0.29136000E+01(   0.29136000E+01 )
+C                                =   0.13034253E+01(   0.13034253E+01 )
+D                                =   0.42340915E+01(   0.42340915E+01 )
+BD                               =   0.00000000E+00(   0.00000000E+00 )
+-------------------------------------------------------------
+O  -Ca  interactions:
+-------------------------------------------------------------
+A                                =   0.10900391E+04(   0.10900391E+04 )
+B                                =   0.28413000E+01(   0.28413000E+01 )
+C                                =   0.13034253E+01(   0.13034253E+01 )
+D                                =   0.42340915E+01(   0.42340915E+01 )
+BD                               =   0.00000000E+00(   0.00000000E+00 )
+-------------------------------------------------------------
+Si -Si  interactions:
+-------------------------------------------------------------
+A                                =   0.00000000E+00
+B                                =   0.28170000E+01
+C                                =   0.12789351E+00
+D                                =   0.14422034E+00
+BD                               =   0.18897286E+07
+-------------------------------------------------------------
+Si -Ca  interactions:
+-------------------------------------------------------------
+A                                =   0.00000000E+00(   0.00000000E+00 )
+B                                =   0.28170000E+01(   0.28170000E+01 )
+C                                =   0.12789351E+00(   0.12789351E+00 )
+D                                =   0.14422034E+00(   0.14422034E+00 )
+BD                               =   0.18897286E+07(   0.18897286E+07 )
+-------------------------------------------------------------
+Ca -Ca  interactions:
+-------------------------------------------------------------
+A                                =   0.00000000E+00
+B                                =   0.28170000E+01
+C                                =   0.12789351E+00
+D                                =   0.14422034E+00
+BD                               =   0.18897286E+07
+
+
+=============================================================
+
+input positions in Cartesian coordinates
+=============================================================
+
+MD MODULE ... WELCOME
+
+periodic boundary conditions  
+using minimum image convention                 
+dynamic calculation
+NVE ensemble --- velocity verlet integrator    
+with no equilibration          
+number of steps                       =            0
+timestep                              =  0.50000E-03  ps
+time range                            =  0.00000E+00  ps
+temperature                           =   2500.00000   K
+pressure                              =      0.00000 GPa
+print thermo  periodicity             =           20
+
+paralelisation - atoms decomposition
+rank =         0   atoms       1 to     360 load :      360
+paralelisation - k-pts decomposition
+rank =         0   k-pts       1 to    1687 load :     1687
+=============================================================
+
+generate velocities
+Velocities from Maxwell-Boltzmann distribution
+normal distribution method = boxmuller_basic     
+effective temperature      T        =  2582.0587
+wanted temperature         T0       =  2500.0000
+velocities rescaled by              =   0.98398154E+00 -0.31780335E-01
+
+c.o.m. vel. ALL     0.137212E-17   -0.106011E-17    0.578241E-18
+c.o.m. vel. O       0.257016E-02   -0.583066E-02    0.559418E-03
+c.o.m. vel. Si     -0.812609E-02    0.157952E-01   -0.330004E-02
+c.o.m. vel. Ca      0.415622E-03    0.169682E-02    0.162178E-02
+
+=============================================================
+properties at t=0
+
+-------------------------------------------------------------
+                running scf_kO_v2 algorithm                  
+-------------------------------------------------------------
+scf =    1 u_pol =   0.00000000E+00 u_coul (qq)  =  -0.14465976E+05 u_coul (dd)  =   0.00000000E+00 u_coul_pol =  -0.14465976E+05 rmsd       =   0.17976931+309
+inner loop converged in  2 steps                                                                                                  rmsd_inner =   0.16107886E-01
+scf =    2 u_pol =   0.59911763E+02 u_coul (qq)  =  -0.14465976E+05 u_coul (dd)  =   0.79789242E+02 u_coul_pol =  -0.14545766E+05 rmsd       =   0.13104310E-01
+inner loop converged in  3 steps                                                                                                  rmsd_inner =   0.10266939E-02
+scf =    3 u_pol =   0.62587241E+02 u_coul (qq)  =  -0.14465976E+05 u_coul (dd)  =   0.80836471E+02 u_coul_pol =  -0.14546813E+05 rmsd       =   0.21379433E-02
+inner loop converged in  3 steps                                                                                                  rmsd_inner =   0.18056411E-03
+scf =    4 u_pol =   0.63097162E+02 u_coul (qq)  =  -0.14465976E+05 u_coul (dd)  =   0.81388735E+02 u_coul_pol =  -0.14547365E+05 rmsd       =   0.56835089E-03
+inner loop converged in  3 steps                                                                                                  rmsd_inner =   0.26106174E-04
+scf =    5 u_pol =   0.63157421E+02 u_coul (qq)  =  -0.14465976E+05 u_coul (dd)  =   0.81403728E+02 u_coul_pol =  -0.14547380E+05 rmsd       =   0.18636852E-03
+inner loop converged in  2 steps                                                                                                  rmsd_inner =   0.15293737E-04
+scf =    6 u_pol =   0.63176586E+02 u_coul (qq)  =  -0.14465976E+05 u_coul (dd)  =   0.81424398E+02 u_coul_pol =  -0.14547401E+05 rmsd       =   0.68044123E-04
+inner loop converged in  2 steps                                                                                                  rmsd_inner =   0.53579684E-05
+scf =    7 u_pol =   0.63177726E+02 u_coul (qq)  =  -0.14465976E+05 u_coul (dd)  =   0.81422215E+02 u_coul_pol =  -0.14547399E+05 rmsd       =   0.24683649E-04
+inner loop converged in  2 steps                                                                                                  rmsd_inner =   0.18975024E-05
+scf =    8 u_pol =   0.63179577E+02 u_coul (qq)  =  -0.14465976E+05 u_coul (dd)  =   0.81424443E+02 u_coul_pol =  -0.14547401E+05 rmsd       =   0.92180048E-05
+inner loop converged in  2 steps                                                                                                  rmsd_inner =   0.70491548E-06
+scf =    9 u_pol =   0.63179604E+02 u_coul (qq)  =  -0.14465976E+05 u_coul (dd)  =   0.81424074E+02 u_coul_pol =  -0.14547400E+05 rmsd       =   0.33616326E-05
+inner loop converged in  2 steps                                                                                                  rmsd_inner =   0.25749484E-06
+scf =   10 u_pol =   0.63179832E+02 u_coul (qq)  =  -0.14465976E+05 u_coul (dd)  =   0.81424361E+02 u_coul_pol =  -0.14547401E+05 rmsd       =   0.12600639E-05
+inner loop converged in  2 steps                                                                                                  rmsd_inner =   0.96326178E-07
+scf =   11 u_pol =   0.63179831E+02 u_coul (qq)  =  -0.14465976E+05 u_coul (dd)  =   0.81424308E+02 u_coul_pol =  -0.14547401E+05 rmsd       =   0.46066085E-06
+
+scf calculation of the induced electric moment converged in     11 iterations 
+Electric field is converged at  0.461E-06 (  0.100E-05 ) 
+
+
+  Thermodynamic information 
+  ---------------------------------------------
+  step                  =         0
+  time                  =  0.000000000000E+00
+  Ekin                  =  0.116334120321E+03
+  Temp                  =  0.250000000000E+04
+  Utot                  = -0.106427577620E+05
+  U_vdw                 =  0.390464292168E+04
+  U_coul                = -0.145474006837E+05
+  Pressure              =  0.132280271789E+03
+  Pvir_vdw              =  0.234555285013E+01
+  Pvir_coul             = -0.151999192617E+01
+  Pvir_tot              =  0.825560923963E+00
+  volume                =  0.318365930743E+04
+  a cell                =  0.147110000000E+02
+  b cell                =  0.147110000000E+02
+  c cell                =  0.147110000000E+02
+  ---------------------------------------------
+  Etot                  = -0.105264236417E+05
+  Htot                  = -0.105264236417E+05
+
+stress tensor of initial configuration
+
+non_bonded stress tensor
+  0.37846650E+03  0.11947636E+01 -0.39371272E+00
+  0.11947636E+01  0.37932024E+03 -0.24011083E+00
+ -0.39371272E+00 -0.24011083E+00  0.36961015E+03
+  iso =   0.37579896E+03(  0.10438860E+01)
+
+coulombic stress tensor
+ -0.24398517E+03 -0.45870444E+00  0.35190480E+00
+ -0.45870444E+00 -0.24474513E+03  0.33932972E+00
+  0.35190480E+00  0.33932972E+00 -0.24185830E+03
+  iso =  -0.24352953E+03( -0.67647092E+00)
+
+total stress tensor
+  0.13448132E+03  0.73605916E+00 -0.41807918E-01
+  0.73605916E+00  0.13457511E+03  0.99218891E-01
+ -0.41807918E-01  0.99218891E-01  0.12775185E+03
+  iso =   0.13226943E+03(  0.36741508E+00)
+
+
+starting main loop
+=============================================================
+=============================================================
+end of the main loop
+
+
+stress tensor of final configuration
+non_bonded stress tensor
+  0.37846650E+03  0.11947636E+01 -0.39371272E+00
+  0.11947636E+01  0.37932024E+03 -0.24011083E+00
+ -0.39371272E+00 -0.24011083E+00  0.36961015E+03
+  iso =   0.37579896E+03(  0.10438860E+01)
+
+coulombic stress tensor
+ -0.24398517E+03 -0.45870444E+00  0.35190480E+00
+ -0.45870444E+00 -0.24474513E+03  0.33932972E+00
+  0.35190480E+00  0.33932972E+00 -0.24185830E+03
+  iso =  -0.24352953E+03( -0.67647092E+00)
+
+total stress tensor
+  0.13448132E+03  0.73605916E+00 -0.41807918E-01
+  0.73605916E+00  0.13457511E+03  0.99218891E-01
+ -0.41807918E-01  0.99218891E-01  0.12775185E+03
+  iso =   0.13226943E+03(  0.36741508E+00)
+
+=============================================================
+
+TIME MODULE ... WELCOME
+
+-------------------------------------------------------------
+                           TOTAL :  cpu time     1.89
+                        FIELD_ES :  cpu time     1.84
+                          kardir :  cpu time     0.00
+                          dirkar :  cpu time     0.00
+
+-------------------------------------------------------------
+main subroutines:
+-------------------------------------------------------------
+MD:
+-------------------------------------------------------------
+-------------------------------------------------------------
+-------------------------------------------------------------
+Coulomb:
+-------------------------------------------------------------
+        multipole_ES(real  part) :  cpu time     1.14
+        multipole_ES(recip part) :  cpu time     0.71
+        moment_from_pola         :  cpu time     1.74
+=============================================================
+
+SUPPLEMENTARTY TIMING INFO (seed dumb.f90) 
+t12 =     0.51
+sum =     0.51
+
