@@ -2635,50 +2635,50 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
           ! =========================================
           !   multipole interaction tensor rank = 3  
           ! =========================================
-          T3%abc = 0.0_dp
-          do i = 1 , 3
-            do j = 1 , 3
-              do k = 1 , 3
-                if ( j .gt. k ) cycle 
-                if ( i .gt. j ) cycle 
-                T3%abc (i,j,k) = - rij(i) * rij(j) * rij(k) * F3 * dm7 * 15.0_dp
-                if ( i .eq. j .and. j.eq.k ) then
-                  T3%abc (i,j,k) = T3%abc (i,j,k) +    rij(i) * F2 * dm5 * 9.0_dp
-                else
-                  if ( i.eq.j ) T3%abc (i,j,k) = T3%abc (i,j,k) + rij(k) * F2 * dm5 * 3.0_dp
-                  if ( i.eq.k ) T3%abc (i,j,k) = T3%abc (i,j,k) + rij(j) * F2 * dm5 * 3.0_dp 
-                  if ( j.eq.k ) T3%abc (i,j,k) = T3%abc (i,j,k) + rij(i) * F2 * dm5 * 3.0_dp
-                endif
-              enddo
-            enddo
-          enddo
-          T3%abc(1,3,2) = T3%abc(1,2,3)
-          T3%abc(3,1,2) = T3%abc(1,2,3)
-          T3%abc(3,2,1) = T3%abc(1,2,3)
-          T3%abc(2,3,1) = T3%abc(1,2,3)
-          T3%abc(2,1,3) = T3%abc(1,2,3)
-          T3%abc(1,2,1) = T3%abc(1,1,2)
-          T3%abc(2,1,1) = T3%abc(1,1,2)
-          T3%abc(1,3,1) = T3%abc(1,1,3)
-          T3%abc(3,1,1) = T3%abc(1,1,3)
-          T3%abc(2,2,1) = T3%abc(1,2,2)
-          T3%abc(2,1,2) = T3%abc(1,2,2)
-          T3%abc(3,3,1) = T3%abc(1,3,3) 
-          T3%abc(3,1,3) = T3%abc(1,3,3) 
-          T3%abc(2,3,2) = T3%abc(2,2,3)
-          T3%abc(3,2,2) = T3%abc(2,2,3)
-          T3%abc(3,3,2) = T3%abc(2,3,3) 
-          T3%abc(3,2,3) = T3%abc(2,3,3) 
+          !T3%abc = 0.0_dp
+          !do i = 1 , 3
+          !  do j = 1 , 3
+          !    do k = 1 , 3
+          !      if ( j .gt. k ) cycle 
+          !      if ( i .gt. j ) cycle 
+          !      T3%abc (i,j,k) = - rij(i) * rij(j) * rij(k) * F3 * dm7 * 15.0_dp
+          !      if ( i .eq. j .and. j.eq.k ) then
+          !        T3%abc (i,j,k) = T3%abc (i,j,k) +    rij(i) * F2 * dm5 * 9.0_dp
+          !      else
+          !        if ( i.eq.j ) T3%abc (i,j,k) = T3%abc (i,j,k) + rij(k) * F2 * dm5 * 3.0_dp
+          !        if ( i.eq.k ) T3%abc (i,j,k) = T3%abc (i,j,k) + rij(j) * F2 * dm5 * 3.0_dp 
+          !        if ( j.eq.k ) T3%abc (i,j,k) = T3%abc (i,j,k) + rij(i) * F2 * dm5 * 3.0_dp
+          !      endif
+          !    enddo
+          !  enddo
+          !enddo
+          !T3%abc(1,3,2) = T3%abc(1,2,3)
+          !T3%abc(3,1,2) = T3%abc(1,2,3)
+          !T3%abc(3,2,1) = T3%abc(1,2,3)
+          !T3%abc(2,3,1) = T3%abc(1,2,3)
+          !T3%abc(2,1,3) = T3%abc(1,2,3)
+          !T3%abc(1,2,1) = T3%abc(1,1,2)
+          !T3%abc(2,1,1) = T3%abc(1,1,2)
+          !T3%abc(1,3,1) = T3%abc(1,1,3)
+          !T3%abc(3,1,1) = T3%abc(1,1,3)
+          !T3%abc(2,2,1) = T3%abc(1,2,2)
+          !T3%abc(2,1,2) = T3%abc(1,2,2)
+          !T3%abc(3,3,1) = T3%abc(1,3,3) 
+          !T3%abc(3,1,3) = T3%abc(1,3,3) 
+          !T3%abc(2,3,2) = T3%abc(2,2,3)
+          !T3%abc(3,2,2) = T3%abc(2,2,3)
+          !T3%abc(3,3,2) = T3%abc(2,3,3) 
+          !T3%abc(3,2,3) = T3%abc(2,3,3) 
 
           ! =========================================
           !   multipole interaction tensor rank = 3  
           !   nb of components = 27 => reduced = 10
           ! =========================================
-          F3_dm7 = F3 * dm7 * 15.0_dp
-          T3%abc = 0.0_dp
-          do i = 1 , 3
-            do j = 1 , 3
-              do k = 1 , 3
+          !F3_dm7 = F3 * dm7 * 15.0_dp
+          !T3%abc = 0.0_dp
+          !do i = 1 , 3
+          !  do j = 1 , 3
+          !    do k = 1 , 3
                 T3%abc (i,j,k)               = - rij(i) * rij(j) * rij(k) * F3_dm7
                 if ( i.eq.j ) T3%abc (i,j,k) = T3%abc (i,j,k) + rij(k) * F2_dm5
                 if ( i.eq.k ) T3%abc (i,j,k) = T3%abc (i,j,k) + rij(j) * F2_dm5
@@ -2692,68 +2692,68 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
           !   multipole interaction tensor rank = 4  
           !   nb of components = 81 => reduced = 15
           ! =========================================
-          T4%abcd = 0.0_dp
-          F4_dm9 = dm9 * F4 * 105.0_dp
-          do i = 1 , 3
-            do j = 1 , 3
-              do k = 1 , 3
-                do l = 1 , 3
-                  T4%abcd  (i,j,k,l) = rij(i) * rij(j) * rij(k) * rij(l) * F4_dm9
-                  if ( k.eq.l ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(i)*rij(j) * F3_dm7
-                  if ( j.eq.l ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(i)*rij(k) * F3_dm7
-                  if ( j.eq.k ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(i)*rij(l) * F3_dm7
-                  if ( i.eq.l ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(j)*rij(k) * F3_dm7
-                  if ( i.eq.k ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(j)*rij(l) * F3_dm7
-                  if ( i.eq.j ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(k)*rij(l) * F3_dm7
-                  if ( i .eq. j .and. k .eq. l ) T4%abcd  (i,j,k,l) = T4%abcd  (i,j,k,l) + F2_dm5
-                  if ( i .eq. k .and. j .eq. l ) T4%abcd  (i,j,k,l) = T4%abcd  (i,j,k,l) + F2_dm5
-                  if ( i .eq. l .and. j .eq. k ) T4%abcd  (i,j,k,l) = T4%abcd  (i,j,k,l) + F2_dm5
-                enddo
-              enddo
-            enddo
-          enddo
+          !T4%abcd = 0.0_dp
+          !F4_dm9 = dm9 * F4 * 105.0_dp
+          !do i = 1 , 3
+          !  do j = 1 , 3
+          !    do k = 1 , 3
+          !      do l = 1 , 3
+          !        T4%abcd  (i,j,k,l) = rij(i) * rij(j) * rij(k) * rij(l) * F4_dm9
+          !        if ( k.eq.l ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(i)*rij(j) * F3_dm7
+          !        if ( j.eq.l ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(i)*rij(k) * F3_dm7
+          !        if ( j.eq.k ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(i)*rij(l) * F3_dm7
+          !        if ( i.eq.l ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(j)*rij(k) * F3_dm7
+          !        if ( i.eq.k ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(j)*rij(l) * F3_dm7
+          !        if ( i.eq.j ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(k)*rij(l) * F3_dm7
+          !        if ( i .eq. j .and. k .eq. l ) T4%abcd  (i,j,k,l) = T4%abcd  (i,j,k,l) + F2_dm5
+          !        if ( i .eq. k .and. j .eq. l ) T4%abcd  (i,j,k,l) = T4%abcd  (i,j,k,l) + F2_dm5
+          !        if ( i .eq. l .and. j .eq. k ) T4%abcd  (i,j,k,l) = T4%abcd  (i,j,k,l) + F2_dm5
+          !      enddo
+          !    enddo
+          !  enddo
+          !enddo
           ! =========================================
           !   multipole interaction tensor rank = 5  
           !   nb of components = 243 => reduced = ?
           ! =========================================
-          T5%abcde = 0.0_dp
-          F5_dm11 = dm11 * F5 * 945.0_dp
-          do i = 1 , 3
-            do j = 1 , 3
-              do k = 1 , 3
-                do l = 1 , 3
-                  do m = 1 , 3
-                  T5%abcde  (i,j,k,l,m) = rij(i) * rij(j) * rij(k) * rij(l) * rij(m) * F5_dm11
-                  if ( l.eq.m ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(i)*rij(j)*rij(k) * F4_dm9
-                  if ( k.eq.m ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(i)*rij(j)*rij(l) * F4_dm9
-                  if ( k.eq.l ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(i)*rij(j)*rij(m) * F4_dm9
-                  if ( j.eq.m ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(i)*rij(k)*rij(l) * F4_dm9
-                  if ( j.eq.l ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(i)*rij(k)*rij(m) * F4_dm9
-                  if ( j.eq.k ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(i)*rij(l)*rij(m) * F4_dm9
-                  if ( i.eq.m ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(j)*rij(k)*rij(l) * F4_dm9
-                  if ( i.eq.l ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(j)*rij(k)*rij(m) * F4_dm9
-                  if ( i.eq.k ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(j)*rij(l)*rij(m) * F4_dm9
-                  if ( i.eq.j ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(k)*rij(l)*rij(m) * F4_dm9
-                  if ( i .eq. j .and. k .eq. l ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(m) * F3_dm7
-                  if ( i .eq. j .and. l .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(k) * F3_dm7
-                  if ( i .eq. j .and. k .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(l) * F3_dm7
-                  if ( i .eq. k .and. j .eq. l ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(m) * F3_dm7
-                  if ( i .eq. k .and. l .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(j) * F3_dm7
-                  if ( i .eq. k .and. j .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(l) * F3_dm7
-                  if ( i .eq. l .and. k .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(j) * F3_dm7
-                  if ( i .eq. l .and. j .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(k) * F3_dm7
-                  if ( j .eq. k .and. l .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(i) * F3_dm7
-                  if ( j .eq. k .and. i .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(l) * F3_dm7
-                  if ( j .eq. k .and. i .eq. l ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(m) * F3_dm7
-                  if ( j .eq. l .and. k .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(i) * F3_dm7
-                  if ( j .eq. l .and. i .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(k) * F3_dm7
-                  if ( k .eq. l .and. j .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(i) * F3_dm7
-                  if ( k .eq. l .and. i .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(j) * F3_dm7
-                  enddo
-                enddo
-              enddo
-            enddo
-          enddo
+          !T5%abcde = 0.0_dp
+          !F5_dm11 = dm11 * F5 * 945.0_dp
+          !do i = 1 , 3
+          !  do j = 1 , 3
+          !    do k = 1 , 3
+          !      do l = 1 , 3
+          !        do m = 1 , 3
+          !        T5%abcde  (i,j,k,l,m) = rij(i) * rij(j) * rij(k) * rij(l) * rij(m) * F5_dm11
+          !        if ( l.eq.m ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(i)*rij(j)*rij(k) * F4_dm9
+          !        if ( k.eq.m ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(i)*rij(j)*rij(l) * F4_dm9
+          !        if ( k.eq.l ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(i)*rij(j)*rij(m) * F4_dm9
+          !        if ( j.eq.m ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(i)*rij(k)*rij(l) * F4_dm9
+          !        if ( j.eq.l ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(i)*rij(k)*rij(m) * F4_dm9
+          !        if ( j.eq.k ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(i)*rij(l)*rij(m) * F4_dm9
+          !        if ( i.eq.m ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(j)*rij(k)*rij(l) * F4_dm9
+          !        if ( i.eq.l ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(j)*rij(k)*rij(m) * F4_dm9
+          !        if ( i.eq.k ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(j)*rij(l)*rij(m) * F4_dm9
+          !        if ( i.eq.j ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(k)*rij(l)*rij(m) * F4_dm9
+          !        if ( i .eq. j .and. k .eq. l ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(m) * F3_dm7
+          !        if ( i .eq. j .and. l .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(k) * F3_dm7
+          !        if ( i .eq. j .and. k .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(l) * F3_dm7
+          !        if ( i .eq. k .and. j .eq. l ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(m) * F3_dm7
+          !        if ( i .eq. k .and. l .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(j) * F3_dm7
+          !        if ( i .eq. k .and. j .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(l) * F3_dm7
+          !        if ( i .eq. l .and. k .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(j) * F3_dm7
+          !        if ( i .eq. l .and. j .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(k) * F3_dm7
+          !        if ( j .eq. k .and. l .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(i) * F3_dm7
+          !        if ( j .eq. k .and. i .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(l) * F3_dm7
+          !        if ( j .eq. k .and. i .eq. l ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(m) * F3_dm7
+          !        if ( j .eq. l .and. k .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(i) * F3_dm7
+          !        if ( j .eq. l .and. i .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(k) * F3_dm7
+          !        if ( k .eq. l .and. j .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(i) * F3_dm7
+          !        if ( k .eq. l .and. i .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(j) * F3_dm7
+          !        enddo
+          !      enddo
+          !    enddo
+          !  enddo
+          !enddo
 
 
 

@@ -1,5 +1,5 @@
 TITLE     PDB file created by CP2K version 2.5.1 (revision svn:13632)
-AUTHOR    filipe@charrue 2015-10-23 15:53:32
+AUTHOR    filipe@charrue 2015-10-24 01:10:17
 CRYST1   14.711   14.711   14.711  90.00  90.00  90.00
 ATOM      1 O     O1     1       0.024  14.703   1.737  0.00  0.00      O1   O
 ATOM      2 O     O2     1       0.077   0.020   8.661  0.00  0.00      O2   O
