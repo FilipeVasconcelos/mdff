@@ -2266,7 +2266,7 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
   USE constants,                ONLY :  piroot
   USE cell,                     ONLY :  kardir , dirkar
   USE io,                       ONLY :  stdout, ionode, ioprintnode, ioprint
-  USE tensors_rk,               ONLY :  tensor_rank0, tensor_rank1, tensor_rank2, tensor_rank3 
+  USE tensors_rk,               ONLY :  tensor_rank0, tensor_rank1, tensor_rank2, tensor_rank3 , tensor_rank4 , tensor_rank5
   USE dumb
  
  
@@ -2283,7 +2283,7 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
   logical       :: task ( : ) , damp_ind, do_efield , do_efg , do_forces , do_stress, store_interaction
 
   ! local 
-  integer       :: ia , ja , ita, jta, j1 , jb ,je , i , j , k, it1,it2 , ierr
+  integer       :: ia , ja , ita, jta, j1 , jb ,je , i , j , k, l , m , it1,it2 , ierr
   real(kind=dp) :: qi, qj , qij , u_damp 
   real(kind=dp) :: mui(3)
   real(kind=dp) :: muj(3)
@@ -2295,12 +2295,12 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
   real(kind=dp) :: rij(3)
   real(kind=dp) :: sij(3)
   real(kind=dp) :: fij(3)
-  real(kind=dp) :: d , d2 , d3  , d5
-  real(kind=dp) :: dm1 , dm3 , dm5 , dm7
-  real(kind=dp) :: F0 , F1 , F2 , F3
+  real(kind=dp) :: d , d2 , d3  , d5 , d7 , d9
+  real(kind=dp) :: dm1 , dm3 , dm5 , dm7 , dm9, dm11
+  real(kind=dp) :: F0 , F1 , F2 , F3 , F4 , F5
   real(kind=dp) :: F1d , F2d 
   real(kind=dp) :: F1d2 , F2d2 
-  real(kind=dp) :: alpha2 , alpha3 , alpha5 , alpha7 , expon 
+  real(kind=dp) :: alpha2 , alpha3 , alpha5 , alpha7 , alpha9 , expon 
   real(kind=dp), external :: errfc
   real(kind=dp), external :: errf
   real(kind=dp) :: fdamp , fdampdiff
@@ -2309,6 +2309,7 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
   real(kind=dp) :: expthole, Athole , arthole, arthole2 , arthole3 , twopiroot, erfra , ra
   real(kind=dp) :: ttt1, ttt2 
   real(kind=dp) , dimension (:) , allocatable :: tmp 
+  real(kind=dp) :: F1_dm3 , F1d_dm3 , F1d2_dm3 , F2_dm5 , F2d_dm5 , F2d2_dm5 , F3_dm7 , F4_dm9 , F5_dm11
   integer       :: cthole
   logical       :: ipol, jpol
   logical       :: ldamp 
@@ -2318,6 +2319,8 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
   TYPE ( tensor_rank1 ) :: T1
   TYPE ( tensor_rank2 ) :: T2
   TYPE ( tensor_rank3 ) :: T3
+  TYPE ( tensor_rank4 ) :: T4
+  TYPE ( tensor_rank5 ) :: T5
 
   charge_charge         = task(1)
   charge_dipole         = task(2)
@@ -2415,13 +2418,17 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
         d2  = rij(1) * rij(1) + rij(2) * rij(2) + rij(3) * rij(3)
         if ( d2 .gt. cutsq ) cycle
 
-          d   = SQRT ( d2 )
-          d3  = d2 * d
-          d5  = d3 * d2
-          dm1 = 1.0_dp / d
-          dm3 = dm1 / d2
-          dm5 = dm3 / d2
-          dm7 = dm5 / d2
+          d    = SQRT ( d2 )
+          d3   = d2 * d
+          d5   = d3 * d2
+          d7   = d5 * d2
+          d9   = d7 * d2
+          dm1  = 1.0_dp / d
+          dm3  = dm1 / d2
+          dm5  = dm3 / d2
+          dm7  = dm5 / d2
+          dm9  = dm7 / d2
+          dm11 = dm9 / d2
 
           ! damping function 
           ldamp = .false.
@@ -2442,6 +2449,8 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
           F1    = F0 + 2.0_dp * alphaES * d  * expon
           F2    = F1 + 4.0_dp * alpha3  * d3 * expon / 3.0_dp
           F3    = F2 + 8.0_dp * alpha5  * d5 * expon / 15.0_dp
+          F4    = F3 + 16.0_dp * alpha7  * d7 * expon / 105.0_dp
+          F5    = F4 + 32.0_dp * alpha9  * d9 * expon / 945.0_dp
 
           ! damping if no damping fdamp == 1 and fdampdiff == 0
           F1d   = - fdamp + 1.0d0 
@@ -2660,6 +2669,93 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
           T3%abc(3,2,2) = T3%abc(2,2,3)
           T3%abc(3,3,2) = T3%abc(2,3,3) 
           T3%abc(3,2,3) = T3%abc(2,3,3) 
+
+          ! =========================================
+          !   multipole interaction tensor rank = 3  
+          !   nb of components = 27 => reduced = 10
+          ! =========================================
+          F3_dm7 = F3 * dm7 * 15.0_dp
+          T3%abc = 0.0_dp
+          do i = 1 , 3
+            do j = 1 , 3
+              do k = 1 , 3
+                T3%abc (i,j,k)               = - rij(i) * rij(j) * rij(k) * F3_dm7
+                if ( i.eq.j ) T3%abc (i,j,k) = T3%abc (i,j,k) + rij(k) * F2_dm5
+                if ( i.eq.k ) T3%abc (i,j,k) = T3%abc (i,j,k) + rij(j) * F2_dm5
+                if ( j.eq.k ) T3%abc (i,j,k) = T3%abc (i,j,k) + rij(i) * F2_dm5
+              enddo
+            enddo
+          enddo
+
+
+          ! =========================================
+          !   multipole interaction tensor rank = 4  
+          !   nb of components = 81 => reduced = 15
+          ! =========================================
+          T4%abcd = 0.0_dp
+          F4_dm9 = dm9 * F4 * 105.0_dp
+          do i = 1 , 3
+            do j = 1 , 3
+              do k = 1 , 3
+                do l = 1 , 3
+                  T4%abcd  (i,j,k,l) = rij(i) * rij(j) * rij(k) * rij(l) * F4_dm9
+                  if ( k.eq.l ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(i)*rij(j) * F3_dm7
+                  if ( j.eq.l ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(i)*rij(k) * F3_dm7
+                  if ( j.eq.k ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(i)*rij(l) * F3_dm7
+                  if ( i.eq.l ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(j)*rij(k) * F3_dm7
+                  if ( i.eq.k ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(j)*rij(l) * F3_dm7
+                  if ( i.eq.j ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(k)*rij(l) * F3_dm7
+                  if ( i .eq. j .and. k .eq. l ) T4%abcd  (i,j,k,l) = T4%abcd  (i,j,k,l) + F2_dm5
+                  if ( i .eq. k .and. j .eq. l ) T4%abcd  (i,j,k,l) = T4%abcd  (i,j,k,l) + F2_dm5
+                  if ( i .eq. l .and. j .eq. k ) T4%abcd  (i,j,k,l) = T4%abcd  (i,j,k,l) + F2_dm5
+                enddo
+              enddo
+            enddo
+          enddo
+          ! =========================================
+          !   multipole interaction tensor rank = 5  
+          !   nb of components = 243 => reduced = ?
+          ! =========================================
+          T5%abcde = 0.0_dp
+          F5_dm11 = dm11 * F5 * 945.0_dp
+          do i = 1 , 3
+            do j = 1 , 3
+              do k = 1 , 3
+                do l = 1 , 3
+                  do m = 1 , 3
+                  T5%abcde  (i,j,k,l,m) = rij(i) * rij(j) * rij(k) * rij(l) * rij(m) * F5_dm11
+                  if ( l.eq.m ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(i)*rij(j)*rij(k) * F4_dm9
+                  if ( k.eq.m ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(i)*rij(j)*rij(l) * F4_dm9
+                  if ( k.eq.l ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(i)*rij(j)*rij(m) * F4_dm9
+                  if ( j.eq.m ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(i)*rij(k)*rij(l) * F4_dm9
+                  if ( j.eq.l ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(i)*rij(k)*rij(m) * F4_dm9
+                  if ( j.eq.k ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(i)*rij(l)*rij(m) * F4_dm9
+                  if ( i.eq.m ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(j)*rij(k)*rij(l) * F4_dm9
+                  if ( i.eq.l ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(j)*rij(k)*rij(m) * F4_dm9
+                  if ( i.eq.k ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(j)*rij(l)*rij(m) * F4_dm9
+                  if ( i.eq.j ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(k)*rij(l)*rij(m) * F4_dm9
+                  if ( i .eq. j .and. k .eq. l ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(m) * F3_dm7
+                  if ( i .eq. j .and. l .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(k) * F3_dm7
+                  if ( i .eq. j .and. k .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(l) * F3_dm7
+                  if ( i .eq. k .and. j .eq. l ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(m) * F3_dm7
+                  if ( i .eq. k .and. l .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(j) * F3_dm7
+                  if ( i .eq. k .and. j .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(l) * F3_dm7
+                  if ( i .eq. l .and. k .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(j) * F3_dm7
+                  if ( i .eq. l .and. j .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(k) * F3_dm7
+                  if ( j .eq. k .and. l .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(i) * F3_dm7
+                  if ( j .eq. k .and. i .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(l) * F3_dm7
+                  if ( j .eq. k .and. i .eq. l ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(m) * F3_dm7
+                  if ( j .eq. l .and. k .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(i) * F3_dm7
+                  if ( j .eq. l .and. i .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(k) * F3_dm7
+                  if ( k .eq. l .and. j .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(i) * F3_dm7
+                  if ( k .eq. l .and. i .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(j) * F3_dm7
+                  enddo
+                enddo
+              enddo
+            enddo
+          enddo
+
+
 
         ! note :
         ! les termes faisant intervenir les tenseurs d'interactions : T0,T2,T4...
