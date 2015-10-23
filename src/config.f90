@@ -66,9 +66,10 @@ MODULE config
 
   real(kind=dp), dimension(:)      , allocatable :: massia             !< mass on ion 
   real(kind=dp), dimension(:)      , allocatable :: qia                !< charge on ion 
-  real(kind=dp), dimension(:)      , allocatable :: quadia             !< quadrupolar moment on ion
+  real(kind=dp), dimension(:)      , allocatable :: quadia_nuc         !< quadrupolar moment on ion
   real(kind=dp), dimension(:,:)    , allocatable :: dipia              !< dipole on ion 
   real(kind=dp), dimension(:,:)    , allocatable :: dipia_wfc          !< induced dipole on ion from Wannier centers
+  real(kind=dp), dimension(:,:,:)  , allocatable :: quadia             !< quadrupole on ion 
   real(kind=dp), dimension(:,:,:)  , allocatable :: poldipia           !< dipole polarisability on ion
   real(kind=dp), dimension(:,:,:,:), allocatable :: polquadia          !< quadrupole polarisability on ion
   real(kind=dp), dimension(:,:,:)  , allocatable :: invpoldipia           !< polarisation on ion
@@ -274,7 +275,7 @@ SUBROUTINE config_alloc
   allocate( verlet_coul%list ( natm * vnlmax ) , verlet_coul%point (  natm + 1 ) )
   allocate( qia ( natm ) )
   allocate( massia ( natm ) )
-  allocate( quadia ( natm ) )
+  allocate( quadia_nuc ( natm ) )
   allocate( dipia ( 3 , natm ) )
   allocate( dipia_wfc ( 3 , natm ) )
   allocate( poldipia ( 3 , 3  , natm ) )
@@ -306,10 +307,11 @@ SUBROUTINE config_alloc
   verlet_vdw%point   = 0
   verlet_coul%list   = 0
   verlet_coul%point  = 0
-  qia       = 0.0_dp
-  massia    = 1.0_dp
-  quadia    = 0.0_dp
-  dipia   = 0.0_dp
+  qia        = 0.0_dp
+  massia     = 1.0_dp
+  quadia_nuc = 0.0_dp
+  dipia      = 0.0_dp
+  quadia     = 0.0_dp
   dipia_wfc = 0.0_dp
   poldipia     = 0.0_dp
   polquadia     = 0.0_dp

@@ -162,9 +162,9 @@ END SUBROUTINE read_pos
 SUBROUTINE typeinfo_init
 
   USE constants, ONLY :  dp
-  USE config ,  ONLY :  atype , atypei , itype , natmi , natm , ntype , massia, dipia , qia , &
-                        quadia , ipolar , poldipia , polquadia, invpoldipia 
-  USE field ,   ONLY :  mass, qch , quad_nuc , dip , quad , lpolar , poldip
+  USE config ,  ONLY :  atype , atypei , itype , natmi , natm , ntype , massia, dipia , quadia, qia , &
+                        quadia_nuc , ipolar , poldipia , polquadia, invpoldipia 
+  USE field ,   ONLY :  mass, qch , quad_nuc , dip , quad , lpolar , poldip , polquad
   USE io,       ONLY :  stdout
   
   implicit none

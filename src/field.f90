@@ -1759,13 +1759,13 @@ END SUBROUTINE finalize_coulomb
 !> \param[in]  f_ind_ext 
 !> \param[out] mu_ind induced electric dipole define at ion position 
 !> \note
-!! polia is the polarizability tensor
+!! poldipia is the polarizability tensor
 !! algorithm by kO ( Kirill Okhotnikov ) afternoon of 28/10/14 
 ! ******************************************************************************
 SUBROUTINE induced_moment_inner ( f_ind_ext , mu_ind )
 
   USE constants,        ONLY : coul_unit
-  USE config,           ONLY : natm , itype , atypei, ntype , polia, invpolia, atype 
+  USE config,           ONLY : natm , itype , atypei, ntype , poldipia, invpoldipia, atype 
   USE io,               ONLY : stdout, ioprintnode
 
   implicit none
@@ -1805,7 +1805,7 @@ SUBROUTINE induced_moment_inner ( f_ind_ext , mu_ind )
   ! note on units :
   ! everything are in internal units :
   !    [ f_ind_ext ] = e / A^2
-  !    [ polia  ] = A ^ 3
+  !    [ poldipia  ] = A ^ 3
   !    [ mu_ind ] = e A 
   ! ---------------------------------------------------------------
   mu_ind = 0.0_dp
@@ -1814,7 +1814,7 @@ SUBROUTINE induced_moment_inner ( f_ind_ext , mu_ind )
     if ( .not. lpolar ( it ) ) cycle
     do alpha = 1 , 3 
       do beta = 1 , 3  
-        mu_ind ( alpha , ia ) = mu_ind ( alpha , ia ) + polia ( alpha , beta  , ia ) * ( f_ind_total ( beta , ia ) )
+        mu_ind ( alpha , ia ) = mu_ind ( alpha , ia ) + poldipia ( alpha , beta  , ia ) * ( f_ind_total ( beta , ia ) )
       enddo
     enddo
   enddo
@@ -1841,7 +1841,7 @@ SUBROUTINE induced_moment_inner ( f_ind_ext , mu_ind )
     ! note on units :
     ! everything are in internal units :
     !    [ f_ind_ext ] = e / A^2
-    !    [ polia  ] = A ^ 3
+    !    [ poldipia  ] = A ^ 3
     !    [ mu_ind ] = e A 
     ! ---------------------------------------------------------------
     mu_ind = 0.0_dp
@@ -1850,7 +1850,7 @@ SUBROUTINE induced_moment_inner ( f_ind_ext , mu_ind )
       if ( .not. lpolar ( it ) ) cycle
       do alpha = 1 , 3 
         do beta = 1 , 3  
-          mu_ind ( alpha , ia ) = mu_ind ( alpha , ia ) + polia ( alpha , beta  , ia ) * ( f_ind_total ( beta , ia ) )
+          mu_ind ( alpha , ia ) = mu_ind ( alpha , ia ) + poldipia ( alpha , beta  , ia ) * ( f_ind_total ( beta , ia ) )
         enddo
       enddo
     enddo
@@ -1884,12 +1884,12 @@ END SUBROUTINE induced_moment_inner
 !> \param[in]  Efield electric field vector define at ion position 
 !> \param[out] mu_ind induced electric dipole define at ion position 
 !> \note
-!! polia is the polarizability tensor
+!! poldipia is the polarizability tensor
 ! ******************************************************************************
 SUBROUTINE induced_moment ( Efield , mu_ind )
 
   USE constants,        ONLY : coul_unit
-  USE config,           ONLY : natm , itype , atypei, ntype , polia, atype 
+  USE config,           ONLY : natm , itype , atypei, ntype , poldipia, atype 
   USE io,               ONLY : stdout
 
   implicit none
@@ -1909,7 +1909,7 @@ SUBROUTINE induced_moment ( Efield , mu_ind )
   ! note on units :
   ! everything are in internal units :
   !    [ Efield ] = e / A^2
-  !    [ polia  ] = A ^ 3
+  !    [ poldipia  ] = A ^ 3
   !    [ mu_ind ] = e A 
   ! ---------------------------------------------------------------
   mu_ind = 0.0_dp
@@ -1918,7 +1918,7 @@ SUBROUTINE induced_moment ( Efield , mu_ind )
     if ( .not. lpolar ( it ) ) cycle
     do alpha = 1 , 3 
       do beta = 1 , 3  
-        mu_ind ( alpha , ia ) = mu_ind ( alpha , ia ) + polia ( alpha , beta , ia ) * Efield ( beta , ia )  
+        mu_ind ( alpha , ia ) = mu_ind ( alpha , ia ) + poldipia ( alpha , beta , ia ) * Efield ( beta , ia )  
       enddo
     enddo
   enddo
@@ -2199,7 +2199,7 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
                               task , damp_ind , do_efield , do_efg , do_forces , do_stress )
 
   USE control,                  ONLY :  lvnlist
-  USE config,                   ONLY :  natm, ntype,simu_cell, qia, rx ,ry ,rz ,itype , atom_dec, verlet_coul , atype, polia, ipolar
+  USE config,                   ONLY :  natm, ntype,simu_cell, qia, rx ,ry ,rz ,itype , atom_dec, verlet_coul , atype, poldipia, ipolar
   USE constants,                ONLY :  piroot
   USE cell,                     ONLY :  kardir , dirkar
   USE io,                       ONLY :  stdout, ionode, ioprintnode, ioprint
@@ -2301,7 +2301,7 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
     qi  = qia(ia)
     mui = mu ( : , ia )
     ipol = ipolar(ia)
-    ialpha = polia(1,1,ia)
+    ialpha = poldipia(1,1,ia)
 
     dip_i = any ( mui .ne. 0.0d0 ) 
 
@@ -2330,7 +2330,7 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
         sij = rij - nint ( rij )
         rij=0.0_dp
         jpol = ipolar(ja)
-        jalpha = polia(1,1,ja)
+        jalpha = poldipia(1,1,ja)
         
         do j=1, 3
           do k=1, 3
@@ -2782,8 +2782,8 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
           ita= itype(ia)
           if ( pair_thole(ia) .ne. 0 ) then 
             jta= itype(pair_thole(ia))
-            ialpha = polia(1,1,ia)
-            jalpha = polia(1,1,pair_thole(ia))
+            ialpha = poldipia(1,1,ia)
+            jalpha = poldipia(1,1,pair_thole(ia))
             Athole = ( ialpha * jalpha ) ** onesixth 
             write(stdout, '(a,2i5,a5,a,a2,a,f8.5,a,f8.5,a,f8.5,a,f8.5,a)')  'pair : ',ia,pair_thole(ia), atype(ia) ,' -- ', atype(pair_thole(ia)),&
                   'distance = ',pair_thole_distance(ia),' catastrophe at distance = ',4.0_dp**onesixth*Athole,' thole param = ',thole_param(ita,jta) ,'(',thole_param(ita,jta)*Athole,')'
@@ -3420,7 +3420,7 @@ SUBROUTINE moment_from_pola_scf ( mu_ind , didpim )
 
   USE io,               ONLY :  ionode , stdout , ioprintnode
   USE constants,        ONLY :  coul_unit
-  USE config,           ONLY :  natm , atype , fx , fy , fz , ntype , dipia , qia , ntypemax, polia , invpolia , itype 
+  USE config,           ONLY :  natm , atype , fx , fy , fz , ntype , dipia , qia , ntypemax, poldipia , invpoldipia , itype 
   USE control,          ONLY :  longrange , calc
   USE thermodynamic,    ONLY :  u_pol, u_coul
   USE time,             ONLY :  time_moment_from_pola
@@ -3559,7 +3559,7 @@ SUBROUTINE moment_from_pola_scf ( mu_ind , didpim )
     !      u_pol = 1/ ( 2 alpha  ) * | mu_ind | ^ 2
     ! ---------------------------------------------------------------
     ! note on units :
-    !    [ polia  ] = A ^ 3
+    !    [ poldipia  ] = A ^ 3
     !    [ mu_ind ] = e A 
     !    [ u_pol  ] = e^2 / A ! electrostatic internal energy  
     ! ===============================================================
@@ -3567,7 +3567,7 @@ SUBROUTINE moment_from_pola_scf ( mu_ind , didpim )
     do ia = 1 , natm
       do alpha = 1 , 3
         do beta = 1 , 3
-          u_pol = u_pol + mu_ind ( alpha , ia ) * invpolia ( alpha , beta , ia ) * mu_ind ( beta , ia )
+          u_pol = u_pol + mu_ind ( alpha , ia ) * invpoldipia ( alpha , beta , ia ) * mu_ind ( beta , ia )
         enddo
       enddo
     enddo
@@ -3675,7 +3675,7 @@ SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , didpim )
 
   USE io,               ONLY :  ionode , stdout , ioprintnode
   USE constants,        ONLY :  coul_unit
-  USE config,           ONLY :  natm , atype , fx , fy , fz , ntype , dipia , qia , ntypemax, polia , invpolia , itype 
+  USE config,           ONLY :  natm , atype , fx , fy , fz , ntype , dipia , qia , ntypemax, poldipia , invpoldipia , itype 
   USE control,          ONLY :  longrange , calc
   USE thermodynamic,    ONLY :  u_pol, u_coul
   USE time,             ONLY :  time_moment_from_pola
@@ -3817,7 +3817,7 @@ SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , didpim )
     !      u_pol = 1/ ( 2 alpha  ) * | mu_ind | ^ 2
     ! ---------------------------------------------------------------
     ! note on units :
-    !    [ polia  ] = A ^ 3
+    !    [ poldipia  ] = A ^ 3
     !    [ mu_ind ] = e A 
     !    [ u_pol  ] = e^2 / A ! electrostatic internal energy  
     ! ===============================================================
@@ -3825,7 +3825,7 @@ SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , didpim )
     do ia = 1 , natm
       do alpha = 1 , 3
         do beta = 1 , 3
-          u_pol = u_pol + mu_ind ( alpha , ia ) * invpolia ( alpha , beta , ia ) * mu_ind ( beta , ia )
+          u_pol = u_pol + mu_ind ( alpha , ia ) * invpoldipia ( alpha , beta , ia ) * mu_ind ( beta , ia )
         enddo
       enddo
     enddo
@@ -3862,7 +3862,7 @@ SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , didpim )
       do alpha = 1 , 3
         it = itype( ia)
         if ( .not. lpolar( it ) ) cycle
-        f_ind(alpha,ia) = Efield(alpha,ia) - mu_ind(alpha,ia)/polia(alpha,alpha,ia)
+        f_ind(alpha,ia) = Efield(alpha,ia) - mu_ind(alpha,ia)/poldipia(alpha,alpha,ia)
       enddo
     enddo
 !kO
@@ -3947,7 +3947,7 @@ SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , didpim )
 
   USE io,               ONLY :  ionode , stdout , ioprintnode
   USE constants,        ONLY :  coul_unit
-  USE config,           ONLY :  natm , atype , fx , fy , fz , ntype , dipia , qia , ntypemax, polia , invpolia , itype 
+  USE config,           ONLY :  natm , atype , fx , fy , fz , ntype , dipia , qia , ntypemax, poldipia , invpoldipia , itype 
   USE control,          ONLY :  longrange , calc
   USE thermodynamic,    ONLY :  u_pol, u_coul
   USE time,             ONLY :  time_moment_from_pola
@@ -4101,7 +4101,7 @@ SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , didpim )
     !      u_pol = 1/ ( 2 alpha  ) * | mu_ind | ^ 2
     ! ---------------------------------------------------------------
     ! note on units :
-    !    [ polia  ] = A ^ 3
+    !    [ poldipia  ] = A ^ 3
     !    [ mu_ind ] = e A 
     !    [ u_pol  ] = e^2 / A ! electrostatic internal energy  
     ! ===============================================================
@@ -4109,7 +4109,7 @@ SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , didpim )
     do ia = 1 , natm
       do alpha = 1 , 3
         do beta = 1 , 3
-          u_pol = u_pol + mu_ind ( alpha , ia ) * invpolia ( alpha , beta , ia ) * mu_ind ( beta , ia )
+          u_pol = u_pol + mu_ind ( alpha , ia ) * invpoldipia ( alpha , beta , ia ) * mu_ind ( beta , ia )
         enddo
       enddo
     enddo
@@ -4145,7 +4145,7 @@ SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , didpim )
       do alpha = 1 , 3
         it = itype( ia)
         if ( .not. lpolar( it ) ) cycle
-        f_ind(alpha,ia) = Efield(alpha,ia) - mu_ind(alpha,ia)/polia(alpha,alpha,ia)
+        f_ind(alpha,ia) = Efield(alpha,ia) - mu_ind(alpha,ia)/poldipia(alpha,alpha,ia)
       enddo
     enddo
 
@@ -4155,7 +4155,7 @@ SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , didpim )
         do alpha = 1 , 3
           it = itype( ia)
           if ( .not. lpolar( it ) ) cycle
-          g_ind(alpha,ia) = gmin(alpha,ia) + mu_ind(alpha,ia)/polia(alpha,alpha,ia)
+          g_ind(alpha,ia) = gmin(alpha,ia) + mu_ind(alpha,ia)/poldipia(alpha,alpha,ia)
         enddo
       enddo
       mu_ind = mu_prev + dmin
@@ -4248,7 +4248,7 @@ SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , didpim )
 
   USE io,               ONLY :  ionode , stdout , ioprintnode
   USE constants,        ONLY :  coul_unit
-  USE config,           ONLY :  natm , atype , fx , fy , fz , ntype , dipia , qia , ntypemax, polia , invpolia , itype 
+  USE config,           ONLY :  natm , atype , fx , fy , fz , ntype , dipia , qia , ntypemax, poldipia , invpoldipia , itype 
   USE control,          ONLY :  longrange , calc
   USE thermodynamic,    ONLY :  u_pol, u_coul
   USE time,             ONLY :  time_moment_from_pola
@@ -4424,7 +4424,7 @@ SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , didpim )
     !      u_pol = 1/ ( 2 alpha  ) * | mu_ind | ^ 2
     ! ---------------------------------------------------------------
     ! note on units :
-    !    [ polia  ] = A ^ 3
+    !    [ poldipia  ] = A ^ 3
     !    [ mu_ind ] = e A 
     !    [ u_pol  ] = e^2 / A ! electrostatic internal energy  
     ! ===============================================================
@@ -4432,7 +4432,7 @@ SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , didpim )
     do ia = 1 , natm
       do alpha = 1 , 3
         do beta = 1 , 3
-          u_pol = u_pol + mu_ind ( alpha , ia ) * invpolia ( alpha , beta , ia ) * mu_ind ( beta , ia )
+          u_pol = u_pol + mu_ind ( alpha , ia ) * invpoldipia ( alpha , beta , ia ) * mu_ind ( beta , ia )
         enddo
       enddo
     enddo
@@ -4459,7 +4459,7 @@ SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , didpim )
       do alpha = 1 , 3
         it = itype( ia)
         if ( .not. lpolar( it ) ) cycle
-        f_ind(alpha,ia) = Efield(alpha,ia) - mu_ind(alpha,ia)/polia(alpha,alpha,ia)
+        f_ind(alpha,ia) = Efield(alpha,ia) - mu_ind(alpha,ia)/poldipia(alpha,alpha,ia)
       enddo
     enddo
 
@@ -4472,7 +4472,7 @@ SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , didpim )
           do alpha = 1 , 3
             it = itype( ia)
             if ( .not. lpolar( it ) ) cycle
-            g_ind(alpha,ia) = gmin(alpha,ia) + mu_ind(alpha,ia)/polia(alpha,alpha,ia)
+            g_ind(alpha,ia) = gmin(alpha,ia) + mu_ind(alpha,ia)/poldipia(alpha,alpha,ia)
           enddo
         enddo
         mu_ind = mu_prev + dmin
@@ -4567,7 +4567,7 @@ SUBROUTINE moment_from_pola_scf_kO_v4 ( mu_ind , didpim )
 
   USE io,               ONLY :  ionode , stdout , ioprintnode
   USE constants,        ONLY :  coul_unit
-  USE config,           ONLY :  natm , atype , fx , fy , fz , ntype , dipia , qia , ntypemax, polia , invpolia , itype 
+  USE config,           ONLY :  natm , atype , fx , fy , fz , ntype , dipia , qia , ntypemax, poldipia , invpoldipia , itype 
   USE control,          ONLY :  longrange , calc
   USE thermodynamic,    ONLY :  u_pol, u_coul
   USE time,             ONLY :  time_moment_from_pola
@@ -4707,7 +4707,7 @@ SUBROUTINE moment_from_pola_scf_kO_v4 ( mu_ind , didpim )
     !      u_pol = 1/ ( 2 alpha  ) * | mu_ind | ^ 2
     ! ---------------------------------------------------------------
     ! note on units :
-    !    [ polia  ] = A ^ 3
+    !    [ poldipia  ] = A ^ 3
     !    [ mu_ind ] = e A 
     !    [ u_pol  ] = e^2 / A ! electrostatic internal energy  
     ! ===============================================================
@@ -4715,7 +4715,7 @@ SUBROUTINE moment_from_pola_scf_kO_v4 ( mu_ind , didpim )
     do ia = 1 , natm
       do alpha = 1 , 3
         do beta = 1 , 3
-          u_pol = u_pol + mu_ind ( alpha , ia ) * invpolia ( alpha , beta , ia ) * mu_ind ( beta , ia )
+          u_pol = u_pol + mu_ind ( alpha , ia ) * invpoldipia ( alpha , beta , ia ) * mu_ind ( beta , ia )
         enddo
       enddo
     enddo
@@ -4743,9 +4743,9 @@ SUBROUTINE moment_from_pola_scf_kO_v4 ( mu_ind , didpim )
         if ( .not. lpolar( it ) ) cycle
       
         if ( algo_moment_from_pola .eq. 'scf_kO_v4_1' ) then 
-          F_ind(alpha,ia) = mu_ind(alpha,ia)/polia(alpha,alpha,ia) - Efield_ind(alpha,ia)  !!! find_min_ex
+          F_ind(alpha,ia) = mu_ind(alpha,ia)/poldipia(alpha,alpha,ia) - Efield_ind(alpha,ia)  !!! find_min_ex
         else
-          F_ind(alpha,ia) = mu_ind(alpha,ia)/polia(alpha,alpha,ia) - Efield(alpha,ia)       !!! find_min
+          F_ind(alpha,ia) = mu_ind(alpha,ia)/poldipia(alpha,alpha,ia) - Efield(alpha,ia)       !!! find_min
         endif
       enddo
     enddo
@@ -4764,7 +4764,7 @@ SUBROUTINE moment_from_pola_scf_kO_v4 ( mu_ind , didpim )
       do alpha = 1 , 3
         it = itype( ia)
         if ( .not. lpolar( it ) ) cycle
-        Efield (alpha,ia) = - F_ind(alpha,ia) + mu_ind(alpha,ia)/polia(alpha,alpha,ia)    !!! for both 
+        Efield (alpha,ia) = - F_ind(alpha,ia) + mu_ind(alpha,ia)/poldipia(alpha,alpha,ia)    !!! for both 
       enddo
     enddo
 
@@ -5322,7 +5322,7 @@ END SUBROUTINE extrapolate_dipole_poly
 ! as the zero order is taking juste 
 SUBROUTINE extrapolate_dipole_aspc ( mu_ind , Efield , key ) 
 
-  USE config,           ONLY :  natm, invpolia
+  USE config,           ONLY :  natm, invpoldipia
   USE md,               ONLY :  itime 
   USE io,               ONLY :  stdout, ioprintnode
 
@@ -5567,7 +5567,7 @@ END SUBROUTINE
 
 SUBROUTINE get_rmsd_mu ( rmsd , g0 , mu ) 
 
-  USE config,           ONLY :  natm , itype , polia
+  USE config,           ONLY :  natm , itype , poldipia
 
   implicit none 
   ! global
@@ -5585,8 +5585,8 @@ SUBROUTINE get_rmsd_mu ( rmsd , g0 , mu )
     if ( .not. lpolar( it ) ) cycle
     npol = npol + 1
     do alpha = 1 , 3
-      if ( polia ( alpha , alpha  , ia ) .eq. 0.0_dp ) cycle
-      rmsd  = rmsd  +  ( mu ( alpha , ia ) / polia ( alpha , alpha , ia ) - g0 ( alpha , ia ) ) ** 2.0_dp
+      if ( poldipia ( alpha , alpha  , ia ) .eq. 0.0_dp ) cycle
+      rmsd  = rmsd  +  ( mu ( alpha , ia ) / poldipia ( alpha , alpha , ia ) - g0 ( alpha , ia ) ) ** 2.0_dp
     enddo
   enddo
   rmsd = SQRT ( rmsd /  REAL(npol,kind=dp) )

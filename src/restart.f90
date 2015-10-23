@@ -129,7 +129,7 @@ SUBROUTINE restart_init ( MDFF )
   READ( kunit_RESTART   ) verlet_coul%cut
   READ( kunit_RESTART   ) qia
   READ( kunit_RESTART   ) massia
-  READ( kunit_RESTART   ) quadia
+  READ( kunit_RESTART   ) quadia_nuc
   READ( kunit_RESTART   ) dipia
   READ( kunit_RESTART   ) poldipia
   READ( kunit_RESTART   ) polquadia
@@ -326,7 +326,7 @@ SUBROUTINE write_RESTART
   WRITE( kunit_RESTART   ) verlet_coul%cut
   WRITE( kunit_RESTART   ) qia
   WRITE( kunit_RESTART   ) massia
-  WRITE( kunit_RESTART   ) quadia
+  WRITE( kunit_RESTART   ) quadia_nuc
   WRITE( kunit_RESTART   ) dipia
   WRITE( kunit_RESTART   ) poldipia
   WRITE( kunit_RESTART   ) polquadia
