@@ -1,0 +1,16 @@
+        ! ===========================================
+        !               polar on O
+        lpolar(1)=.true.
+        pol(1,1,1)=1.59150
+        pol(1,2,2)=1.59150
+        pol(1,3,3)=1.59150
+        ! O - O
+        ldip_damping(1,1,1) = .true.
+        pol_damp_b(1,1,1) = 4.74888
+        pol_damp_c(1,1,1) = 2.227
+        pol_damp_k(1,1,1) = 4
+        ! O - Si
+        ldip_damping(1,1,2) = .true.
+        pol_damp_b(1,1,2) = 3.66480
+        pol_damp_c(1,1,2) = 1.44589
+        pol_damp_k(1,1,2) = 4

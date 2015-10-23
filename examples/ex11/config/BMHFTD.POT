@@ -1,0 +1,13 @@
+        ! BMHFTD potential
+        !O-O               eV               hartree
+        Abmhftd(1,1)  = 7902.1862      !    290.4
+        Bbmhftd(1,1)  = 4.54668
+        Cbmhftd(1,1)  = 13.145548      !    0.48309
+        Dbmhftd(1,1)  = 71.279951      !    2.61949
+        BDbmhftd(1,1) = 2.64562 
+        !O-Si               eV           hartree
+        Abmhftd(1,2)  = 1311.5888      ! 48.2
+        Bbmhftd(1,2)  = 3.18568
+        Cbmhftd(1,2)  = 0.0
+        Dbmhftd(1,2)  = 0.0
+        BDbmhftd(1,2) = 0.0

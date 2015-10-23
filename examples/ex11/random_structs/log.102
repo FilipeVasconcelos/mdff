@@ -1,0 +1,74 @@
+                            \\|//                            
+                           -(o o)-                           
+========================oOO==(_)==OOo========================
+          ____    ____  ______   ________  ________  
+         |_   \  /   _||_   _ `.|_   __  ||_   __  | 
+           |   \/   |    | | `. \ | |_ \_|  | |_ \_| 
+           | |\  /| |    | |  | | |  _|     |  _|    
+          _| |_\/_| |_  _| |_.' /_| |_     _| |_     
+         |_____||_____||______.'|_____|   |_____|    
+
+=============================================================
+
+MOLECULAR DYNAMICS ...for fun                 
+mdff.r  (build Oct 20 2015 16:39:45) parallel                                   
+filipe.manuel.vasconcelos@gmail.com  
+Running on  :    1 nodes                  
+by user     : filipe                        
+host        : charrue
+date        : 2015/10/22    19:16:56
+
+CONTROL MODULE ... WELCOME
+
+calc        =  stochio                                                     
+lnmlj       =  F
+lbmhft      =  F
+lbmhftd     =  F
+lmorse      =  F
+lcoulomb    =  F
+lsurf       =  F
+lvnlist     =  T
+lstatic     =  F
+lreduced    =  F
+lrestart    =  F
+periodic table generated
+stochio from oxydes input
+=============================================================
+
+STOCHIO MODULE ... WELCOME
+Composition :
+   B2O3    Na2O    Al2O3   SiO2    P2O5    CaO     GeO2    La2O3   SrO     MoO3 
+    0.00    0.00    0.00  100.00    0.00    0.00    0.00    0.00    0.00    0.00
+number of oxydes :     1
+ntypes           :     2
+target found :   34
+#elem     nsites
+   O         68
+   Si        34
+total       102
+ 
+#stoichiometry is EXACT
+#oxyde    current(%)      wanted(%)           nb of oxyde (mole)
+SiO2       100.000       100.000                  34
+ 
+           Z     valence    mass    element       nb ele
+    8    6  15.999          O       68
+   14    4  28.086          Si      34
+
+NBANDS        =          272
+density       =       2.8000 g/cm^3 
+total mass    =    2042.8832 [a.m]  
+volume        =    1211.5310 A 
+cell param. a =      10.6605 A 
+=============================================================
+
+TIME MODULE ... WELCOME
+
+-------------------------------------------------------------
+                           TOTAL :  cpu time     0.00
+
+-------------------------------------------------------------
+main subroutines:
+-------------------------------------------------------------
+=============================================================
+

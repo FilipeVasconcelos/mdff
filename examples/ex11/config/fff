@@ -1,0 +1,39 @@
+#!/bin/bash
+
+for i in {1..10}
+do
+
+if [ -f average ]
+then
+	cp average old
+	n=`head -n 1 old | awk '{print $2+1}'`
+	#echo "Found average file "
+else
+	echo "First data starting from scratch (no average file)"
+	n=1
+
+fi
+
+echo "#" > current
+for omega in 0.50 0.60 0.70 0.725 0.75 0.775 0.80 0.825 0.85 0.90 1.0
+do
+	#echo "calc $omega"
+	sed -e "s/__OMEGA__/$omega/g" ccc.F > control.F
+	mdff.x control.F > log
+	echo "$omega `grep "TOTAL :  cpu time" log | awk '{print $NF}'` " >> current
+done
+
+if [ ! -f average ]
+then
+	echo "# $n" >  average 
+	tail -n+2 current >> average
+
+else
+	echo "averaging on $n data"
+	echo "# $n" >  tmp 
+	echo "# $n" >  average 
+	tail -n+2 old | awk -v nn=$n '{print $1,$2*(nn-1)}' >> tmp 
+	paste tmp current | tail -n+2 | awk -v nn=$n '{print $1,($2+$4)/nn}'   >> average
+fi	
+
+done
