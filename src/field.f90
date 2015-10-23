@@ -602,7 +602,7 @@ SUBROUTINE field_print_info ( kunit , quiet )
     WRITE ( kunit ,'(a)')               'static dipoles: '
     lseparator(kunit) 
     do it = 1 , ntype
-      WRITE ( kunit ,'(a,a,a,3f10.5)')  'mu',atypei(it),'      = ',dip(1,it),dip(2,it),dip(3,it)
+      WRITE ( kunit ,'(a,a,a,3e12.3)')  'mu',atypei(it),'      = ',dip(1,it),dip(2,it),dip(3,it)
     enddo
     WRITE ( kunit ,'(a,3e12.3)')        'sum of dipoles          = ',mu_sum(1),mu_sum(2),mu_sum(3)
     blankline(kunit)
