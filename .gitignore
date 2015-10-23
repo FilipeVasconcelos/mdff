@@ -12,10 +12,12 @@
 *.so
 *.dylib
 *.dll
+*.pyc
 
 # Fortran module files
 *.mod
 *.F90
+fort.*
 
 # Compiled Static libraries
 *.lai
@@ -27,6 +29,22 @@
 *.exe
 *.out
 *.app
+*.x
+
+#MDFF files
+CONTFF*
+OSZIFF*
+TRAJFF*
+DOSFF*
+DOSKFF*
+EIGFF*
+VECTFF*
+
+#pictures/pdf/latex output
+*.aux
+*.pdf
+*.toc
+*.eps
 
 
 
