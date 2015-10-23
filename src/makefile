@@ -36,6 +36,8 @@ INSTALL_DIR=/home/filipe/dev/github/mdff/bin
 $(info instalation dir: : $(shell readlink -f $(INSTALL_DIR)) )
 # List of executable to be built within the package
 EXE= mdff.x 
+BRANCH=$(shell git branch | grep "*" | awk '{print $$2}' )
+$(info branch :  $(BRANCH))
 
 # =====================================================
 #                FORTRAN COMPILER FLAGS
@@ -182,7 +184,7 @@ OBJ= constants.o io.o dumb.o tt_damp.o tensors.o oxyde.o mpi_mdff.o control.o st
 # ================================================================
 CPPDEFS = -DHOST=\"$(HOST)\"   \
           -Dtiming             \
-          -DSVNREV=\"$(SVNREV)\" \
+          -DBRANCH=\"$(BRANCH)\" \
           -DMPI
 #         -Ddebug 
 #	  -DGFORTRAN \
@@ -223,7 +225,7 @@ veryclean: clean
 
 install: all
 	cp $(EXE) $(INSTALL_DIR)
-	cp $(EXE) $(INSTALL_DIR)/mdff.x
+	cp $(EXE) $(INSTALL_DIR)/mdff_$(BRANCH).x
 
 tar :
 	@if test -f mdff.tar.gz ; then /bin/rm mdff.tar.gz ; fi

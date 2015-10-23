@@ -198,6 +198,7 @@ MODULE field
 
   real(kind=dp), dimension ( : , : )     , allocatable :: ef_t         !< electric field vector
   real(kind=dp), dimension ( : , : )     , allocatable :: mu_t         !< total dipole 
+  real(kind=dp), dimension ( : , : , : ) , allocatable :: theta_t      !< total quadrupole
   real(kind=dp), dimension ( : , : , : ) , allocatable :: efg_t        !< electric field gradient tensor
   real(kind=dp), dimension ( : , : , : ) , allocatable :: dipia_ind_t  !< induced dipole on ion at (t)
 
@@ -1200,6 +1201,7 @@ SUBROUTINE engforce_driver
   ! local 
   real(kind=dp) , allocatable :: ef ( : , : ) , efg ( : , : , : ) 
   real(kind=dp) , allocatable :: mu ( : , : )
+  real(kind=dp) , allocatable :: theta ( : , : , : )
   logical :: didpim
 
   ! test purpose only
@@ -1223,29 +1225,32 @@ SUBROUTINE engforce_driver
   ! =================================
   if ( lcoulomb ) then
 
-     allocate( ef(3,natm) , efg(3,3,natm) , mu(3,natm) )     
+     allocate( ef(3,natm) , efg(3,3,natm) , mu(3,natm) , theta(3,3,natm))     
      allocate ( pair_thole ( natm ) ) 
      allocate ( pair_thole_distance ( natm ) ) 
      pair_thole = 0
      pair_thole_distance = 0.0_dp
-     mu=0.0d0
+     mu=0.0_dp
+     theta=0.0_dp
 
      ! this subroutine set the total dipole moment from :
      ! static          (if given in control file dip TODO: read from DIPFF )
      ! wannier centers (if given in POSFF )
      ! induced         (if polar are set in control file)
-     CALL get_dipole_moments ( mu , didpim )
+     CALL get_dipole_moments ( mu , theta , didpim )
  
      ! ====================================
      ! get all the electrostatic quantities
      ! ====================================
-     CALL multipole_ES ( ef , efg , mu , task_coul , damp_ind=.true. , &
+     CALL multipole_ES ( ef , efg , mu , theta , task_coul , damp_ind=.true. , &
                          do_efield=doefield , do_efg=doefg , do_forces=.true. , &
                          do_stress=.true. , do_rec=.true. , do_dir=.true. , do_strucfact =.false. , use_ckrskr = didpim )
-     mu_t  = mu
-     ef_t  = ef
-     efg_t = efg
-     deallocate( ef , efg , mu )      
+     mu_t     = mu
+     theta_t  = theta
+     ef_t     = ef
+     efg_t    = efg
+
+     deallocate( ef , efg , mu , theta )      
      deallocate ( pair_thole )  
      deallocate ( pair_thole_distance )  
    
@@ -1818,7 +1823,7 @@ END SUBROUTINE finalize_coulomb
 !! poldipia is the polarizability tensor
 !! algorithm by kO ( Kirill Okhotnikov ) afternoon of 28/10/14 
 ! ******************************************************************************
-SUBROUTINE induced_moment_inner ( f_ind_ext , mu_ind )
+SUBROUTINE induced_moment_inner ( f_ind_ext , mu_ind , theta_ind )
 
   USE constants,        ONLY : coul_unit
   USE config,           ONLY : natm , itype , atypei, ntype , poldipia, invpoldipia, atype 
@@ -1829,6 +1834,7 @@ SUBROUTINE induced_moment_inner ( f_ind_ext , mu_ind )
   ! global
   real(kind=dp) , intent ( in  ) :: f_ind_ext ( 3 , natm ) 
   real(kind=dp) , intent ( out ) :: mu_ind    ( 3 , natm ) 
+  real(kind=dp) , intent ( out ) :: theta_ind    ( 3 , 3 , natm ) 
 
   ! local
   real(kind=dp), dimension(:,:), allocatable :: mu_prev , f_ind_total , zerovec , f_ind
@@ -1884,7 +1890,7 @@ SUBROUTINE induced_moment_inner ( f_ind_ext , mu_ind )
     ! only real part is calculated in the inner loop
     alphaES = 0.001_dp
     ! note that do_strucfact , use_ckrskr has no effect as do_rec=.false.
-    CALL  multipole_ES ( f_ind , efg_dummy, mu_ind , task_ind , &
+    CALL  multipole_ES ( f_ind , efg_dummy, mu_ind , theta_ind , task_ind , &
                          damp_ind = .false. , do_efield=.true. , do_efg = .false. , &
                          do_forces = .false. , do_stress =.false. , do_rec=.false., do_dir=.true. , &
                          do_strucfact=.false. , use_ckrskr=.false. ) 
@@ -1995,7 +2001,7 @@ END SUBROUTINE induced_moment
 !> \todo
 !! make it more condensed 
 ! ******************************************************************************
-SUBROUTINE multipole_ES ( ef , efg , mu , task , damp_ind , &
+SUBROUTINE multipole_ES ( ef , efg , mu , theta , task , damp_ind , &
                           do_efield , do_efg , do_forces , do_stress , do_rec , do_dir , do_strucfact , use_ckrskr )
 
   USE control,          ONLY :  lsurf
@@ -2013,6 +2019,7 @@ SUBROUTINE multipole_ES ( ef , efg , mu , task , damp_ind , &
   real(kind=dp)     :: ef     ( : , : )
   real(kind=dp)     :: efg    ( : , : , : )
   real(kind=dp)     :: mu     ( : , : )
+  real(kind=dp)     :: theta  ( : , : , : )
   logical           :: task   ( : )
   logical           :: damp_ind , do_efield , do_efg, do_forces, do_stress, do_rec , do_dir , do_strucfact , use_ckrskr 
 
@@ -2091,7 +2098,7 @@ SUBROUTINE multipole_ES ( ef , efg , mu , task , damp_ind , &
 #ifdef MPI
     ttt1 = MPI_WTIME(ierr)
 #endif
-      CALL multipole_ES_dir ( u_dir , ef_dir, efg_dir, fx_dir , fy_dir , fz_dir , tau_dir , mu , task , damp_ind , & 
+      CALL multipole_ES_dir ( u_dir , ef_dir, efg_dir, fx_dir , fy_dir , fz_dir , tau_dir , mu , theta , task , damp_ind , & 
                               do_efield , do_efg , do_forces , do_stress )
 #ifdef MPI
     ttt2 = MPI_WTIME(ierr)
@@ -2107,7 +2114,7 @@ SUBROUTINE multipole_ES ( ef , efg , mu , task , damp_ind , &
 #ifdef MPI
     ttt1 = MPI_WTIME(ierr)
 #endif
-    CALL multipole_ES_rec ( u_rec , ef_rec , efg_rec , fx_rec , fy_rec , fz_rec , tau_rec , mu , task , & 
+    CALL multipole_ES_rec ( u_rec , ef_rec , efg_rec , fx_rec , fy_rec , fz_rec , tau_rec , mu , theta , task , & 
                             do_efield , do_efg , do_forces , do_stress , do_strucfact , use_ckrskr )
 #ifdef MPI
     ttt2 = MPI_WTIME(ierr)
@@ -2251,7 +2258,7 @@ do ia = 1 , natm
 END SUBROUTINE multipole_ES
 
 
-SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_dir , tau_dir , mu , & 
+SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_dir , tau_dir , mu , theta , & 
                               task , damp_ind , do_efield , do_efg , do_forces , do_stress )
 
   USE control,                  ONLY :  lvnlist
@@ -2269,9 +2276,10 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
   real(kind=dp) :: u_dir 
   real(kind=dp) :: ef_dir   ( : , : )
   real(kind=dp) :: efg_dir  ( : , : , : )
-  real(kind=dp) :: fx_dir ( : ) , fy_dir ( : ) , fz_dir ( : )
-  real(kind=dp) :: tau_dir ( : , : )
-  real(kind=dp) :: mu     ( : , :  )
+  real(kind=dp) :: fx_dir   ( : ) , fy_dir ( : ) , fz_dir ( : )
+  real(kind=dp) :: tau_dir  ( : , : )
+  real(kind=dp) :: mu       ( : , :  )
+  real(kind=dp) :: theta    ( : , :  , : )
   logical       :: task ( : ) , damp_ind, do_efield , do_efg , do_forces , do_stress, store_interaction
 
   ! local 
@@ -2279,6 +2287,8 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
   real(kind=dp) :: qi, qj , qij , u_damp 
   real(kind=dp) :: mui(3)
   real(kind=dp) :: muj(3)
+  real(kind=dp) :: thetai(3,3)
+  real(kind=dp) :: thetaj(3,3)
   real(kind=dp) :: cutsq
   real(kind=dp) :: rxi  , ryi  , rzi
   real(kind=dp) :: rxj  , ryj  , rzj
@@ -2290,7 +2300,7 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
   real(kind=dp) :: F0 , F1 , F2 , F3
   real(kind=dp) :: F1d , F2d 
   real(kind=dp) :: F1d2 , F2d2 
-  real(kind=dp) :: alpha2 , alpha3 , alpha5 , expon 
+  real(kind=dp) :: alpha2 , alpha3 , alpha5 , alpha7 , expon 
   real(kind=dp), external :: errfc
   real(kind=dp), external :: errf
   real(kind=dp) :: fdamp , fdampdiff
@@ -2302,20 +2312,27 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
   integer       :: cthole
   logical       :: ipol, jpol
   logical       :: ldamp 
-  logical       :: charge_charge, charge_dipole, dipole_dipole, dip_i , dip_j
+  logical       :: charge_charge, charge_dipole, dipole_dipole, charge_quadrupole, dipole_quadrupole, quadrupole_quadrupole , dip_i  , dip_j
   
   TYPE ( tensor_rank0 ) :: T0
   TYPE ( tensor_rank1 ) :: T1
   TYPE ( tensor_rank2 ) :: T2
   TYPE ( tensor_rank3 ) :: T3
 
-  charge_charge = task(1)
-  charge_dipole = task(2)
-  dipole_dipole = task(3)
+  charge_charge         = task(1)
+  charge_dipole         = task(2)
+  dipole_dipole         = task(3)
+  charge_quadrupole     = task(4)
+  dipole_quadrupole     = task(5)
+  quadrupole_quadrupole = task(6)
+
+  !  few constants
   cutsq  = verlet_coul%cut * verlet_coul%cut !cutlongrange
   alpha2 = alphaES * alphaES
   alpha3 = alpha2  * alphaES
   alpha5 = alpha3  * alpha2
+  alpha7 = alpha5  * alpha2
+
   onesixth = 1.0_dp / 6.0_dp
   twopiroot = 2.0_dp / piroot
   twothird  = onesixth * 4.0_dp  
@@ -2356,6 +2373,7 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
     rzi = rz(ia)
     qi  = qia(ia)
     mui = mu ( : , ia )
+    thetai = theta ( : , : , ia )
     ipol = ipolar(ia)
     ialpha = poldipia(1,1,ia)
 
@@ -2375,6 +2393,7 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
         jta  = itype(ja)
         qj   = qia(ja)
         muj = mu ( : , ja )
+        thetaj = theta ( : , : , ja )
         dip_j = any ( muj .ne. 0.0d0 ) 
         qij  = qi * qj
         rxj  = rx(ja)
@@ -2856,7 +2875,7 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
 
 END SUBROUTINE multipole_ES_dir 
 
-SUBROUTINE multipole_ES_rec ( u_rec , ef_rec, efg_rec , fx_rec , fy_rec , fz_rec , tau_rec , mu , task , &
+SUBROUTINE multipole_ES_rec ( u_rec , ef_rec, efg_rec , fx_rec , fy_rec , fz_rec , tau_rec , mu , theta , task , &
                               do_efield , do_efg , do_forces , do_stress , do_strucfact , use_ckrskr )
 
   USE constants,                ONLY :  imag, tpi
@@ -2874,6 +2893,7 @@ SUBROUTINE multipole_ES_rec ( u_rec , ef_rec, efg_rec , fx_rec , fy_rec , fz_rec
   real(kind=dp) :: fx_rec  (:) , fy_rec (:) , fz_rec (:)
   real(kind=dp) :: tau_rec (:,:)
   real(kind=dp) :: mu      (:,:)
+  real(kind=dp) :: theta   (:,:,:)
   logical       :: task(:), do_efield , do_efg , do_forces , do_stress , do_strucfact , use_ckrskr 
 
   ! local
@@ -3472,11 +3492,11 @@ END SUBROUTINE engforce_morse_pbc
 !! The stopping criteria is governed by conv_tol_ind
 !
 ! ******************************************************************************
-SUBROUTINE moment_from_pola_scf ( mu_ind , didpim ) 
+SUBROUTINE moment_from_pola_scf ( mu_ind , theta_ind , didpim ) 
 
   USE io,               ONLY :  ionode , stdout , ioprintnode
   USE constants,        ONLY :  coul_unit
-  USE config,           ONLY :  natm , atype , fx , fy , fz , ntype , dipia , qia , ntypemax, poldipia , invpoldipia , itype 
+  USE config,           ONLY :  natm , atype , fx , fy , fz , ntype , dipia , quadia , qia , ntypemax, poldipia , invpoldipia , itype 
   USE control,          ONLY :  longrange , calc
   USE thermodynamic,    ONLY :  u_pol, u_coul
   USE time,             ONLY :  time_moment_from_pola
@@ -3486,6 +3506,7 @@ SUBROUTINE moment_from_pola_scf ( mu_ind , didpim )
 
   ! global
   real(kind=dp) , intent (out) :: mu_ind ( : , : ) 
+  real(kind=dp) , intent (out) :: theta_ind ( : , : , : ) 
 
   ! local
   integer :: ia , iscf , it , npol, alpha, beta, t 
@@ -3554,7 +3575,7 @@ SUBROUTINE moment_from_pola_scf ( mu_ind , didpim )
   ! ==============================================
   ! do_strucfact = .true. : recalculate exp(ikr) for new r
   ! use_ckrskr  = .true. : use the store exp(ikr) 
-  CALL  multipole_ES ( Efield_stat , EfieldG_stat , dipia , task_static , & 
+  CALL  multipole_ES ( Efield_stat , EfieldG_stat , dipia , quadia , task_static , & 
                        damp_ind =.true. , do_efield=.true. , do_efg=.false. , & 
                        do_forces=.false. , do_stress = .false. , do_rec = .true. , do_dir = .true. , do_strucfact= .true. , use_ckrskr=.true. ) 
   u_coul_stat = u_coul 
@@ -3635,7 +3656,7 @@ SUBROUTINE moment_from_pola_scf ( mu_ind , didpim )
     !  calculate Efield_ind from mu_ind
     !  Efield_ind out , mu_ind in ==> charges and static dipoles = 0
     ! ==========================================================
-    CALL  multipole_ES ( Efield_ind , EfieldG_ind , mu_ind , task_ind , & 
+    CALL  multipole_ES ( Efield_ind , EfieldG_ind , mu_ind , theta_ind , task_ind , & 
                          damp_ind = .false. , do_efield=.true. , do_efg = .false. , &
                          do_forces = .false. , do_stress =.false. , do_rec=.true., do_dir=.true. , do_strucfact=.false. , use_ckrskr = .true. )
 
@@ -3731,11 +3752,11 @@ END SUBROUTINE moment_from_pola_scf
 !! The stopping criteria is governed by conv_tol_ind
 !
 ! ******************************************************************************
-SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , didpim ) 
+SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , theta_ind , didpim )
 
   USE io,               ONLY :  ionode , stdout , ioprintnode
   USE constants,        ONLY :  coul_unit
-  USE config,           ONLY :  natm , atype , fx , fy , fz , ntype , dipia , qia , ntypemax, poldipia , invpoldipia , itype 
+  USE config,           ONLY :  natm , atype , fx , fy , fz , ntype , dipia , quadia , qia , ntypemax, poldipia , invpoldipia , itype 
   USE control,          ONLY :  longrange , calc
   USE thermodynamic,    ONLY :  u_pol, u_coul
   USE time,             ONLY :  time_moment_from_pola
@@ -3745,6 +3766,7 @@ SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , didpim )
 
   ! global
   real(kind=dp) , intent (out) :: mu_ind ( : , : ) 
+  real(kind=dp) , intent (out) :: theta_ind ( :, : , : ) 
 
   ! local
   integer :: ia , iscf , it , npol, alpha, beta, t , kkkk
@@ -3755,6 +3777,8 @@ SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , didpim )
   real(kind=dp) :: qia_tmp ( natm )  , qch_tmp ( ntypemax ) , conv_tol_ind_ , rmsd_gmin
   logical       :: task_static (3), task_ind(3), ldip
   real(kind=dp) , dimension (:,:) , allocatable :: f_ind , dmu_ind, zerovec
+  real(kind=dp) , dimension (:,:,:) , allocatable :: dtheta_ind 
+
 #ifdef MPI
   dectime
 #endif
@@ -3782,7 +3806,7 @@ SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , didpim )
   endif
   didpim = linduced
 
-  allocate ( f_ind ( 3 , natm ) , dmu_ind( 3 , natm ) , zerovec(3,natm) ) 
+  allocate ( f_ind ( 3 , natm ) , dmu_ind( 3 , natm ) , zerovec(3,natm) , dtheta_ind(3,3,natm) ) 
   f_ind = 0.0_dp
   dmu_ind = 0.0_dp
   zerovec = 0.0_dp
@@ -3810,7 +3834,7 @@ SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , didpim )
   ! ==============================================
   !          main ewald subroutine 
   ! ==============================================
-  CALL  multipole_ES ( Efield_stat , EfieldG_stat , dipia , task_static , & 
+  CALL  multipole_ES ( Efield_stat , EfieldG_stat , dipia , quadia , task_static , & 
                        damp_ind =.true. , do_efield=.true. , do_efg=.false. , & 
                        do_forces=.false. , do_stress = .false. , do_rec = .true. , do_dir = .true. , do_strucfact= .true. , use_ckrskr=.true. ) 
   u_coul_stat = u_coul 
@@ -3854,7 +3878,7 @@ SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , didpim )
     ! ==========================================================
     if ( iscf.ne.1 .or. ( calc .ne. 'md' .and.  calc .ne. 'opt' ) ) then
 
-          CALL induced_moment_inner ( f_ind , dmu_ind )         
+          CALL induced_moment_inner ( f_ind , dmu_ind , dtheta_ind )         
           mu_ind = mu_ind + dmu_ind
     else
 
@@ -3896,7 +3920,7 @@ SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , didpim )
     !  calculate Efield_ind from mu_ind
     !  Efield_ind out , mu_ind in ==> charges and static dipoles = 0
     ! ==========================================================
-    CALL  multipole_ES ( Efield_ind , EfieldG_ind , mu_ind , task_ind , & 
+    CALL  multipole_ES ( Efield_ind , EfieldG_ind , mu_ind , theta_ind , task_ind , & 
                          damp_ind = .false. , do_efield=.true. , do_efg = .false. , &
                          do_forces = .false. , do_stress =.false. , do_rec=.true., do_dir=.true. , do_strucfact=.false. , use_ckrskr = .true. )
 
@@ -3984,7 +4008,7 @@ SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , didpim )
 #endif
 
 
-  deallocate ( f_ind , dmu_ind , zerovec) 
+  deallocate ( f_ind , dmu_ind , zerovec ,dtheta_ind) 
 
 #ifdef MPI
   stotime
@@ -4008,11 +4032,11 @@ END SUBROUTINE moment_from_pola_scf_kO_v1
 !! The stopping criteria is governed by conv_tol_ind
 !
 ! ******************************************************************************
-SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , didpim ) 
+SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , theta_ind , didpim ) 
 
   USE io,               ONLY :  ionode , stdout , ioprintnode
   USE constants,        ONLY :  coul_unit
-  USE config,           ONLY :  natm , atype , fx , fy , fz , ntype , dipia , qia , ntypemax, poldipia , invpoldipia , itype 
+  USE config,           ONLY :  natm , atype , fx , fy , fz , ntype , dipia , quadia , qia , ntypemax, poldipia , invpoldipia , itype 
   USE control,          ONLY :  longrange , calc
   USE thermodynamic,    ONLY :  u_pol, u_coul
   USE time,             ONLY :  time_moment_from_pola
@@ -4022,6 +4046,7 @@ SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , didpim )
 
   ! global
   real(kind=dp) , intent (out) :: mu_ind ( : , : ) 
+  real(kind=dp) , intent (out) :: theta_ind ( : , : , : ) 
 
   ! local
   integer :: ia , iscf , it , npol, alpha, beta, t , kkkk
@@ -4032,6 +4057,7 @@ SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , didpim )
   real(kind=dp) :: qia_tmp ( natm )  , qch_tmp ( ntypemax ) , conv_tol_ind_ , rmsd_gmin
   logical       :: task_static (3), task_ind(3), ldip 
   real(kind=dp) , dimension (:,:) , allocatable :: f_ind , dmu_ind, f_ind_prev , gmin , mu_prev, dmin, zerovec, g_ind
+  real(kind=dp) , dimension (:,:,:) , allocatable :: dtheta_ind
 #ifdef MPI
   dectime
 #endif
@@ -4061,6 +4087,7 @@ SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , didpim )
   didpim = linduced
 
   allocate ( f_ind ( 3 , natm ) , dmu_ind( 3 , natm )  , f_ind_prev( 3 ,natm ) , gmin( 3 , natm ) , mu_prev( 3 , natm ) , dmin(3,natm) , zerovec(3,natm) , g_ind(3,natm ) ) 
+  allocate ( dtheta_ind (3,3,natm) )
   f_ind = 0.0_dp
   dmu_ind = 0.0_dp
   f_ind_prev = 0.0_dp 
@@ -4093,7 +4120,7 @@ SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , didpim )
   ! ==============================================
   !          main ewald subroutine 
   ! ==============================================
-  CALL  multipole_ES ( Efield_stat , EfieldG_stat , dipia , task_static , & 
+  CALL  multipole_ES ( Efield_stat , EfieldG_stat , dipia , quadia , task_static , & 
                        damp_ind =.true. , do_efield=.true. , do_efg=.false. , & 
                        do_forces=.false. , do_stress = .false. , do_rec = .true. , do_dir = .true. , do_strucfact= .true. , use_ckrskr=.true. ) 
   u_coul_stat = u_coul 
@@ -4138,10 +4165,10 @@ SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , didpim )
     if ( iscf.ne.1 .or. ( calc .ne. 'md' .and.  calc .ne. 'opt' ) ) then
 
         if ( iscf .le. 2 ) then
-          CALL induced_moment_inner ( f_ind , dmu_ind )         
+          CALL induced_moment_inner ( f_ind , dmu_ind , dtheta_ind )         
           mu_ind = mu_ind + dmu_ind
         else
-          CALL induced_moment_inner ( gmin , dmu_ind  )          
+          CALL induced_moment_inner ( gmin , dmu_ind  , dtheta_ind )          
           mu_ind = mu_ind + dmu_ind
         endif
 
@@ -4185,7 +4212,7 @@ SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , didpim )
     !  calculate Efield_ind from mu_ind
     !  Efield_ind out , mu_ind in ==> charges and static dipoles = 0
     ! ==========================================================
-    CALL  multipole_ES ( Efield_ind , EfieldG_ind , mu_ind , task_ind , & 
+    CALL  multipole_ES ( Efield_ind , EfieldG_ind , mu_ind , theta_ind , task_ind , & 
                          damp_ind = .false. , do_efield=.true. , do_efg = .false. , &
                          do_forces = .false. , do_stress =.false. , do_rec=.true., do_dir=.true. , do_strucfact=.false. , use_ckrskr = .true. )
 
@@ -4312,11 +4339,11 @@ END SUBROUTINE moment_from_pola_scf_kO_v2
 !! The stopping criteria is governed by conv_tol_ind
 !
 ! ******************************************************************************
-SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , didpim ) 
+SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , theta_ind , didpim ) 
 
   USE io,               ONLY :  ionode , stdout , ioprintnode
   USE constants,        ONLY :  coul_unit
-  USE config,           ONLY :  natm , atype , fx , fy , fz , ntype , dipia , qia , ntypemax, poldipia , invpoldipia , itype 
+  USE config,           ONLY :  natm , atype , fx , fy , fz , ntype , dipia , quadia , qia , ntypemax, poldipia , invpoldipia , itype 
   USE control,          ONLY :  longrange , calc
   USE thermodynamic,    ONLY :  u_pol, u_coul
   USE time,             ONLY :  time_moment_from_pola
@@ -4326,6 +4353,7 @@ SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , didpim )
 
   ! global
   real(kind=dp) , intent (out) :: mu_ind ( : , : ) 
+  real(kind=dp) , intent (out) :: theta_ind ( : , : , : ) 
 
   ! local
   integer :: ia , iscf , it , npol, alpha, beta, t , kkkk
@@ -4397,7 +4425,7 @@ SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , didpim )
   ! ==============================================
   !          main ewald subroutine 
   ! ==============================================
-  CALL  multipole_ES ( Efield_stat , EfieldG_stat , dipia , task_static , & 
+  CALL  multipole_ES ( Efield_stat , EfieldG_stat , dipia , quadia , task_static , & 
                        damp_ind =.true. , do_efield=.true. , do_efg=.false. , & 
                        do_forces=.false. , do_stress = .false. , do_rec = .true. , do_dir = .true. , do_strucfact= .true. , use_ckrskr=.true. ) 
   u_coul_stat = u_coul 
@@ -4443,7 +4471,7 @@ SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , didpim )
 
   
 
-    CALL  multipole_ES ( Efield_ind , EfieldG_ind , mu_ind , task_ind , &
+    CALL  multipole_ES ( Efield_ind , EfieldG_ind , mu_ind , theta_ind , task_ind , &
                          damp_ind = .false. , do_efield=.true. , do_efg = .false. , &
                          do_forces = .false. , do_stress =.false. , do_rec=.true.,  &
                          do_dir=.true. , do_strucfact=.false. , use_ckrskr = .true. )
@@ -4455,7 +4483,7 @@ SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , didpim )
   else
 
     print*,'null dipoles or extrapolates : lfirst inner = .false. '
-    CALL  multipole_ES ( Efield_ind , EfieldG_ind , mu_ind , task_ind , & 
+    CALL  multipole_ES ( Efield_ind , EfieldG_ind , mu_ind , theta_ind , task_ind , & 
                          damp_ind = .false. , do_efield=.true. , do_efg = .false. , &
                          do_forces = .false. , do_stress =.false. , do_rec=.true.,  &
                          do_dir=.true. , do_strucfact=.false. , use_ckrskr = .true. )
@@ -4465,7 +4493,7 @@ SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , didpim )
       CALL extrapolate_dipole_aspc ( mu_ind , Efield_ind , key=2 ) ! corrector
     endif
     
-    CALL  multipole_ES ( Efield_ind , EfieldG_ind , mu_ind , task_ind , & 
+    CALL  multipole_ES ( Efield_ind , EfieldG_ind , mu_ind , theta_ind , task_ind , & 
                          damp_ind = .false. , do_efield=.true. , do_efg = .false. , &
                          do_forces = .false. , do_stress =.false. , do_rec=.true.,  &
                          do_dir=.true. , do_strucfact=.false. , use_ckrskr = .true. )
@@ -4511,7 +4539,7 @@ SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , didpim )
     !  calculate Efield_ind from mu_ind
     !  Efield_ind out , mu_ind in ==> charges and static dipoles = 0
     ! ==========================================================
-    CALL  multipole_ES ( Efield_ind , EfieldG_ind , mu_ind , task_ind , & 
+    CALL  multipole_ES ( Efield_ind , EfieldG_ind , mu_ind , theta_ind , task_ind , & 
                          damp_ind = .false. , do_efield=.true. , do_efg = .false. , &
                          do_forces = .false. , do_stress =.false. , do_rec=.true., do_dir=.true. , do_strucfact=.false. , use_ckrskr = .true. )
 
@@ -4635,11 +4663,11 @@ END SUBROUTINE moment_from_pola_scf_kO_v3
 !! The stopping criteria is governed by conv_tol_ind
 !
 ! ******************************************************************************
-SUBROUTINE moment_from_pola_scf_kO_v4 ( mu_ind , didpim ) 
+SUBROUTINE moment_from_pola_scf_kO_v4 ( mu_ind , theta_ind , didpim ) 
 
   USE io,               ONLY :  ionode , stdout , ioprintnode
   USE constants,        ONLY :  coul_unit
-  USE config,           ONLY :  natm , atype , fx , fy , fz , ntype , dipia , qia , ntypemax, poldipia , invpoldipia , itype 
+  USE config,           ONLY :  natm , atype , fx , fy , fz , ntype , dipia , quadia , qia , ntypemax, poldipia , invpoldipia , itype 
   USE control,          ONLY :  longrange , calc
   USE thermodynamic,    ONLY :  u_pol, u_coul
   USE time,             ONLY :  time_moment_from_pola
@@ -4649,6 +4677,7 @@ SUBROUTINE moment_from_pola_scf_kO_v4 ( mu_ind , didpim )
 
   ! global
   real(kind=dp) , intent (out) :: mu_ind ( : , : ) 
+  real(kind=dp) , intent (out) :: theta_ind ( : , : , : ) 
 
   ! local
   integer :: ia , iscf , it , npol, alpha, beta, t 
@@ -4724,7 +4753,7 @@ SUBROUTINE moment_from_pola_scf_kO_v4 ( mu_ind , didpim )
   ! ==============================================
   ! do_strucfact = .true. : recalculate exp(ikr) for new r
   ! use_ckrskr  = .true. : use the store exp(ikr) 
-  CALL  multipole_ES ( Efield_stat , EfieldG_stat , dipia , task_static , & 
+  CALL  multipole_ES ( Efield_stat , EfieldG_stat , dipia , quadia , task_static , & 
                        damp_ind =.true. , do_efield=.true. , do_efg=.false. , & 
                        do_forces=.false. , do_stress = .false. , do_rec = .true. , do_dir = .true. , do_strucfact= .true. , use_ckrskr=.true. ) 
   u_coul_stat = u_coul 
@@ -4797,7 +4826,7 @@ SUBROUTINE moment_from_pola_scf_kO_v4 ( mu_ind , didpim )
     !  calculate Efield_ind from mu_ind
     !  Efield_ind out , mu_ind in ==> charges and static dipoles = 0
     ! ==========================================================
-    CALL  multipole_ES ( Efield_ind , EfieldG_ind , mu_ind , task_ind , & 
+    CALL  multipole_ES ( Efield_ind , EfieldG_ind , mu_ind , theta_ind , task_ind , & 
                          damp_ind = .false. , do_efield=.true. , do_efg = .false. , &
                          do_forces = .false. , do_stress =.false. , do_rec=.true., do_dir=.true. , do_strucfact=.false. , use_ckrskr = .true. )
 
@@ -5139,26 +5168,29 @@ END SUBROUTINE moment_from_WFc
 !! February 2014
 !
 ! ******************************************************************************
-SUBROUTINE get_dipole_moments ( mu , didpim )
+SUBROUTINE get_dipole_moments ( mu , theta , didpim )
 
-  USE config,           ONLY : natm , ntype , dipia , dipia_wfc, fx,fy,fz, atype 
+  USE config,           ONLY : natm , ntype , dipia , quadia , dipia_wfc, fx,fy,fz, atype 
   USE io,               ONLY : ionode , stdout, kunit_DIPFF
 
   implicit none
 
   ! global
   real(kind=dp) , intent ( out ) :: mu (:,:)
+  real(kind=dp) , intent ( out ) :: theta (:,:,:)
 
   ! local
   integer :: it, ia ,ja 
   logical :: lwannier, lcata , didpim 
   real(kind=dp), dimension ( : )  , allocatable :: fx_save , fy_save, fz_save
   real(kind=dp), dimension ( : , :  ) , allocatable :: dipia_ind
+  real(kind=dp), dimension ( : , : , :  ) , allocatable :: quadia_ind
   integer :: ierr 
 
   ! save total force fx , fy, fz as they are overwritted by moment_from_pola
   allocate ( fx_save(natm)  , fy_save (natm) , fz_save(natm)  )
   allocate ( dipia_ind ( 3, natm)  )
+  allocate ( quadia_ind ( 3, 3, natm)  )
   fx_save = fx ; fy_save = fy ; fz_save = fz
   dipia_ind = 0.0d0
 
@@ -5166,16 +5198,16 @@ SUBROUTINE get_dipole_moments ( mu , didpim )
   !     induced moment from polarisation 
   ! ======================================
   if ( algo_moment_from_pola .eq. 'scf' ) then
-    CALL moment_from_pola_scf    ( dipia_ind , didpim )
+    CALL moment_from_pola_scf    ( dipia_ind , quadia_ind , didpim )
   else if ( algo_moment_from_pola .eq. 'scf_kO_v1' ) then
-    CALL moment_from_pola_scf_kO_v1 ( dipia_ind , didpim )
+    CALL moment_from_pola_scf_kO_v1 ( dipia_ind , quadia_ind , didpim )
   else if ( algo_moment_from_pola .eq. 'scf_kO_v2' ) then
-    CALL moment_from_pola_scf_kO_v2 ( dipia_ind , didpim )
+    CALL moment_from_pola_scf_kO_v2 ( dipia_ind , quadia_ind , didpim )
   else if ( algo_moment_from_pola .eq. 'scf_kO_v3' ) then
-    CALL moment_from_pola_scf_kO_v3 ( dipia_ind , didpim )
+    CALL moment_from_pola_scf_kO_v3 ( dipia_ind , quadia_ind , didpim )
   else if ( algo_moment_from_pola .eq. 'scf_kO_v4_1' .or. &
             algo_moment_from_pola .eq. 'scf_kO_v4_2'      ) then
-    CALL moment_from_pola_scf_kO_v4 ( dipia_ind , didpim )
+    CALL moment_from_pola_scf_kO_v4 ( dipia_ind , quadia_ind , didpim )
   endif
 
   ! =========================================================
@@ -5204,7 +5236,8 @@ SUBROUTINE get_dipole_moments ( mu , didpim )
           mu = dipia + dipia_ind
     endif
   else
-    mu = dipia + dipia_ind
+    mu    = dipia  + dipia_ind
+    theta = quadia + quadia_ind
   endif
 
   fx = fx_save
@@ -5213,6 +5246,7 @@ SUBROUTINE get_dipole_moments ( mu , didpim )
 
   deallocate ( fx_save, fy_save, fz_save ) 
   deallocate ( dipia_ind  )
+  deallocate ( quadia_ind  )
 
   ! =====================================
   ! check for POLARIZATION CATASTROPH

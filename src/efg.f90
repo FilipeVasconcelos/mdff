@@ -67,7 +67,8 @@ MODULE efg
   real(kind=dp)   , dimension(:,:)  , allocatable :: rgrid
 #endif
 
-  real(kind=dp)   , dimension(:,:)  , allocatable :: mu   !< electric dipoles
+  real(kind=dp)   , dimension(:,:)  , allocatable :: mu      !< electric dipoles
+  real(kind=dp)   , dimension(:,:,:), allocatable :: theta   !< electric quadrupoles 
 
   ! ===================
   !  efg tensors 
@@ -436,7 +437,8 @@ SUBROUTINE efgcalc
       ! =======================
       efg_t    = 0.0_dp
       mu = 0.0_dp
-      CALL get_dipole_moments ( mu , didpim )
+      theta = 0.0_dp
+      CALL get_dipole_moments ( mu , theta , didpim )
 
 !#if defined(debug_multipole) || defined(debug)
 !    allocate ( ef_tmp  ( natm , 3     ) )
@@ -2777,7 +2779,9 @@ SUBROUTINE efg_alloc
   allocate( efg_t    ( natm , 3 , 3 ) )
   allocate( efg_ia    ( natm , 3 , 3 ) )
   allocate( mu ( 3 , natm ) ) 
+  allocate( theta ( 3 , 3 , natm ) ) 
   mu = 0.0_dp
+  theta = 0.0_dp
   efg_t = 0.0_dp
   efg_ia = 0.0_dp
 
@@ -2808,6 +2812,7 @@ SUBROUTINE efg_dealloc
   deallocate( efg_t )
   deallocate( efg_ia    )
   deallocate( mu ) 
+  deallocate( theta ) 
 
   return
 
