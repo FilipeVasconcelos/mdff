@@ -46,7 +46,7 @@ VECTFF*
 *.toc
 *.eps
 
-
+doc/missfont.log
 doc/mdff.log
 examples/ex1/dl_poly/
 examples/ex1/mdff/
