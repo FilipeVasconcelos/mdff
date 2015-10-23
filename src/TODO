@@ -1,0 +1,35 @@
+===============================================================
+CHECK (optimise default value):
+
+* skindiff
+* nuandersen (thermostat)
+* Qmass (nosehoover thermostat)
+* Wmass (andersen barostat)
+* tauberendsen  
+
+===============================================================
+
+TODO when programming:
+
+* allocate local arrays
+* let some space in the operation at least ( var = var *...)
+ -> better to follow when using grep or any other script
+
+===============================================================
+
+TODO:  
+* add more comments ( in/out of subroutine and some comments)
+* memory usage ?
+* calculate average values (by block) remind use nequil                       
+* add WARNINGS for some tags where default value (???)
+* add default values for secondary tags
+* add some descriptions of gaussian distribution routine 
+ -> (basically some refs to be able to find bugs)
+* masses   
+* write some manual (with theory, ref teaching oriented)
+
+* remove the TODO list ;)                                        
+* create a general routine to check allowed string tags 
+
+===============================================================
+
