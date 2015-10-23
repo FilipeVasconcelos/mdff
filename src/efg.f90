@@ -336,7 +336,7 @@ SUBROUTINE efgcalc
                                         coord_format_allowed, atom_dec , read_traj_header , read_traj , config_dealloc, verlet_coul
   
   USE control,                  ONLY :  longrange , myrank , numprocs, lcoulomb , itraj_format , trajff_data , lvnlist, cutlongrange, iefgall_format
-  USE field,                    ONLY :  qch , dip , field_init , finalize_coulomb , lpolar , lwfc , & 
+  USE field,                    ONLY :  qch , dip , field_init , finalize_coulomb , ldip_polar , lwfc , & 
                                         rm_coul , &
                                         km_coul , alphaES , field_print_info , ldip_wfc, get_dipole_moments, ewald_param
   USE cell,                     ONLY :  lattice , dirkar , periodicbc, kardir

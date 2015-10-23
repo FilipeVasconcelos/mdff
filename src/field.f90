@@ -138,13 +138,13 @@ MODULE field
   real(kind=dp)    :: qch      ( ntypemax )            !< charges 
   !real(kind=dp)    :: quad_efg ( ntypemax )           !< quadrupolar moment
   !real(kind=dp)    :: dip      ( 3 , ntypemax )       !< dipoles 
-  !real(kind=dp)    :: pol      ( ntypemax , 3 , 3 )   !< polarizability if lpolar( it ) = .true. 
+  !real(kind=dp)    :: pol      ( ntypemax , 3 , 3 )   !< polarizability if ldip_polar( it ) = .true. 
 
   real(kind=dp)    :: dip      ( 3 , ntypemax )        !< dipoles 
   real(kind=dp)    :: quad     ( 3 , 3 , ntypemax )    !< quadrupoles
   real(kind=dp)    :: poldip   ( ntypemax , 3 , 3 )    !< dipole     polarizability if ldip_polar( it ) = .true. 
   !real(kind=dp)    :: poldip_iso ( ntypemax )         !< isotropic dipole polarizability if ldip_polar( it ) = .true.
-  real(kind=dp)    :: polquad  ( ntypemax , 3 , 3 , 3 )!< quadrupole polarizability if ldip_polar( it ) = .true.
+  real(kind=dp)    :: polquad  ( ntypemax , 3 , 3 , 3 )!< quadrupole polarizability if lquad_polar( it ) = .true.
   !real(kind=dp)    :: polquad_iso ( ntypemax )        !< isotropic quadrupole polarizability if ldip_polar( it ) = .true. 
   real(kind=dp)    :: quad_nuc ( ntypemax )            !< quadrupolar moment nucleus NMR
 
@@ -158,11 +158,14 @@ MODULE field
   integer          :: min_scf_pol_iter                               !< 
   integer          :: max_scf_pol_iter                               !< 
   integer          :: extrapolate_order                              !< 
-  logical          :: lpolar   ( ntypemax )                          !< induced moment from pola. Is this type of ion polarizable ?
+  logical          :: ldip_polar   ( ntypemax )                          !< induced moment from pola. Is this type of ion polarizable ?
   logical          :: ldip_damping ( ntypemax , ntypemax , ntypemax) !< dipole damping 
   real(kind=dp)    :: pol_damp_b ( ntypemax, ntypemax,ntypemax )     !< dipole damping : parameter b [length]^-1
   real(kind=dp)    :: pol_damp_c ( ntypemax, ntypemax,ntypemax )     !< dipole damping : parameter c no units
   integer          :: pol_damp_k ( ntypemax, ntypemax,ntypemax )     !< dipole damping : Tang-Toennies function order
+  logical          :: lquad_polar    ( ntypemax )                    !< induced quadrupole from pola
+
+  ! THOLE FUNCTION RELATED
   logical          :: thole_functions                                !< use thole functions correction on dipole-dipole interaction
   real(kind=dp)    :: thole_param (ntypemax,ntypemax)                !< use thole functions correction on dipole-dipole interaction
   character(len=6) :: thole_function_type
@@ -252,7 +255,7 @@ SUBROUTINE field_default_tag
   lwrite_dip    = .false.            
 
   ! polarization
-  lpolar        = .false. 
+  ldip_polar        = .false. 
   poldip        = 0.0_dp
   polquad       = 0.0_dp
   pol_damp_b    = 0.0_dp
@@ -381,7 +384,7 @@ SUBROUTINE field_check_tag
     if ( any(qch.ne.0.0_dp) ) lqch=.true.
     if ( lqch ) task_coul(1) = .true.
     do it = 1 , ntype
-      if ( lpolar(it) )  ldip = .true.
+      if ( ldip_polar(it) )  ldip = .true.
     enddo
     if ( any(dip.ne.0.0_dp) ) ldip=.true.     
     if ( ldip ) then
@@ -481,7 +484,7 @@ SUBROUTINE field_init
                          lwrite_dip    , &            
                          ldip_wfc      , &            
                          rcut_wfc      , &            
-                         lpolar        , &
+                         ldip_polar        , &
                          ldip_damping  , &
                          Abmhftd       , &  
                          Bbmhftd       , &
@@ -585,7 +588,7 @@ SUBROUTINE field_print_info ( kunit , quiet )
   enddo
   linduced = .false.
   do it = 1 , ntype
-    if ( lpolar(it) )  linduced = .true.
+    if ( ldip_polar(it) )  linduced = .true.
   enddo
   ldamp = .false.
   if ( any ( ldip_damping )  )  ldamp = .true.
@@ -629,7 +632,7 @@ SUBROUTINE field_print_info ( kunit , quiet )
 
       lseparator(kunit) 
       do it1 = 1 , ntype
-        if ( lpolar( it1 ) ) then
+        if ( ldip_polar( it1 ) ) then
           WRITE ( kunit ,'(a,a2,a,f12.4)')'polarizability on type ', atypei(it1),' : ' 
           WRITE ( kunit ,'(3f12.4)')      ( poldip ( it1 , 1 , j ) , j = 1 , 3 ) 
           WRITE ( kunit ,'(3f12.4)')      ( poldip ( it1 , 2 , j ) , j = 1 , 3 ) 
@@ -1811,7 +1814,7 @@ SUBROUTINE induced_moment_inner ( f_ind_ext , mu_ind )
   mu_ind = 0.0_dp
   do ia = 1 , natm 
     it = itype(ia) 
-    if ( .not. lpolar ( it ) ) cycle
+    if ( .not. ldip_polar ( it ) ) cycle
     do alpha = 1 , 3 
       do beta = 1 , 3  
         mu_ind ( alpha , ia ) = mu_ind ( alpha , ia ) + poldipia ( alpha , beta  , ia ) * ( f_ind_total ( beta , ia ) )
@@ -1847,7 +1850,7 @@ SUBROUTINE induced_moment_inner ( f_ind_ext , mu_ind )
     mu_ind = 0.0_dp
     do ia = 1 , natm 
       it = itype(ia) 
-      if ( .not. lpolar ( it ) ) cycle
+      if ( .not. ldip_polar ( it ) ) cycle
       do alpha = 1 , 3 
         do beta = 1 , 3  
           mu_ind ( alpha , ia ) = mu_ind ( alpha , ia ) + poldipia ( alpha , beta  , ia ) * ( f_ind_total ( beta , ia ) )
@@ -1915,7 +1918,7 @@ SUBROUTINE induced_moment ( Efield , mu_ind )
   mu_ind = 0.0_dp
   do ia = 1 , natm 
     it = itype(ia) 
-    if ( .not. lpolar ( it ) ) cycle
+    if ( .not. ldip_polar ( it ) ) cycle
     do alpha = 1 , 3 
       do beta = 1 , 3  
         mu_ind ( alpha , ia ) = mu_ind ( alpha , ia ) + poldipia ( alpha , beta , ia ) * Efield ( beta , ia )  
@@ -3463,7 +3466,7 @@ SUBROUTINE moment_from_pola_scf ( mu_ind , didpim )
   linduced = .false.
   didpim   = .false.
   do it = 1 , ntype
-    if ( lpolar ( it ) ) linduced = .true.
+    if ( ldip_polar ( it ) ) linduced = .true.
   enddo
   if ( .not. linduced ) then
 #ifdef debug
@@ -3712,7 +3715,7 @@ SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , didpim )
   linduced = .false.
   didpim   = .false.
   do it = 1 , ntype
-    if ( lpolar ( it ) ) linduced = .true.
+    if ( ldip_polar ( it ) ) linduced = .true.
   enddo
   if ( .not. linduced ) then
 #ifdef debug
@@ -3861,7 +3864,7 @@ SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , didpim )
     do ia = 1 , natm
       do alpha = 1 , 3
         it = itype( ia)
-        if ( .not. lpolar( it ) ) cycle
+        if ( .not. ldip_polar( it ) ) cycle
         f_ind(alpha,ia) = Efield(alpha,ia) - mu_ind(alpha,ia)/poldipia(alpha,alpha,ia)
       enddo
     enddo
@@ -3985,7 +3988,7 @@ SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , didpim )
   linduced = .false.
   didpim   = .false.
   do it = 1 , ntype
-    if ( lpolar ( it ) ) linduced = .true.
+    if ( ldip_polar ( it ) ) linduced = .true.
   enddo
   if ( .not. linduced ) then
 #ifdef debug
@@ -4144,7 +4147,7 @@ SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , didpim )
     do ia = 1 , natm
       do alpha = 1 , 3
         it = itype( ia)
-        if ( .not. lpolar( it ) ) cycle
+        if ( .not. ldip_polar( it ) ) cycle
         f_ind(alpha,ia) = Efield(alpha,ia) - mu_ind(alpha,ia)/poldipia(alpha,alpha,ia)
       enddo
     enddo
@@ -4154,7 +4157,7 @@ SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , didpim )
       do ia = 1 , natm
         do alpha = 1 , 3
           it = itype( ia)
-          if ( .not. lpolar( it ) ) cycle
+          if ( .not. ldip_polar( it ) ) cycle
           g_ind(alpha,ia) = gmin(alpha,ia) + mu_ind(alpha,ia)/poldipia(alpha,alpha,ia)
         enddo
       enddo
@@ -4286,7 +4289,7 @@ SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , didpim )
   linduced = .false.
   didpim   = .false.
   do it = 1 , ntype
-    if ( lpolar ( it ) ) linduced = .true.
+    if ( ldip_polar ( it ) ) linduced = .true.
   enddo
   if ( .not. linduced ) then
 #ifdef debug
@@ -4458,7 +4461,7 @@ SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , didpim )
     do ia = 1 , natm
       do alpha = 1 , 3
         it = itype( ia)
-        if ( .not. lpolar( it ) ) cycle
+        if ( .not. ldip_polar( it ) ) cycle
         f_ind(alpha,ia) = Efield(alpha,ia) - mu_ind(alpha,ia)/poldipia(alpha,alpha,ia)
       enddo
     enddo
@@ -4471,7 +4474,7 @@ SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , didpim )
         do ia = 1 , natm
           do alpha = 1 , 3
             it = itype( ia)
-            if ( .not. lpolar( it ) ) cycle
+            if ( .not. ldip_polar( it ) ) cycle
             g_ind(alpha,ia) = gmin(alpha,ia) + mu_ind(alpha,ia)/poldipia(alpha,alpha,ia)
           enddo
         enddo
@@ -4611,7 +4614,7 @@ SUBROUTINE moment_from_pola_scf_kO_v4 ( mu_ind , didpim )
   linduced = .false.
   didpim   = .false.
   do it = 1 , ntype
-    if ( lpolar ( it ) ) linduced = .true.
+    if ( ldip_polar ( it ) ) linduced = .true.
   enddo
   if ( .not. linduced ) then
 #ifdef debug
@@ -4740,7 +4743,7 @@ SUBROUTINE moment_from_pola_scf_kO_v4 ( mu_ind , didpim )
     do ia = 1 , natm
       do alpha = 1 , 3
         it = itype( ia)
-        if ( .not. lpolar( it ) ) cycle
+        if ( .not. ldip_polar( it ) ) cycle
       
         if ( algo_moment_from_pola .eq. 'scf_kO_v4_1' ) then 
           F_ind(alpha,ia) = mu_ind(alpha,ia)/poldipia(alpha,alpha,ia) - Efield_ind(alpha,ia)  !!! find_min_ex
@@ -4763,7 +4766,7 @@ SUBROUTINE moment_from_pola_scf_kO_v4 ( mu_ind , didpim )
     do ia = 1 , natm
       do alpha = 1 , 3
         it = itype( ia)
-        if ( .not. lpolar( it ) ) cycle
+        if ( .not. ldip_polar( it ) ) cycle
         Efield (alpha,ia) = - F_ind(alpha,ia) + mu_ind(alpha,ia)/poldipia(alpha,alpha,ia)    !!! for both 
       enddo
     enddo
@@ -5549,7 +5552,7 @@ SUBROUTINE find_min ( g0 , g1 , d1 , gmin , dmin )
   g0g1mg0 = 0.0_dp
   do ia=1 , natm  
     it = itype( ia)
-    if ( .not. lpolar( it ) ) cycle
+    if ( .not. ldip_polar( it ) ) cycle
     do k = 1 ,3  
       g0sq    = g0sq    + g0(k,ia)*g0   (k,ia)
       g0g1mg0 = g0g1mg0 + g0(k,ia)*g1mg0(k,ia)
@@ -5582,7 +5585,7 @@ SUBROUTINE get_rmsd_mu ( rmsd , g0 , mu )
   npol=0
   do ia=1, natm
     it = itype( ia)
-    if ( .not. lpolar( it ) ) cycle
+    if ( .not. ldip_polar( it ) ) cycle
     npol = npol + 1
     do alpha = 1 , 3
       if ( poldipia ( alpha , alpha  , ia ) .eq. 0.0_dp ) cycle
@@ -5682,7 +5685,7 @@ REAL(KIND=DP) FUNCTION DDOTF(v1,v2)
   DDOTF=0.0_dp 
   do ia=1 , natm
     it = itype( ia)
-    if ( .not. lpolar( it ) ) cycle
+    if ( .not. ldip_polar( it ) ) cycle
     do k = 1 ,3
       DDOTF = DDOTF + v1(k,ia)*v2(k,ia) 
     enddo

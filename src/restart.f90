@@ -221,8 +221,9 @@ SUBROUTINE restart_init ( MDFF )
   READ( kunit_RESTART   ) lwrite_dip
   READ( kunit_RESTART   ) ldip_wfc
   READ( kunit_RESTART   ) rcut_wfc
-  READ( kunit_RESTART   ) lpolar 
+  READ( kunit_RESTART   ) ldip_polar 
   READ( kunit_RESTART   ) ldip_damping
+  READ( kunit_RESTART   ) lquad_polar 
   READ( kunit_RESTART   ) Abmhftd 
   READ( kunit_RESTART   ) Bbmhftd 
   READ( kunit_RESTART   ) Cbmhftd 
@@ -399,8 +400,9 @@ SUBROUTINE write_RESTART
   WRITE( kunit_RESTART   ) lwrite_dip
   WRITE( kunit_RESTART   ) ldip_wfc
   WRITE( kunit_RESTART   ) rcut_wfc
-  WRITE( kunit_RESTART   ) lpolar 
+  WRITE( kunit_RESTART   ) ldip_polar 
   WRITE( kunit_RESTART   ) ldip_damping
+  WRITE( kunit_RESTART   ) lquad_polar 
   WRITE( kunit_RESTART   ) Abmhftd 
   WRITE( kunit_RESTART   ) Bbmhftd 
   WRITE( kunit_RESTART   ) Cbmhftd 

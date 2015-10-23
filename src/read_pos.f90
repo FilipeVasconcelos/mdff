@@ -39,7 +39,7 @@ SUBROUTINE read_pos
   USE config,                   ONLY :  rx , ry , rz , vx , vy , vz , fx , fy , fz , atype , atypei , itype , &
                                         natmi , natm , dipia , qia , ipolar , rho , system , ntype , config_alloc , &
                                         simu_cell , config_print_info , coord_format_allowed , write_CONTFF
-  USE field,                    ONLY :  qch , dip , quad, lpolar , field_init
+  USE field,                    ONLY :  qch , dip , quad, ldip_polar , field_init
   USE io,                       ONLY :  ionode , stdout , kunit_POSFF
   USE cell,                     ONLY :  lattice, periodicbc , dirkar, kardir
 
@@ -164,7 +164,7 @@ SUBROUTINE typeinfo_init
   USE constants, ONLY :  dp
   USE config ,  ONLY :  atype , atypei , itype , natmi , natm , ntype , massia, dipia , quadia, qia , &
                         quadia_nuc , ipolar , poldipia , polquadia, invpoldipia 
-  USE field ,   ONLY :  mass, qch , quad_nuc , dip , quad , lpolar , poldip , polquad
+  USE field ,   ONLY :  mass, qch , quad_nuc , dip , quad , ldip_polar , poldip , polquad
   USE io,       ONLY :  stdout
   
   implicit none
@@ -195,10 +195,10 @@ SUBROUTINE typeinfo_init
       quadia_nuc ( ia )           = quad_nuc ( it )   
       dipia ( : , ia )            = dip ( : , it )
       quadia ( : , : , ia )       = quad ( : , : , it )
-      ipolar ( ia )               = lpolar ( it )
+      ipolar ( ia )               = ldip_polar ( it )
       poldipia ( : , :  , ia )    = poldip ( it , : , : )
       polquadia( : , : , : , ia ) = polquad ( it , : , : , : )
-      if ( .not. lpolar ( it ) ) cycle
+      if ( .not. ldip_polar ( it ) ) cycle
       invpoldipia ( : , : , ia )  = poldipia ( : , : , ia )
       CALL DGETRF( 3, 3, invpoldipia(:,:,ia), 3, ipiv, ierr )  
       if ( ierr.lt.0 ) then
