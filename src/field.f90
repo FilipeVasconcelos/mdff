@@ -68,6 +68,8 @@ MODULE field
   logical, SAVE     :: lwrite_dip_wfc    !< write dipoles from wannier centers to file
   logical, SAVE     :: lwrite_dip        !< write dipoles 
   logical, SAVE     :: lwrite_quad       !< write quadrupoles to QUADFF
+  logical, SAVE     :: lwrite_efg        !< write electric field gradient to EFGALL
+  logical, SAVE     :: lwrite_ef         !< write electric field s to EFALL
   logical, SAVE     :: ldip_wfc          !< calculate electrostatic contribution from dipolar momemt coming from wfc
   logical, SAVE     :: lquiet            !< internal stuff 
   logical, SAVE     :: symmetric_pot     !< symmetric potential ( default .true. but who knows ?)
@@ -134,9 +136,19 @@ MODULE field
   ! type dependent properties
   real(kind=dp)    :: mass     ( ntypemax )            !< masses ( not yet tested everywhere )
   real(kind=dp)    :: qch      ( ntypemax )            !< charges 
-  real(kind=dp)    :: quad_efg ( ntypemax )            !< quadrupolar moment
-  real(kind=dp)    :: dip      ( 3 , ntypemax )        !< dipoles 
-  real(kind=dp)    :: pol      ( ntypemax , 3 , 3 )    !< polarizability if lpolar( it ) = .true. 
+  !real(kind=dp)    :: quad_efg ( ntypemax )            !< quadrupolar moment
+  !real(kind=dp)    :: dip      ( 3 , ntypemax )        !< dipoles 
+  !real(kind=dp)    :: pol      ( ntypemax , 3 , 3 )    !< polarizability if lpolar( it ) = .true. 
+
+  real(kind=dp)    :: dip      ( ntypemax , 3 )        !< dipoles 
+  real(kind=dp)    :: quad     ( ntypemax , 3 , 3 )    !< quadrupoles
+  real(kind=dp)    :: poldip   ( ntypemax , 3 , 3 )    !< dipole     polarizability if ldip_polar( it ) = .true. 
+  real(kind=dp)    :: poldip_iso ( ntypemax )          !< isotropic dipole polarizability if ldip_polar( it ) = .true.
+  real(kind=dp)    :: polquad  ( ntypemax , 3 , 3 , 3 )!< quadrupole polarizability if ldip_polar( it ) = .true.
+  real(kind=dp)    :: polquad_iso ( ntypemax )         !< isotropic quadrupole polarizability if ldip_polar( it ) = .true. 
+  real(kind=dp)    :: quad_efg ( ntypemax )            !< quadrupolar moment nucleus NMR
+
+
 
   ! =====================================================
   !                 polarizability  
