@@ -1,0 +1,1188 @@
+%MDFF documentation
+\documentclass[a4paper,8pt]{article}
+\usepackage{lscape}
+\usepackage{geometry}
+\usepackage[strict]{changepage}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{color}
+\usepackage{amssymb}
+\usepackage{amsmath}
+
+
+%##############################################
+%new commands
+%##############################################
+\newcommand{\MDFF}{{\sc MDff}}
+\newcommand{\FMV}{{\sc fmv}}
+\newcommand{\wiki}{\textcolor{red}{[wiki]}} 
+\newcommand{\addref}{\textcolor{blue}{[ref]}}
+
+% math symbol
+\def\nn{{\bf n}}
+\def\kk{{\bf k}}
+\def\rr{{\bf r}}
+\def\00{{\bf 0}}
+
+
+
+
+\title{Molecular Dynamics FF, Manual }
+
+\begin{document}
+
+%\changepage{ text height }{ text width }{ even-side margin } { odd-side margin }{ column sep. }{ topmargin }{ headheight }{ headsep }{ footskip }
+\changepage{0pt}{30pt}{0pt}{0pt}{0pt}{0pt}{0pt}{0pt}{0pt}
+\maketitle
+\clearpage
+\tableofcontents
+
+\clearpage
+
+\section{Aim}
+
+Le but de ce document est de repertorier les differents 
+algorithmes utilis\'es par \MDFF. Notamment, definir les 
+commandes (TAG) et leurs valeurs par défaut. Mais également, 
+les r\'eferences aux codes, articles originaux, livres dont 
+sont extraits les diff\'erents algorithmes, ou preciser dans 
+le cas contraire (i.e \FMV!) ce que fait la routine point par point. 
+Ce travail de documentation permettra de faciliter la d\'ecouverte
+de bug qui independamment de ma volont\'e sont (et seront) 
+forc\'ement pr\'esents. 
+
+\clearpage
+
+\section{Theory}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Molecular Dynamics\label{sec:MD}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Integration\label{sec:integrator}}
+\subsubsection{Force-Field}
+\paragraph{Binary Mixture Lennard-Jones\label{sec:BMLJ}}
+\paragraph{Kob-Andersen model\label{sec:KA}}
+\paragraph{Morse potential\label{sec:morse}}
+\paragraph{Born-Mayer-Huggings-Fumi-Tosi\label{sec:BMHFT}}
+\paragraph{Long-range electrostatic\label{sec:COUL}}
+\paragraph{Multipole expansion: polarizabilities \label{sec:pola}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Optimisation\label{sec:OPT}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Phonons\label{sec:VIB}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Electric-Field Gradient\label{sec:EFG}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsubsection{Some general definition: NMR oriented}
+
+In solid-state NMR, the  quadrupolar interaction is  characterised by two parameters:
+$C_Q$ and $\eta_Q$ (respectively the quadrupolar coupling constant, and  the
+quadrupolar asymmetry), which are both defined from the  three principal  components
+of the diagonal  EFG tensor  ($\bf{V}$), by relations:
+\begin{equation}
+  \label{eq:quad}
+ C_Q=\frac{e|Q|}{h}|V_{zz}| ,\;\;\;\;\;\; \eta_Q=\frac{V_{yy}-V_{xx}}{V_{zz}}
+\end{equation}
+where $e$ is the elementary charge, $h$ is the Planck's constant, $Q$
+is the quadrupolar  moment and the principal components $V_{ii},\ (i=x,y,z)$ are sorted
+such that  $|V_{zz}|  \geqslant |V_{xx}| \geqslant |V_{yy}|$. 
+We only consider the parameters $V_{zz}$ and $\eta_Q$ to report the principal
+components of the diagonal EFG tensor. Even if, NMR experiments at room temperature, are unable
+to determined the sign of the larger principal component~\cite{B-Abragam}, this sign property,
+which is explicitly available by DFT calculation, is important to characterise the distribution~\cite{VasconcelosPRB}
+
+In the general  case, the  zero trace  EFG tensor  is not
+diagonal,  and it  is  necessary to  defined  three others  parameters
+which  define the orientation  of the tensor in a fixed reference frame.
+Consequently, the EFG tensor is completely defined by five independent
+variables as expected by a symmetric second-rank tensor without trace.
+Following Czjzek at al.~\cite{PRB.23.2513}, we define five real parameters
+$U_i$ from the Cartesian components of the EFG tensor.
+\begin{equation}
+  \label{eq:U_i}
+  U_1=v_{zz}/2, U_2=\frac{v_{xz}}{\sqrt{3}},U_3=\frac{v_{yz}}{\sqrt{3}},U_4=\frac{v_{xy}}{\sqrt{3}},U_5=\frac{(v_{xx}-v_{yy})}{2\sqrt{3}}  
+\end{equation}
+The five-dimensional vector ${\bf{U}}=(U_1,\ldots,U_5)$ constitutes a random vector
+representative of the EFG tensor distribution of an amorphous solid in a fixed frame
+of reference for all the nuclei sites. To get access to the distribution of the two
+parameters $V_{zz}$ and $\eta_Q$, it is necessary to diagonalise the EFG tensor from
+site to site~\cite{JPCM.10.10715}.
+
+
+\subsubsection{EFG calculation: Implemented formulas}
+
+Consider a finite number $N$ of point charge particules, the EFG tensor
+($\bf{V}$) at the position $\rr_i$ of a particule $i$ due to the
+$N-1$ other point charges $q_j$ at distance $\rr_{ij}=\rr_i-\rr_j$.
+\begin{equation}
+V_{i,\alpha\beta} = - \sum_{j\ne i}^N q_j \bigg( \frac {3 r_{ij,\alpha} r_{ij,\beta} - r_{ij}^2\delta_{\alpha\beta} } {r_{ij}^5} \bigg )
+\label{eq:EFG}
+\end{equation}
+where  $\alpha$ end $\beta$ are the cartesian components, $\delta_{\alpha\beta}$
+is the Kronecker delta.
+In periodic boundaries conditions, a further summation is added to
+Eq.~\ref{eq:EFG} arising from the particules which belong to other cells.
+This method is called the direct summation. The EFG tensor by the direct
+summation technique is given by
+%\begin{widetext}
+\begin{equation}
+V^{DS}_{i,\alpha\beta} = - \sum_\nn^{n_{max}} \sideset{}{'}\sum^{N}_j \\ q_j\bigg(\frac{3 (r_{ij,\alpha}+n_\alpha) (r_{ij,\beta}+n_\beta) - |\rr_{ij}+\nn|^2\delta_{\alpha\beta} } { |\rr_{ij}+\nn|^5 } \bigg )
+\end{equation}
+%\end{widetext}
+where $\nn$ is an integer vector such $\nn=(n_x,n_y,n_z)L$, the prime indicates
+that the $j=i$ term is ommited when $\nn=\00$. In practice a further spherical
+radial cutoff $r^{cut}_{efg}$ is applied to the cubic cutoff $n_{max}$ which is set
+according to the ratio $r^{cut}_{efg}/L$.
+
+%As the EFG scales as $r^{-3}$, the direct summation technique converge relatively
+%fast. For a typical configurations discussed in that paper, we oberved that the EFG
+%tensor converged within a spherical radius cutoff of 40 $[\sigma_{AA}]$,
+%which corresponds to $n_{max}=$~4.
+
+The EFG tensor can be also obtained from an Ewald summation
+~\cite{ANDP:ANDP19213690304,B-ALLEN_TILDESLEY} like technique.
+The main advantage of this approach is the rapid convergence of
+the k-space summation compared to the direct summation only technique.
+%Ici on suit la notation de Nymand and Linse(en partie), mais les equations
+% correspondent aux equations implementees dans MDFF. 
+The EFG tensor of atom $i$ from the Ewald Sum $V^{ES}_{i,\alpha\beta}$ is
+\begin{equation}
+V^{ES}_{i,\alpha\beta} = V^{real}_{i,\alpha\beta} + V^{rec}_{i,\alpha\beta}
+\label{eq:EFG_ES}
+\end{equation}
+where $V^{real}_{i,\alpha\beta}$ is the real part contribution given by
+\begin{equation}
+V^{real}_{i,\alpha\beta} = - \sum^{N}_{j\ne i} q_j (3 r_{ij,\alpha}r_{ij,\beta} - r_{ij}^2\delta_{\alpha\beta} ) ( T_0 + T_1 + T_2 ) 
+\end{equation}
+with
+\begin{eqnarray}
+T_0&=& \frac{{\rm erfc}( \alpha r_{ij} )} {r_{ij}^5} \nonumber \\
+T_1&=& \frac{2 \alpha \exp(-\alpha^2 r_{ij}^2)}{\sqrt{\pi}r_{ij}^4}  \nonumber \\
+T_2&=& \frac{4 \alpha^3 \exp(-\alpha^2 r_{ij}^2)}{3\sqrt{\pi} r_{ij}^2};
+\end{eqnarray}
+and where $V^{rec}_{i,\alpha\beta}$ is the reciprocal contribution given by
+\begin{equation}
+V^{rec}_{i,\alpha\beta} = \frac{4\pi}{3V}\sum_{\kk\ne\00} A_k Re\Big[ \sum^N_j q_j e^{i\kk\cdot(\rr_i-\rr_j)} \Big] \Big( 3 k_\alpha k_\beta - k^2\delta_{\alpha\beta} \Big)
+\end{equation}
+with
+\begin{equation}
+A_k = \frac{\exp( - k^2 / 4\alpha^2 )}{k^2} 
+\end{equation}
+In practice, we calculate the charge density $\rho_N(\kk)$ defined in k-space by
+\begin{equation}
+\rho_N(\kk) = \sum^N_j q_j e^{i\kk\rr_j}
+\end{equation}
+only once at the beginning, and for each $i$ particule and k-point mesh
+we calculate $e^{i\kk\rr_i} \rho^*_N(\kk)$ where $*$ denotes the complex conjugate.
+The k-space summation runs over all k-points defined by the vector
+\begin{eqnarray}
+\kk=2\pi(n_x/L,n_y/L,n_z/L) \\
+{\rm with}\; |n_x|,|n_y|,|n_z| < n_{max}.
+\end{eqnarray}
+The convergence of the EFG obtained by the Ewald Summation technique
+depends on two main parameters, the Ewald screening parameter $\alpha$
+and on the k-space cut-off $k_{max}=2\pi n_{max}/L$.
+
+In the direct summation procedure, there is no need to use the minimum
+ image convention as all the neighbour cells are explicitely take into account.
+In the real part of the Ewald summation, however, the minimum image convention
+is used. the screening parameter $\alpha$ should choose such that that only particles
+in the primary box need to be considered when calculating the real space sum.
+This cutoff is then implictely set to half of the box size.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Radial distribution function\label{sec:GR}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Verlet list\label{sec:vnlist}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Units \label{sec:units}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Miscellaneous \label{sec:misc}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Usage}
+
+The main file (usually called control.F~\footnote{the .F extension permits to get nice colors with vim}) is read in input as :
+\begin{verbatim}
+mdff.x control.F
+\end{verbatim}
+
+\MDFF~reads configuration from different files, depending on the task :
+\begin{verbatim}
+POSFF : md
+TRAJFF : opt, efg
+ISCFF : vib
+\end{verbatim}
+
+\subsection{Main input : control.F}
+
+The input file is composed of different sections. 
+Each section is defined by  \&SECTIONNAME and \&END.
+Everything outside the sections is ignored.
+\\
+\\
+In \MDFF, three sections are always required :
+
+\begin{itemize}
+\item \&controltag ... \&end $\rightarrow$ General control parameters for calculation 
+\item \&mdtag ... \&end      $\rightarrow$ General Molecular dynamics parameters.
+\item \&fieldtag ... \&end   $\rightarrow$ Set the Force-Field.
+\end{itemize}
+
+see examples/ex0/control.F for the some minimum settings example
+Using this minimum settings the code runs with several default values.
+It correspond to a molecular dynamics trajectory of 10 unit of times of a fcc lennard-jones 
+crystal (256 atoms) at $\rho=$1.0 at $T=$1.0. In the next sextion we show the standard output of this minimum setting. 
+
+\clearpage
+\subsection{Minimum setting: standard output}
+\begin{verbatim}
+                            \\|//                            
+                           -(o o)-                           
+========================oOO==(_)==OOo========================
+          ____    ____  ______   ________  ________  
+         |_   \  /   _||_   _ `.|_   __  ||_   __  | 
+           |   \/   |    | | `. \ | |_ \_|  | |_ \_| 
+           | |\  /| |    | |  | | |  _|     |  _|    
+          _| |_\/_| |_  _| |_.' /_| |_     _| |_     
+         |_____||_____||______.'|_____|   |_____|    
+
+=============================================================
+
+MOLECULAR DYNAMICS ...for fun                 
+mdff.r70  (build Mar 28 2014 12:40:00) parallel                                 
+filipe.manuel.vasconcelos@gmail.com  
+Running on  :    1 nodes                  
+by user     : filipe                        
+host        : IRAM-CE-004776
+date        : 2014/03/28    12:45:23
+
+CONTROL MODULE ... WELCOME
+
+calc        =  md                                                          
+lnmlj       =  T
+lbmhft      =  F
+lbmhftd     =  F
+lmorse      =  F
+lcoulomb    =  F
+lsurf       =  F
+lvnlist     =  T
+lstatic     =  T
+lreduced    =  F
+lrestart    =  F
+
+=============================================================
+
+reading configuration
+config from file POSFF
+found type information on POSFF : A  
+atomic positions in direct coordinates in POSFF
+
+=============================================================
+
+CONFIG MODULE ... WELCOME
+
+system                : CONFIG                                                      
+natm                  =             4000
+ntype                 =                1
+nA                    =             4000  100.00%
+
+-------------------------------------------------------------
+direct     basis : 
+-------------------------------------------------------------
+a_vector              =      15.4144      0.0000      0.0000
+b_vector              =       0.0000     15.4144      0.0000
+c_vector              =       0.0000      0.0000     15.4144
+cell param.           =      15.4144     15.4144     15.4144
+perpend. width        =      15.4144     15.4144     15.4144
+angles                =      90.0000     90.0000     90.0000
+volume                =    3662.4913
+
+
+-------------------------------------------------------------
+reciprocal basis : 
+-------------------------------------------------------------
+a*_vector             =       0.0649      0.0000      0.0000
+b*_vector             =       0.0000      0.0649      0.0000
+c*_vector             =       0.0000      0.0000      0.0649
+
+cell param.           =       0.0649      0.0649      0.0649
+perpend. width        =       0.0649      0.0649      0.0649
+angles                =      90.0000     90.0000     90.0000
+volume                =       1.0000
+
+-------------------------------------------------------------
+
+density               =       1.0922
+
+ long range correction (init)  -169.435784080640     
+=============================================================
+
+FIELD MODULE ... WELCOME
+
+-------------------------------------------------------------
+point charges: 
+-------------------------------------------------------------
+q   A                   =  0.000E+00
+quadA                   =  0.000E+00 mb
+total charge            =  0.000E+00
+second moment of charge =  0.000E+00
+
+-------------------------------------------------------------
+static dipoles: 
+-------------------------------------------------------------
+muA        =    0.00000   0.00000   0.00000
+
+-------------------------------------------------------------
+lennard-jones           
+-------------------------------------------------------------
+
+       eps    /    / sigma* \ q       / sigma*  \ p \
+ V = ------- |  p | ------- |    - q | -------- |   |
+      q - p   \    \   r    /         \    r    /   /
+
+cutoff      =    6.00000
+truncation  = linear                                                      
+long range correction :       -169.435784081
+
+
+-------------------------------------------------------------
+A  -A   interactions:
+-------------------------------------------------------------
+sigma                                =   0.10000000E+01
+eps                                  =   0.10000000E+01
+q                                    =   0.12000000E+02
+p                                    =   0.60000000E+01
+shift correction (linear)            :   -0.00009
+
+
+=============================================================
+
+=============================================================
+
+MD MODULE ... WELCOME
+
+static  calculation ....boring                 
+number of steps                       =           10
+timestep                              =  0.00000E+00  ps
+time range                            =  0.00000E+00  ps
+temperature                           =      1.00000   K
+pressure                              =      0.00000 GPa
+print thermo  periodicity             =            1
+
+paralelisation - atoms decomposition
+rank =         0   atoms       1 to    4000 load :     4000
+=============================================================
+properties at t=0
+
+  Thermodynamic information 
+  ---------------------------------------------
+  step                  =         0
+  time                  =  0.00000000E+00
+  Ekin                  =  0.00000000E+00
+  Temp                  =  0.00000000E+00
+  Utot                  = -0.34102600E+05
+  U_vdw                 = -0.34102600E+05
+  U_coul                =  0.00000000E+00
+  Pressure              =  0.35716516E+04
+  Pvir_vdw              =  0.22292498E+02
+  Pvir_coul             =  0.00000000E+00
+  Pvir_tot              =  0.22292498E+02
+  volume                =  0.36624913E+04
+  a cell                =  0.15414361E+02
+  b cell                =  0.15414361E+02
+  c cell                =  0.15414361E+02
+  ---------------------------------------------
+  Etot                  = -0.34102600E+05
+  Htot                  = -0.34102600E+05
+
+stress tensor of initial configuration
+
+TAU_NONB
+  0.44584996E+02  0.34094247E-14  0.15735806E-14
+  0.34094247E-14  0.44584996E+02  0.64934485E-14
+  0.15735806E-14  0.64934485E-14  0.44584996E+02
+iso =   0.44584996E+02(  0.11146249E-01)
+
+
+TAU_TOTA
+  0.44584996E+02  0.34094247E-14  0.15735806E-14
+  0.34094247E-14  0.44584996E+02  0.64934485E-14
+  0.15735806E-14  0.64934485E-14  0.44584996E+02
+iso =   0.44584996E+02(  0.11146249E-01)
+
+
+starting main loop
+=============================================================
+=============================================================
+end of the main loop
+
+
+stress tensor of final configuration
+
+TAU_NONB
+  0.44584996E+02  0.34094247E-14  0.15735806E-14
+  0.34094247E-14  0.44584996E+02  0.64934485E-14
+  0.15735806E-14  0.64934485E-14  0.44584996E+02
+iso =   0.44584996E+02(  0.11146249E-01)
+
+
+TAU_TOTA
+  0.44584996E+02  0.34094247E-14  0.15735806E-14
+  0.34094247E-14  0.44584996E+02  0.64934485E-14
+  0.15735806E-14  0.64934485E-14  0.44584996E+02
+iso =   0.44584996E+02(  0.11146249E-01)
+
+=============================================================
+
+TIME MODULE ... WELCOME
+
+-------------------------------------------------------------
+                           TOTAL :  cpu time     0.66
+                          kardir :  cpu time     0.00
+                          dirkar :  cpu time     0.00
+
+-------------------------------------------------------------
+main subroutines:
+-------------------------------------------------------------
+MD:
+-------------------------------------------------------------
+             engforce_nmlj       :  cpu time     0.35
+-------------------------------------------------------------
+=============================================================
+\end{verbatim}
+
+\subsection{Miniumim setting : Output files}
+For this minimum setting, the code generates 4 files:
+
+\begin{itemize}
+\item OSZIFF : thermodynamic parameters 
+\item TRAJFF : trajectory file (empty in this case) 
+\item CONTFF : final configuration
+\end{itemize}
+theses files and other output files are described in a following section.
+
+\newpage
+
+\subsection{Input file : Description}
+
+%###################################################################################################"
+%                                         CONTROLTAG
+%###################################################################################################"
+\subsubsection{\&controltag }
+
+Where : \verb?SUBROUTINE control_init? in \verb?control.f90?
+\newline
+
+\begin{longtable}{l|c|m{8cm}|m{2cm}}
+\hline
+\hline
+Parameter        &  Type              &          Short Description                                                          & Default value \\
+\hline
+\hline
+\rule[-2.5cm]{0cm}{5cm}
+\verb?calc?      & (CHARACTER)        & \newline \verb?'md'?  : molecular dynamics simulation (see section~\ref{sec:MD}) \newline
+
+                                        \verb?'opt'? : unconstrained optimization of configuation saved in TRAJFF file 
+					(see section~\ref{sec:OPT}) \newline
+
+					\verb?'vib'? : 'vib+fvib', 'vib+gmod', 'vib+band', 'vib+dos' : phonons related 
+					(see section~\ref{sec:VIB})\newline
+
+					\verb?'efg'? : Electric Field Gradient calculation from configuration in TRAJFF 
+					(see section~\ref{sec:EFG})\newline
+
+					\verb?'efg+acf?' : EFG auto-correlation function from EFGALL file 
+					(see section~\ref{sec:EFG})\newline
+
+					\verb?'gr'? : radial distribution function of configurations in TRAJFF
+					(see section~\ref{sec:GR}) \newline                                                 & \verb?'md'?   \tabularnewline
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?lnmlj?     & (LOGICAL)          &  switch on the binary mixture lennard-jones potential (see section~\ref{sec:BMLJ})  & \verb?.FALSE.?  \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?lcoulomb?  & (LOGICAL)          &  switch on the coulombic potentials                                                 & \verb?.FALSE.? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?lmorse?    & (LOGICAL)          &  switch on morse potential (to be tested )                                          & \verb?.FALSE.? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?lbmhft?    & (LOGICAL)          &  switch on Born–Mayer–Huggins–Fumi–Tosi (BMHFT) potential                           & \verb?.FALSE.? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?lbmhftd?   & (LOGICAL)          &  switch on Born–Mayer–Huggins–Fumi–Tosi  with damping functions                     & \verb?.FALSE.? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?lvnlist?   & (LOGICAL)          &  use verlet neighbour list (see section~\ref{sec:vnlist})                           & \verb?.TRUE.?  \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?skindiff?  
+                 & (REAL)             &  verlet-list cutoff ( cutoff + skindiff )                                           & \verb?0.1?\\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?lstatic?   & (LOGICAL)          &  static calculation                                                                 & \verb?.FALSE.? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?lcsvr?   & (LOGICAL)            &  switch on the stochastic velocity rescaling method by Bussi-Donadio-Parrinello     & \verb?.FALSE.? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?lmsd?      & (LOGICAL)          & calculate mean square displacment on the fly during the md (see \verb?&msdtag? )    & \verb?.FALSE? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?lvacf?     & (LOGICAL)          & calculate velocity autocorrelation function on the fly during the md 
+                                        (see \verb?&vacftag? not the final version )                                        & \verb?.FALSE? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?lsurf?     & (LOGICAL)          &  add "surface" contribution to electrostatic quantities (see \ref{sec:COUL})        & \verb?.FALSE.?  \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?lreduced?  & (LOGICAL)          &  \newline reduced units and reduced the output quantities by the 
+                                         total number of particules \newline
+
+					 Units are discussed in section \ref{sec:units} \newline                            & \verb?.FALSE.? \\ 
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?ltest?     & (LOGICAL)          &  get around the main code (for test purpose only)                                   & \verb?.FALSE.? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?lrestart?   & (LOGICAL)         &  restart calculation and consider previous positions and velocities                 & \verb?.FALSE.? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?restart_data?  
+                 & (CHARACTER)        &  format of  \verb?POSFF? file : 'rvf' , 'rnn' , 'rnf' , 'rvn' \newline
+
+                                         \verb?'rnn'? : positions only                   (ion\_type + 3 columns) \newline 
+                                         \verb?'rnf'? : positions and forces             (ion\_type + 6 columns) \newline 
+                                         \verb?'rvn'? : positions and velocities         (ion\_type + 6 columns) \newline 
+                                         \verb?'rvf'? : positions, velocities and forces (ion\_type + 9 columns) 
+
+                                                                                                                            & \verb?'rnn'? \tabularnewline
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?dgauss?    & (CHARACTER)        & \newline algorithm for gaussian distribution (no fondamental differences test purpose only) 
+                                        (see section~\ref{sec:misc}) \newline  
+
+                                        \verb?'boxmuller_basic'? : also known as the cartesian form  \newline
+
+					\verb?'boxmuller_polar'? : supposed to be faster than the basic method because it is 
+					simpler to compute.     \newline
+
+					\verb?'knuth'? : knuth algorithm cited by~\cite{B-ALLEN_TILDESLEY} \newline         & \verb?'boxmuller_basic'? \tabularnewline
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?longrange? & (CHARACTER)        & \newline algorithm for long-range interactions. It will be used for coulombic potential 
+                                        calculation and Electric-Field Gradient calculation, if both are set together. \newline
+
+					\verb?'direct'? : Direct summation (can be used for EFG but difficult to converge for columbic potential) \newline
+
+					\verb?'ewald'? : Ewald summation technique \newline                                 &  \verb?'ewald?'      \tabularnewline
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?cutshortrange?    
+                 & (REAL)             &  real-space cut-off for short-range interactions  
+                                         [(lnmlj, lmorse, lbmhft, lmhftd )  & \verb?-?\\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?cutlongrange?     
+                 & (REAL)             &  real-space cut-off for long-range interactions ( lcoulomb )                        & \verb?-?\\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?ltraj?     & (LOGICAL)          &  save trajectory (pos, vel, forces) during MD                                       & \verb?.FALSE.? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?itraj_start?   
+                 & (INTEGER)          &  write trajectory from step \verb?itraj_start?                                      & \verb?1? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?itraj_period?  
+                 & (INTEGER)          &  write trajectory each \verb?itraj_period? steps                                    & \verb?10000? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?itraj_format?  
+                 & (INTEGER)          &  format of TRAJFF file ( = 0 BINARY, = 1 FORMATED )                                 & \verb?1? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?traj_data? & (CHARACTER)        &  type of data in TRAJFF (see \verb?restart_data?)                                   & \verb?'rnn'? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?iscff_data?& (CHARACTER)        &  type of data in ISCFF (see \verb?restart_data?)                                    & \verb?'rnn'? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?iscff_format? 
+                 & (INTEGER)          &  format of TRAJFF file ( = 0 BINARY, = 1 FORMATED )                                 & \verb?1? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?iefall_format? 
+                 & (INTEGER)          &  format of EFALL file ( = 0 BINARY, = 1 FORMATED )                                  & \verb?1? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?iefgall_format? 
+                 & (INTEGER)          &  format of EFGALL file ( = 0 BINARY, = 1 FORMATED )                                 & \verb?1? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?idipall_format? 
+                 & (INTEGER)          &  format of DIPFF file ( = 0 BINARY, = 1 FORMATED )                                  & \verb?1? \\
+\hline
+\hline
+\end{longtable}
+
+%###################################################################################################"
+%                                         MDTAG
+%###################################################################################################"
+\subsubsection{\&mdtag}
+
+Where : \verb?SUBROUTINE md_init? in \verb?md.f90?
+\newline
+
+\begin{longtable}{l|c|m{8cm}|m{2cm}}
+\hline
+\hline
+Parameter        &  Type              &          Short Description                                                          & Default value \\
+\hline
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?integrator?& (CHARACTER)        &  \newline algorithm for dynamic integration (see section~\ref{sec:integrator}) \newline                   
+
+                                         \verb?'nve-vv'?    : NVE velocity-verlet \newline
+					  
+					 \verb?'nve-lf'?    : NVE leap-frog \newline
+					   
+				         \verb?'nve-be'?    : NVE beeman \newline
+
+					 \verb?'nve-lfq'?   : NVE leap-frog +  equilibration \newline                        
+
+					 \verb?'npe-vv'?    : NPE beredsen barostat \newline                        
+					 
+					 \verb?'nvt-and'?   : NVT Andersen \newline
+					 
+					 \verb?'nvt-nhc2'?  : NVT Nosé-Hoover two chains \newline
+
+					 \verb?'nvt-nhcn'?  : NVT Nosé-Hoover chains \newline
+
+					 \verb?'npt-nhcnp'? : NPT Martyna-Tuckerman-Tobias-Klein + Nosé-Hoover thermostat \newline 
+                                                                                                                            & \verb?'nve-vv'? \tabularnewline
+					 
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?setvel?    & (CHARACTER)        &  \newline velocity distribution \newline 
+                                        
+					 \verb?'MaxwBoltz'? : Maxwell-Boltzmann distribution \newline 
+
+					 \verb?'uniform'?   : Uniform distribution (test purpose) \newline                  & \verb?'MaxwBoltz'? \tabularnewline
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?npas?      & (INTEGER)          &  total number of time steps                                                         & \verb?10?    \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?nequil?    & (INTEGER)          &  total number of equilibration steps                                                & \verb?10? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?nequil_period? 
+                 & (INTEGER)          &  equilibration period                                                               & \verb?1? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?annealing? & (REAL)             &  rescaling factor for annealing velocities                                          & \verb?1.0? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?nprint?    & (INTEGER)          &  print thermo info to standard output (period)                                      & \verb?1? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?fprint?    & (INTEGER)          &  print thermo info to file OSZIFF (period)                                          & \verb?1? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?npropr?    & (INTEGER)          &  period to calculate on-the-fly properties (\verb?lmsd,lvacf?)                      & \verb?1? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?npropr_start?   
+                 & (INTEGER)          &  starting point to calculate on-the-fly properties (\verb?lmsd,lvacf?)              & \verb?0? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?spas?      & (INTEGER)          &  save configuration each \verb?spas? steps in file CONTFF                           & \verb?1000? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?dt?        & (REAL)             &  time step for integration [ps]                                                     & \verb?0.001? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?temp?      & (REAL)             &  temperature [K]                                                                    & \verb?1.0?\\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?press?     & (REAL)             &  pressure [GPa]                                                                     & \verb?0.0?\\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?timesca_thermo? 
+                 & (REAL)             &  time scale of thermostat [ps]                                                      & \verb?NULL? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?timesca_baro?   
+                 & (REAL)             &   time scale of barostat [ps]                                                       & \verb?NULL? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?taucsvr?   & (REAL)             &  characteristic time in Stochastic velocity rescale method by 
+                                         Bussi-Donadio-Parrinello (see \verb?&controltag lcsvr?)                            & \verb?-? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?nuandersen?     
+                 & (REAL)             &  characteristic frequency in andersen thermostat (obsolete)                         & \verb?NULL? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?tauTberendsen?  
+                 & (REAL)             &  characteristic time in berendsen thermostat [ps] 
+                                         (simple rescale if tauberendsen = dt )                                             & \verb?dt? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?tauPberendsen?  
+                 & (REAL)             &  characteristic time in berendsen barostat [ps]
+                                         (simple rescale if tauberendsen = dt )                                             & \verb?dt? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?nhc_n?     & (INTEGER)          &  Nose-Hoover Chain : number of chains (extended variable)                           & \verb?4? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?nhc_yosh_order? 
+                 & (INTEGER)          &  Nose-Hoover Chain : order of the yoshida integrator 
+                                         $(2n+1)$ \, from $n=~$0 to 4                                  & \verb?3? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?nhc_mults?      
+                 & (INTEGER)          &  Nose-Hoover Chain : number of multiple timesteps                                   & \verb?2? \\
+\hline
+\hline
+\end{longtable}
+
+%###################################################################################################"
+%                                         FIELDTAG
+%###################################################################################################"
+
+\subsubsection{\&fieldtag}
+
+Where : \verb?SUBROUTINE field_init? in \verb?field.f90?
+\newline
+
+\begin{longtable}{l|c|m{8cm}|m{2cm}}
+\hline
+\hline
+Parameter        &  Type              &          Short Description                                                          & Default value \\
+\hline
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?lKA?       &  (LOGICAL)         & use the Kob-Andersen model for BMLJ (see \S \ref{sec:KA})                           & \verb?.FALSE.? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?ctrunc?    &  (CHARACTER)       & \newline truncation and shift of the potential \newline 
+
+                                                    \verb?'notrunc'? : no shift of the truncation \newline 
+                                                    \verb?'linear'?  : linear correction (potential 
+                                                                       discontinuity at $r=r_{cut}$) \newline 
+                   			            \verb?'quadratic'?: quadratic correction ( potential and force 
+                                                    discontinuity at $r=r_{cut}$) \newline                                  & \verb?'notrunc'? \tabularnewline
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?symmetric_pot?         
+                 & (LOGICAL)          &  make all potentials symmetric ( default .true. but who knows ?) \newline  
+	                                   only the upper triangle in matrices in needed                                    & \verb?.TRUE.? \tabularnewline
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?mass(X)?   &  (REAL)            & mass of the particule type with X = 1 , 2 \ldots \verb?ntype? [a.m.u]               & \verb?1.0? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?quad_efg(X)? 
+                 &  (REAL)            & quadrupolar moment of nucleus for NMR interaction for type $X$ with $X=~$1,2 \ldots \verb?ntype? [mb]     
+                                                                                                                            & \verb?1.0? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+                 &                    & if \verb?lcoulomb=.TRUE.? & \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?doefield?         
+                 & (LOGICAL)          &  calculate electric field (internaly switch on for self-consistent calculation  $\ge$ dipole) 
+                                                                                                                            & \verb?.FALSE.? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?doefg?         
+                 & (LOGICAL)          &  calculate electric field gradient (internaly switch on for self-consistent calculation $\ge$ quadrupole)     
+                                                                                                                            & \verb?.FALSE.? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?qch(X)?    &  (REAL)            & charge of the particule type with X = 1 , 2 \ldots \verb?ntype? [e]                 & \verb?0.0?\\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?dip(X,3)?  &  (REAL)            & static dipole on particule of type $X$ with $X=$~1 , 2 \ldots \verb?ntype? [e\AA]   & \verb?0.0?\\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?quad(X,3,3)?
+                 &  (REAL)            & static quadrupole on particule of type $X$ with $X=$~1 , 2 \ldots \verb?ntype? [e\AA$^2$]  
+	                                                                                                                    & \verb?0.0?\\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?ncelldirect?           
+                 &  (INTEGER)         & \newline number of neighboring cells in the direct summation 
+                                         (total number of cells $=ncelldirect^3$ \newline 
+
+                                          for \verb?lcoulomb=.TRUE.? and \verb?longrange='direct'?  \newline                  
+					  
+					  not efficient for coulombic quantities $<$ electric field gradient order          & \verb?2? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?kES(3)?    &  (INTEGER)         & \newline number of kpoints in the reciprocal contribution of the Ewald summation
+                                         (total number of cells $=ncellewald^3$ \newline                                      
+					 
+					 for \verb?lcoulomb=.TRUE.? and \verb?longrange='ewald'?  \newline                  & \verb?10 10 10? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?alphaES?   &  (REAL)            & Ewald screening parameter                                                           & \verb?1.0? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?lautoES?   & (LOGICAL)          & auto-determination of Ewald parameter (\verb?kES?, \verb?alphaES?) 
+                                        from \verb?epsw? (accuracy) and \verb?cutlongrange? ( accuracy )                    & \verb?.FALSE.? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?epsw?      &  (REAL)            & targeted error in the ewald summation (see \ref{sec:COUL} $\epsilon_\omega$) 
+                                                                                                                            & \verb?1.0? \\
+\hline
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+                 &                    & if \verb?lnmlj=.TRUE.?                                                              & \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?epslj(X,Y)?& (REAL)             & depth of the potential well of the Lennard jones potential 
+                                        with X,Y = 1 , 2 \ldots \verb?ntype? [eV]                                           & \verb?1.0? \tabularnewline
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?sigmalj(X,Y)?          
+                 & (REAL)             & finite distance at which the inter-particle potential is zero with 
+                                          X,Y = 1 , 2 \ldots \verb?ntype? [\AA]                                             & \verb?1.0? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?qlj(X,Y)?  & (REAL)             & exponent of the repulsive part with X,Y = 1 , 2 \ldots \verb?ntype?                 & \verb?12? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?plj(X,Y)?  & (REAL)             & exponent of the attractive part with X,Y = 1 , 2 \ldots \verb?ntype?                & \verb?6? \\
+\hline
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+                 &                    & if \verb?lbmhft=.TRUE.? or \verb?lbmhftd=.TRUE.?                                    & \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?Abmhftd(X,Y)?          
+                 & (REAL)             & parameter of the Born-Meyer-Huggins potential 
+                                        with X,Y = 1 , 2 \ldots \verb?ntype? [eV]                                           & \verb?0.0? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?Bbmhftd(X,Y)?          
+                 & (REAL)             & parameter of the Born-Meyer-Huggins potential 
+                                        with X,Y = 1 , 2 \ldots \verb?ntype? [\AA$^1$]                                      & \verb?0.0? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?Cbmhftd(X,Y)?          
+                 & (REAL)             & parameter of the Born-Meyer-Huggins potential
+                                        with X,Y = 1 , 2 \ldots \verb?ntype? [eV\AA$^6$]                                    & \verb?0.0? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?Dbmhftd(X,Y)?          
+                 & (REAL)             & parameter of the Born-Meyer-Huggins potential
+                                        with X,Y = 1 , 2 \ldots \verb?ntype? [eV\AA$^8$]                                    & \verb?0.0? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?BDbmhftd(X,Y)?         
+                 & (REAL)             &  damping terms of dispersion contribution only \verb?lbmhftd=.TRUE.?                & \verb?0.0? \\
+\hline
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+                 &                    & for polarizabilities                                                                &  \\
+
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?algo_pol?  & (CHARACTER)        & \verb?'scf'? : self-consistent determination of induced field from polarizabilities
+                                        \verb?'cg'? :  dev. stage                                                           & \verb?.FALSE.?\\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?ldip_polar(X)? 
+                 & (LOGICAL)          & switch (dipole) polarizabilities for ion X= 1 , 2 \ldots \verb?ntype?               & \verb?.FALSE.?\\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?lquad_polar(X)? 
+                 & (LOGICAL)          & switch (quadrupole) polarizabilities for ion X= 1 , 2 \ldots \verb?ntype?           & \verb?.FALSE.?\\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?poldip(X,3,3)?
+                 & (REAL)             & dipole-dipole polarizability tensor for type X=1 , 2 \ldots \verb?ntype?            & \verb?0.0? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?polquad(X,3,3,3)?
+                 & (REAL)             & quadrupole-quadrupole polarizability tensor for type X=1 , 2 \ldots \verb?ntype?    & \verb?0.0? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?poldip_iso(X)?
+                 & (REAL)             & dipole-dipole polarizability isotropic part only for type X=1 , 2 \ldots \verb?ntype?            
+                                                                                                                            & \verb?0.0? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?polquad_iso(X)?
+                 & (REAL)             & quadrupole-quadrupole polarizability tensor for type X=1 , 2 \ldots \verb?ntype?    & \verb?0.0? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?ldip_damp(X,3,3)?      
+                 & (LOGICAL)          & switch on damping function on dipole for type X=1 , 2 \ldots \verb?ntype? (see \ref{sec:pola})         
+                                                                                                                            & \verb?.FALSE.? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?dip_pol_damp_b(X,3,3)?     
+                 & (REAL)             & $b$ parameter of damping function on dipole for type X=1 , 2 \ldots \verb?ntype? (see \ref{sec:pola})
+                                                                                                                            & \verb?0.0? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?dip_pol_damp_c(X,3,3)?     
+                 & (REAL)             & $c$ parameter of damping function on dipole for type X=1 , 2 \ldots \verb?ntype? (see \ref{sec:pola})
+                                                                                                                            & \verb?0.0? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?dip_pol_damp_k(X,3,3)?     
+                 & (INTEGER)          & $k$ parameter of damping function on dipole for type X=1 , 2 \ldots \verb?ntype? (see \ref{sec:pola})
+                                                                                                                            & \verb?4? \\
+\hline
+\hline
+\end{longtable}
+
+%###################################################################################################"
+%                                         OPTTAG
+%###################################################################################################"
+\subsubsection{\&opttag}
+
+Where : \verb?SUBROUTINE opt_init? in \verb?opt.f90?
+\newline
+
+\begin{longtable}{l|c|m{8cm}|m{2cm}}
+\hline
+\hline
+Parameter        &  Type              &          Short Description                                                          & Default value \\
+\hline
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?optalgo?   & (CHARACTER)        & \newline choose unconstrained optimization algorithm \newline 
+
+                                        \verb?'sastry'? : Linear minimisation via cubic extrapolation of potential 
+					Original author S. Sastry JNCASR \newline
+
+					\verb?'lbfgs'? : Limited memory BFGS method for large scale optimisation
+					Author: J. Nocedal~\addref  \newline 
+					 
+					\verb?'m1qn3'? : M1QN3, Version 3.3, October 2009
+					Authors: Jean Charles Gilbert, Claude Lemarechal, INRIA.~\addref \newline            & \verb?sastry? \tabularnewline
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?ncopt?     & (INTEGER)          & number of configurations in TRAJFF                                                   & \verb?0? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?nskipopt?  & (INTEGER)          & number of configurations skipped in the beginning of TRAJFF                          & \verb?0? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?nmaxopt?   & (INTEGER)          & number of configurations to be optimize                                              & \verb?1? \\
+\hline
+\hline
+\end{longtable}
+
+%###################################################################################################"
+%                                         VIBTAG
+%###################################################################################################"
+\subsubsection{\&vibtag}
+
+Where : \verb?SUBROUTINE vib_init? in \verb?vib.f90?
+\newline
+
+\begin{longtable}{l|c|m{8cm}|m{2cm}}
+\hline
+\hline
+Parameter        &  Type              &          Short Description                                                          & Default value \\
+\hline
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?lwrite_vectff? 
+                 & (LOGICAL)          & write the vector field (i.e eigenvectors) in VECTFF file                            & \verb?.FALSE.?  \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?ncvib?     & (INTEGER)          & number of configurations in ISCFF to be analysed                                    & \verb?0? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?ngconf?    & (INTEGER)          & number of configurations generated with \verb?calc='vib+gmod'?                      & \verb?0? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?imod?      & (INTEGER)          & if \verb?calc='vib+gmod'? generate the mode \verb?imod?                             & \verb?4? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?nkphon?    & (INTEGER)          & number of kpoint between ks and kf used when calc = 'vib+band'                      & \verb?NULL? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?resdos?    & (REAL)             & resolution in vibrational density of states distribution [\AA]                      & \verb?1.0? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?omegamax?  & (REAL)             & maximum value in dos                                                                & \verb?100.0? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?ksx,ksy,ksz?  
+                 & (REAL)             & first kpoint                                                                        & \verb?NULL? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?kfx,kfy,kfz?  
+                 & (REAL)             & last kpoint                                                                         & \verb?NULL? \\
+\hline
+\hline
+\end{longtable}
+
+%###################################################################################################"
+%                                         EFGTAG
+%###################################################################################################"
+
+\subsubsection{\&efgtag}
+
+Where : \verb?SUBROUTINE efg_init? in \verb?efg.f90?
+\newline
+
+\begin{longtable}{l|c|m{8cm}|m{2cm}}
+\hline
+\hline
+Parameter        &  Type              &          Short Description                                                          & Default value \\
+\hline
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?lefgprintall?    
+                 & (LOGICAL)          &  whether or not we want to print all the efg for each atoms and 
+                                               configurations in file EFGALL                                                & \verb?.FALSE.? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?lefg_it_contrib? 
+                 & (LOGICAL)          & if one wants to get the contribution to EFG separated in types 
+                                              (only \verb?'direct'? and test purpose)                                       & \verb?.FALSE.? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?ncefg?     & (INTEGER)          & number of configurations read in TRAJFF for EFG calculation ( \verb?calc='efg'? )   & \verb?0? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?ntcor?     & (INTEGER)          & maximum number of steps for the efg auto-correlation function( \verb?calc='efg+acf'?)
+                                                                                                                            & \verb?10? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?resvzz?    & (REAL)             & resolution in $V_{zz}$ distribution                                                 & \verb?0.1? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?reseta?    & (REAL)             & resolution in $\eta_Q$ distribution                                                 & \verb?0.1? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?resu?      & (REAL)             & resolution in $U_i$ ditribution                                                     & \verb?0.1? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?vzzmin?    & (REAL)             & minimum value of $V_{zz}$ distribution which is then between [vzzmin, -vzzmin]      & \verb?-4.0? \\ 
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?umin?      & (REAL)             & minimum value of umin distribution which is then between [umin, -umin]              & \verb?-4.0? \\
+\hline
+\hline
+\end{longtable}
+
+%###################################################################################################"
+%                                         MSDTAG
+%###################################################################################################"
+
+\subsubsection{\&msdtag}
+
+Where : \verb?SUBROUTINE msd_init? in \verb?msd.f90?
+BE CAREFUL !!! NOT HEAVELY TESTED !
+\newline
+
+\begin{longtable}{l|c|m{8cm}|m{2cm}}
+\hline
+\hline
+Parameter        &  Type              &          Short Description                                                          & Default value \\
+\hline
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?nblock?    & (INTEGER)          & ???????? I forgot ;)                                                                & \verb?10? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?ibmax?     &  (INTEGER)         & ???????? I forgot ;)                                                                & \verb?20? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?tdifmax?   & (REAL)             & ???????? I forgot ;)                                                                & \verb?100.0? \\
+\hline
+\hline
+\end{longtable}
+
+%###################################################################################################"
+%                                         GRTAG
+%###################################################################################################"
+
+\subsubsection{\&grtag}
+
+Where : \verb?SUBROUTINE control_init? in \verb?radial_distribution.f90?
+\newline
+
+\begin{longtable}{l|c|m{8cm}|m{2cm}}
+\hline
+\hline
+Parameter        &  Type              &          Short Description                                                          & Default value \\
+\hline
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?nc?        & (INTEGER)          & number of configurations to read in TRAJFF                                          & \verb?0? \\
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?nskip?     & (INTEGER)          & number of configurations skipped in the beginning of TRAJFF                         & \verb?0? \\
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?resg?      & (REAL)             & resolution in the radial distribution function                                      & \verb?0.1? \\
+\hline
+\hline
+\end{longtable}
+
+%###################################################################################################"
+%                                         VACFTAG
+%###################################################################################################"
+\subsubsection{\&vacftag}
+
+Where : \verb?SUBROUTINE vacf_init? in \verb?vacf.f90?
+BE CAREFUL
+\newline
+
+\begin{longtable}{l|c|m{8cm}|m{2cm}}
+\hline
+\hline
+Parameter        &  Type              &          Short Description                                                          & Default value \\
+\hline
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?it0?       & (INTEGER)          & ???????? I forgot ;)                                                                & \verb?1? \\
+\hline
+\rule[-0.75cm]{0cm}{1.5cm}
+\verb?tdifmax?   & (REAL)             & ???????? I forgot ;)                                                                & \verb?100.0? \\ 
+\hline
+\hline
+\end{longtable}
+
+\subsubsection{\&stochiotag }
+\subsubsection{\&vois1tag }
+\subsubsection{\&rmctag }
+
+%###################################################################################################"
+%                                         OUTFILE DESCRIPTION
+%###################################################################################################"
+\section{Output files description}
+
+\bibliography{mdff}
+\bibliographystyle{amsplain}
+
+\end{document}
