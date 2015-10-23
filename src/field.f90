@@ -709,10 +709,14 @@ SUBROUTINE field_print_info ( kunit , quiet )
     ! =================================
     if ( lcoulomb )    then 
       lseparator(kunit) 
-      WRITE ( kunit ,'(a)')               'coulombic interaction : '
-      WRITE ( kunit ,'(a,l)')             'task : charge-charge', task_coul(1)
-      WRITE ( kunit ,'(a,l)')             'task : charge-dipole', task_coul(2)
-      WRITE ( kunit ,'(a,l)')             'task : dipole-dipole', task_coul(3)
+      WRITE ( kunit ,'(a)')           'coulombic interaction : '
+      WRITE ( kunit ,'(a,l)')         'task : charge-charge        ', task_coul(1)
+      WRITE ( kunit ,'(a,l)')         'task : charge-dipole        ', task_coul(2)
+      WRITE ( kunit ,'(a,l)')         'task : dipole-dipole        ', task_coul(3)
+      WRITE ( kunit ,'(a,l)')         'task : charge-quadrupole    ', task_coul(4)
+      WRITE ( kunit ,'(a,l)')         'task : dipole-quadrupole    ', task_coul(5)
+      WRITE ( kunit ,'(a,l)')         'task : quadrupole-quadrupole', task_coul(6)
+
       lseparator(kunit) 
       blankline(kunit)
       if ( task_coul(1) .and. .not. task_coul(3)) then
