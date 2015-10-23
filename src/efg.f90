@@ -2158,7 +2158,7 @@ SUBROUTINE efg_stat ( kunit_input , kunit_nmroutput )
 
   USE control,                  ONLY :  iefgall_format
   USE config,                   ONLY :  system , natm , natmi , ntype , itype , &
-                                        atype , atypei , simu_cell , rho, config_alloc , quadia
+                                        atype , atypei , simu_cell , rho, config_alloc , quadia_nuc
   USE io,                       ONLY :  ionode , stdout , stderr 
   USE field,                    ONLY :  lwfc , field_init        
   USE constants,                ONLY :  CQ_UNIT
@@ -2397,7 +2397,7 @@ SUBROUTINE efg_stat ( kunit_input , kunit_nmroutput )
           if ( lwfc ( it ) .ge. 0 ) then
             WRITE ( kunit_nmroutput , 150 ) ia , atype ( ia ) , &
                                                  nmr( ia , 1 ) , nmr( ia , 2 ) , &
-                                                 nmr( ia , 3 ) , nmr( ia , 3 ) * CQ_UNIT * quadia ( ia ) , nmr( ia , 4 )
+                                                 nmr( ia , 3 ) , nmr( ia , 3 ) * CQ_UNIT * quadia_nuc ( ia ) , nmr( ia , 4 )
           endif
       endif
 

@@ -143,9 +143,9 @@ MODULE field
   real(kind=dp)    :: dip      ( 3 , ntypemax )        !< dipoles 
   real(kind=dp)    :: quad     ( 3 , 3 , ntypemax )    !< quadrupoles
   real(kind=dp)    :: poldip   ( ntypemax , 3 , 3 )    !< dipole     polarizability if ldip_polar( it ) = .true. 
-  !real(kind=dp)    :: poldip_iso ( ntypemax )         !< isotropic dipole polarizability if ldip_polar( it ) = .true.
+  real(kind=dp)    :: poldip_iso ( ntypemax )          !< isotropic dipole polarizability if ldip_polar( it ) = .true.
   real(kind=dp)    :: polquad  ( ntypemax , 3 , 3 , 3 )!< quadrupole polarizability if lquad_polar( it ) = .true.
-  !real(kind=dp)    :: polquad_iso ( ntypemax )        !< isotropic quadrupole polarizability if ldip_polar( it ) = .true. 
+  real(kind=dp)    :: polquad_iso ( ntypemax )         !< isotropic quadrupole polarizability if ldip_polar( it ) = .true. 
   real(kind=dp)    :: quad_nuc ( ntypemax )            !< quadrupolar moment nucleus NMR
 
 
@@ -189,7 +189,8 @@ MODULE field
   real(kind=dp)    :: alphaES                          !< Ewald sum parameter 
   integer          :: kES(3)                           !< kmax of ewald sum in reciprocal space
   TYPE ( kmesh )   :: km_coul                          !< kpoint mesh ( see kspace.f90 )
-  logical          :: task_coul(3)                     !< q-q, q-d qnd d-d task
+  logical          :: task_coul(6)                     !< q-q, q-d, d-d q-Q d-Q and Q-Q tasks
+
   ! direct sum
   integer          :: ncelldirect                      !< number of cells  in the direct summation
   TYPE ( rmesh )   :: rm_coul                          !< real space mesh ( see rspace.f90 )
@@ -304,7 +305,7 @@ SUBROUTINE field_check_tag
 
   ! local
   integer :: i, it, it2
-  logical :: allowed , ldamp , ldip, lqch
+  logical :: allowed , ldamp , ldip, lqua, lqch
 
   allowed = .false.
   ! ========
@@ -377,21 +378,44 @@ SUBROUTINE field_check_tag
 
   if ( ldamp .or. lbmhftd ) CALL get_TT_damp
 
-  ! coulombic task 
+  ! ===============================
+  !       coulombic tasks
+  ! ===============================
   if ( lcoulomb ) then
+
     lqch = .false.
     ldip = .false.
-    if ( any(qch.ne.0.0_dp) ) lqch=.true.
-    if ( lqch ) task_coul(1) = .true.
+    lqua = .false.
+
+    ! static moments     
+    if ( any(qch .ne.0.0_dp) ) lqch =.true. !charge
+    if ( any(dip .ne.0.0_dp) ) ldip =.true. !dipoles     
+    if ( any(quad.ne.0.0_dp) ) lqua =.true. !quadrupoles     
+
+    ! dipole polarizabilities
     do it = 1 , ntype
-      if ( ldip_polar(it) )  ldip = .true.
+      if ( ldip_polar(it) )   ldip = .true.
     enddo
-    if ( any(dip.ne.0.0_dp) ) ldip=.true.     
+    ! quadrupole polarizabilities
+    do it = 1 , ntype
+      if ( lquad_polar(it) )  lqua = .true.
+    enddo
+
+    ! set tasks
+    if ( lqch ) task_coul(1) = .true.   ! q-q
     if ( ldip ) then
-      if ( lqch ) task_coul(2) = .true.
-      task_coul(3) = .true.
+      if ( lqch ) task_coul(2) = .true. ! q-d
+      task_coul(3) = .true.             ! d-d
     endif
+    if ( lqua ) then
+      if ( lqch ) task_coul(4) = .true. ! q-Q
+      if ( ldip ) task_coul(5) = .true. ! d-Q
+      task_coul(6) = .true.             ! Q-Q
+    endif
+
   endif
+
+
 
   allowed = .false.
   ! =======================
@@ -420,6 +444,28 @@ SUBROUTINE field_check_tag
   if ( thole_function_type .eq. 'expon1' ) thole_param = 0.572_dp
   if ( thole_function_type .eq. 'expon2' ) thole_param = 1.9088_dp
   if ( thole_function_type .eq. 'gauss' ) thole_param = 0.957_dp
+
+
+  ! =================================================
+  ! isotropic values for polarizabilities in input 
+  ! set the tensors
+  ! =================================================
+  do it = 1, ntype
+    if ( poldip_iso(it) .ne. 0.0_dp ) then
+      poldip(it,:,:) = 0.0_dp
+      poldip(it,1,1) = poldip_iso(it)
+      poldip(it,2,2) = poldip_iso(it)
+      poldip(it,3,3) = poldip_iso(it)
+    endif
+    if ( polquad_iso(it) .ne. 0.0_dp ) then
+      polquad(it,:,:,:) = 0.0_dp
+      polquad(it,1,1,1) = polquad_iso(it)
+      polquad(it,2,2,2) = polquad_iso(it)
+      polquad(it,3,3,3) = polquad_iso(it)
+    endif
+    !write(stdout,'(a,i,4e16.8)')'debug',it,polquad(it,1,1,1), polquad(it,2,2,2),polquad(it,3,3,3) ,polquad_iso(it)
+  enddo
+
 
 
 
@@ -463,7 +509,9 @@ SUBROUTINE field_init
                          dip           , &
                          quad          , &
                          poldip        , &  
+                         poldip_iso    , &  
                          polquad       , &  
+                         polquad_iso   , &  
                          pol_damp_b    , &  
                          pol_damp_c    , &  
                          pol_damp_k    , &  
@@ -484,8 +532,9 @@ SUBROUTINE field_init
                          lwrite_dip    , &            
                          ldip_wfc      , &            
                          rcut_wfc      , &            
-                         ldip_polar        , &
+                         ldip_polar    , &
                          ldip_damping  , &
+                         lquad_polar   , &
                          Abmhftd       , &  
                          Bbmhftd       , &
                          Cbmhftd       , &
@@ -3603,8 +3652,12 @@ SUBROUTINE moment_from_pola_scf ( mu_ind , didpim )
 
     ! output
     if ( calc .ne. 'opt' ) then
+#ifdef debug
     io_printnode WRITE ( stdout ,'(a,i4,5(a,e16.8))') &
     'scf = ',iscf,' u_pol = ',u_pol * coul_unit , ' u_coul (qq)  = ', u_coul_stat, ' u_coul (dd)  = ', u_coul_ind,' u_coul_pol = ', u_coul_pol, ' rmsd       = ', rmsd
+#endif
+    io_printnode WRITE ( stdout ,'(a,i4,2(a,e16.8))') &
+    'scf = ',iscf,' u_pol = ',u_pol * coul_unit , ' rmsd       = ', rmsd
     endif
  
 #ifdef debug_print_dipff_scf
@@ -3872,9 +3925,14 @@ SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , didpim )
 
     ! output
     if ( calc .ne. 'opt' ) then
+#ifdef debug
     io_printnode WRITE ( stdout ,'(a,i4,5(a,e16.8))') &
     'scf = ',iscf,' u_pol = ',u_pol * coul_unit , ' u_coul (qq)  = ', u_coul_stat, ' u_coul (dd)  = ', u_coul_ind,' u_coul_pol = ', u_coul_pol, ' rmsd       = ', rmsd
+#endif
+    io_printnode WRITE ( stdout ,'(a,i4,2(a,e16.8))') &
+    'scf = ',iscf,' u_pol = ',u_pol * coul_unit , ' rmsd       = ', rmsd
     endif
+
  
 #ifdef debug_print_dipff_scf
   do ia = 1 , natm
@@ -4166,13 +4224,16 @@ SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , didpim )
     endif
 !kO
 
-
     ! output
     if ( calc .ne. 'opt' ) then
+#ifdef debug
     io_printnode WRITE ( stdout ,'(a,i4,5(a,e16.8))') &
     'scf = ',iscf,' u_pol = ',u_pol * coul_unit , ' u_coul (qq)  = ', u_coul_stat, ' u_coul (dd)  = ', u_coul_ind,' u_coul_pol = ', u_coul_pol, ' rmsd       = ', rmsd
+#endif
+    io_printnode WRITE ( stdout ,'(a,i4,2(a,e16.8))') &
+    'scf = ',iscf,' u_pol = ',u_pol * coul_unit , ' rmsd       = ', rmsd
     endif
- 
+
 #ifdef debug_print_dipff_scf
   do ia = 1 , natm
   if ( mu_ind ( 1 , ia ) .eq. 0._dp ) cycle
@@ -4488,8 +4549,12 @@ SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , didpim )
 
     ! output
     if ( calc .ne. 'opt' ) then
+#ifdef debug
     io_printnode WRITE ( stdout ,'(a,i4,5(a,e16.8))') &
     'scf = ',iscf,' u_pol = ',u_pol * coul_unit , ' u_coul (qq)  = ', u_coul_stat, ' u_coul (dd)  = ', u_coul_ind,' u_coul_pol = ', u_coul_pol, ' rmsd       = ', rmsd
+#endif
+    io_printnode WRITE ( stdout ,'(a,i4,2(a,e16.8))') &
+    'scf = ',iscf,' u_pol = ',u_pol * coul_unit , ' rmsd       = ', rmsd
     endif
  
 #ifdef debug_print_dipff_scf
@@ -4781,8 +4846,12 @@ SUBROUTINE moment_from_pola_scf_kO_v4 ( mu_ind , didpim )
 
     ! output
     if ( calc .ne. 'opt' ) then
+#ifdef debug
     io_printnode WRITE ( stdout ,'(a,i4,5(a,e16.8))') &
     'scf = ',iscf,' u_pol = ',u_pol * coul_unit , ' u_coul (qq)  = ', u_coul_stat, ' u_coul (dd)  = ', u_coul_ind,' u_coul_pol = ', u_coul_pol, ' rmsd       = ', rmsd
+#endif
+    io_printnode WRITE ( stdout ,'(a,i4,2(a,e16.8))') &
+    'scf = ',iscf,' u_pol = ',u_pol * coul_unit , ' rmsd       = ', rmsd
     endif
  
 #ifdef debug_print_dipff_scf
