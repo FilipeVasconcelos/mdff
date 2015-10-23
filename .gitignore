@@ -12,10 +12,12 @@
 *.so
 *.dylib
 *.dll
+*.pyc
 
 # Fortran module files
 *.mod
 *.F90
+fort.*
 
 # Compiled Static libraries
 *.lai
@@ -27,33 +29,30 @@
 *.exe
 *.out
 *.app
+*.x
+
+#MDFF files
+CONTFF*
+OSZIFF*
+TRAJFF*
+DOSFF*
+DOSKFF*
+EIGFF*
+VECTFF*
+
+#pictures/pdf/latex output
+*.aux
+*.pdf
+*.toc
+*.eps
 
 
-bin/config.pyc
-bin/constants.pyc
-bin/lattice.pyc
-bin/mdff.x
-bin/vesta.pyc
-doc/mdff.aux
 doc/mdff.log
-doc/mdff.pdf
-doc/mdff.toc
-doc/missfont.log
 examples/ex1/dl_poly/
 examples/ex1/mdff/
 examples/ex1/plot
 examples/ex10/control_files/
 examples/ex11/md_runs/
-examples/ex5/DOSFF
-examples/ex5/DOSFF.vib
-examples/ex5/DOSKFF.vib+band_GtoX
-examples/ex5/DOSKFF.vib+band_LtoG
-examples/ex5/DOSKFF.vib+band_XtoG
-examples/ex5/DOSKFF.vib+dos
-examples/ex5/EIGFF
-examples/ex5/VECTFF
-examples/ex5/band.eps
-examples/ex5/dos.eps
 examples/ex5/fort.180
 examples/ex5/plot.band
 examples/ex5/plot.dos
@@ -106,5 +105,3 @@ examples/ex9/config/pot_mdff/scr8
 examples/ex9/config/pot_mdff/scr9
 examples/ex9/cp2k/
 examples/ex9/mdff/
-src/mdff.x
-
