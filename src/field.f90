@@ -67,6 +67,7 @@ MODULE field
   logical, SAVE     :: lautoES           !< auto-determination of Ewald parameter from epsw ( accuracy)
   logical, SAVE     :: lwrite_dip_wfc    !< write dipoles from wannier centers to file
   logical, SAVE     :: lwrite_dip        !< write dipoles 
+  logical, SAVE     :: lwrite_quad       !< write quadrupoles to QUADFF
   logical, SAVE     :: ldip_wfc          !< calculate electrostatic contribution from dipolar momemt coming from wfc
   logical, SAVE     :: lquiet            !< internal stuff 
   logical, SAVE     :: symmetric_pot     !< symmetric potential ( default .true. but who knows ?)
