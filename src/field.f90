@@ -143,9 +143,9 @@ MODULE field
   real(kind=dp)    :: dip      ( ntypemax , 3 )        !< dipoles 
   real(kind=dp)    :: quad     ( ntypemax , 3 , 3 )    !< quadrupoles
   real(kind=dp)    :: poldip   ( ntypemax , 3 , 3 )    !< dipole     polarizability if ldip_polar( it ) = .true. 
-  real(kind=dp)    :: poldip_iso ( ntypemax )          !< isotropic dipole polarizability if ldip_polar( it ) = .true.
+  !real(kind=dp)    :: poldip_iso ( ntypemax )          !< isotropic dipole polarizability if ldip_polar( it ) = .true.
   real(kind=dp)    :: polquad  ( ntypemax , 3 , 3 , 3 )!< quadrupole polarizability if ldip_polar( it ) = .true.
-  real(kind=dp)    :: polquad_iso ( ntypemax )         !< isotropic quadrupole polarizability if ldip_polar( it ) = .true. 
+  !real(kind=dp)    :: polquad_iso ( ntypemax )         !< isotropic quadrupole polarizability if ldip_polar( it ) = .true. 
   real(kind=dp)    :: quad_efg ( ntypemax )            !< quadrupolar moment nucleus NMR
 
 
@@ -253,7 +253,8 @@ SUBROUTINE field_default_tag
 
   ! polarization
   lpolar        = .false. 
-  pol           = 0.0_dp
+  poldip        = 0.0_dp
+  polquad       = 0.0_dp
   pol_damp_b    = 0.0_dp
   pol_damp_c    = 0.0_dp
   pol_damp_k    = 0
@@ -457,7 +458,8 @@ SUBROUTINE field_init
                          qch           , &
                          quad_efg      , &
                          dip           , &
-                         pol           , &  
+                         poldip        , &  
+                         polquad       , &  
                          pol_damp_b    , &  
                          pol_damp_c    , &  
                          pol_damp_k    , &  
@@ -628,9 +630,9 @@ SUBROUTINE field_print_info ( kunit , quiet )
       do it1 = 1 , ntype
         if ( lpolar( it1 ) ) then
           WRITE ( kunit ,'(a,a2,a,f12.4)')'polarizability on type ', atypei(it1),' : ' 
-          WRITE ( kunit ,'(3f12.4)')      ( pol ( it1 , 1 , j ) , j = 1 , 3 ) 
-          WRITE ( kunit ,'(3f12.4)')      ( pol ( it1 , 2 , j ) , j = 1 , 3 ) 
-          WRITE ( kunit ,'(3f12.4)')      ( pol ( it1 , 3 , j ) , j = 1 , 3 ) 
+          WRITE ( kunit ,'(3f12.4)')      ( poldip ( it1 , 1 , j ) , j = 1 , 3 ) 
+          WRITE ( kunit ,'(3f12.4)')      ( poldip ( it1 , 2 , j ) , j = 1 , 3 ) 
+          WRITE ( kunit ,'(3f12.4)')      ( poldip ( it1 , 3 , j ) , j = 1 , 3 ) 
           blankline(kunit)
           !if ( ldamp ) then
             WRITE ( kunit ,'(a)') 'damping functions : '
@@ -683,7 +685,7 @@ SUBROUTINE field_print_info ( kunit , quiet )
         WRITE ( kunit ,'(a)')             'pair               a              dc              dt'
         do it1 = 1 , ntype
           do it2 = it1 , ntype
-            Athole    = ( pol (it1,1,1) * pol (it2,1,1) ) ** (1.0_dp / 6.0_dp )
+            Athole    = ( poldip (it1,1,1) * poldip (it2,1,1) ) ** (1.0_dp / 6.0_dp )
             dist_cata = ( 4.0_dp ) ** (1.0_dp / 6.0_dp ) * Athole
             dist_corr = Athole * thole_param ( it1 , it2 )
             WRITE ( kunit ,120)   atypei(it1),'-',atypei(it2),'    ',thole_param ( it1 , it2 ), dist_cata , dist_corr 
