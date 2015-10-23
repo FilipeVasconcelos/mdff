@@ -163,7 +163,7 @@ SUBROUTINE typeinfo_init
 
   USE constants, ONLY :  dp
   USE config ,  ONLY :  atype , atypei , itype , natmi , natm , ntype , massia, dipia , qia , quadia , ipolar , polia , invpolia 
-  USE field ,   ONLY :  mass, qch , quad_efg , dip , lpolar , pol
+  USE field ,   ONLY :  mass, qch , quad_efg , dip , lpolar , poldip
   USE io,       ONLY :  stdout
   
   implicit none
@@ -198,7 +198,7 @@ SUBROUTINE typeinfo_init
       ipolar ( ia )    = lpolar ( it )
       do i = 1 , 3
         do j = 1 , 3
-          polia ( i , j  , ia ) = pol ( it , i , j )
+          polia ( i , j  , ia ) = poldip ( it , i , j )
         enddo
       enddo 
       if ( .not. lpolar ( it ) ) cycle

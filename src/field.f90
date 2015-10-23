@@ -140,7 +140,7 @@ MODULE field
   !real(kind=dp)    :: dip      ( 3 , ntypemax )        !< dipoles 
   !real(kind=dp)    :: pol      ( ntypemax , 3 , 3 )    !< polarizability if lpolar( it ) = .true. 
 
-  real(kind=dp)    :: dip      ( ntypemax , 3 )        !< dipoles 
+  real(kind=dp)    :: dip      ( 3 , ntypemax )        !< dipoles 
   real(kind=dp)    :: quad     ( ntypemax , 3 , 3 )    !< quadrupoles
   real(kind=dp)    :: poldip   ( ntypemax , 3 , 3 )    !< dipole     polarizability if ldip_polar( it ) = .true. 
   !real(kind=dp)    :: poldip_iso ( ntypemax )          !< isotropic dipole polarizability if ldip_polar( it ) = .true.

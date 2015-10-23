@@ -64,13 +64,14 @@ MODULE config
   real(kind=dp), dimension(:)    , allocatable :: rix , riy , riz    !< positions in the center of mass reference 
 
 
-  real(kind=dp), dimension(:)    , allocatable :: massia             !< mass on ion 
-  real(kind=dp), dimension(:)    , allocatable :: qia                !< charge on ion 
-  real(kind=dp), dimension(:)    , allocatable :: quadia             !< quadrupolar moment on ion
-  real(kind=dp), dimension(:,:)  , allocatable :: dipia              !< dipole on ion 
-  real(kind=dp), dimension(:,:)  , allocatable :: dipia_wfc          !< induced dipole on ion from Wannier centers
-  real(kind=dp), dimension(:,:,:), allocatable :: polia              !< polarisation on ion
-  real(kind=dp), dimension(:,:,:), allocatable :: invpolia           !< polarisation on ion
+  real(kind=dp), dimension(:)      , allocatable :: massia             !< mass on ion 
+  real(kind=dp), dimension(:)      , allocatable :: qia                !< charge on ion 
+  real(kind=dp), dimension(:)      , allocatable :: quadia             !< quadrupolar moment on ion
+  real(kind=dp), dimension(:,:)    , allocatable :: dipia              !< dipole on ion 
+  real(kind=dp), dimension(:,:)    , allocatable :: dipia_wfc          !< induced dipole on ion from Wannier centers
+  real(kind=dp), dimension(:,:,:)  , allocatable :: poldipia           !< dipole polarisability on ion
+  real(kind=dp), dimension(:,:,:,:), allocatable :: polquadia          !< quadrupole polarisability on ion
+  real(kind=dp), dimension(:,:,:)  , allocatable :: invpoldipia           !< polarisation on ion
 
   real(kind=dp), dimension(:)    , allocatable   :: phi_coul_tot       !< coulombic potential 
 
@@ -276,8 +277,9 @@ SUBROUTINE config_alloc
   allocate( quadia ( natm ) )
   allocate( dipia ( 3 , natm ) )
   allocate( dipia_wfc ( 3 , natm ) )
-  allocate( polia ( 3 , 3  , natm ) )
-  allocate( invpolia ( 3 , 3 , natm ) )
+  allocate( poldipia ( 3 , 3  , natm ) )
+  allocate( polquadia ( 3 , 3 , 3  , natm ) )
+  allocate( invpoldipia ( 3 , 3 , natm ) )
   allocate( ipolar ( natm ) )
   allocate( phi_coul_tot ( natm ) ) !< only if we calculated coulombic interactions
 
@@ -309,7 +311,8 @@ SUBROUTINE config_alloc
   quadia    = 0.0_dp
   dipia   = 0.0_dp
   dipia_wfc = 0.0_dp
-  polia     = 0.0_dp
+  poldipia     = 0.0_dp
+  polquadia     = 0.0_dp
   ipolar    = .false. 
   phi_coul_tot = 0.0_dp
 
@@ -347,8 +350,9 @@ SUBROUTINE config_dealloc
   deallocate( quadia ) 
   deallocate( dipia ) 
   deallocate( dipia_wfc ) 
-  deallocate( polia ) 
-  deallocate( invpolia ) 
+  deallocate( poldipia ) 
+  deallocate( polquadia ) 
+  deallocate( invpoldipia ) 
   deallocate( ipolar ) 
   deallocate( phi_coul_tot ) !< well only if we calculated coulombic interactions
 
