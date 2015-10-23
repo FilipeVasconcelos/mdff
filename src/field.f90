@@ -146,7 +146,7 @@ MODULE field
   !real(kind=dp)    :: poldip_iso ( ntypemax )         !< isotropic dipole polarizability if ldip_polar( it ) = .true.
   real(kind=dp)    :: polquad  ( ntypemax , 3 , 3 , 3 )!< quadrupole polarizability if ldip_polar( it ) = .true.
   !real(kind=dp)    :: polquad_iso ( ntypemax )        !< isotropic quadrupole polarizability if ldip_polar( it ) = .true. 
-  real(kind=dp)    :: quad_efg ( ntypemax )            !< quadrupolar moment nucleus NMR
+  real(kind=dp)    :: quad_nuc ( ntypemax )            !< quadrupolar moment nucleus NMR
 
 
 
@@ -245,7 +245,7 @@ SUBROUTINE field_default_tag
 
   ! field
   qch           = 0.0_dp  ! charge
-  quad_efg      = 0.0_dp  ! quadrupolar moment
+  quad_nuc      = 0.0_dp  ! quadrupolar moment
   dip           = 0.0_dp  ! dipolar moment
   doefield      = .false. ! calculate electric field ( it is internally swicth on for induced polarization calculation )
   doefg         = .false. ! electric field gradient
@@ -456,7 +456,7 @@ SUBROUTINE field_init
                          doefield      , &
                          doefg         , &
                          qch           , &
-                         quad_efg      , &
+                         quad_nuc      , &
                          dip           , &
                          quad          , &
                          poldip        , &  
@@ -608,7 +608,7 @@ SUBROUTINE field_print_info ( kunit , quiet )
     lseparator(kunit) 
     do it = 1 , ntype 
       WRITE ( kunit ,'(a,a,a,e10.3)')   'q   ',atypei(it),'                 = ',qch(it)
-      WRITE ( kunit ,'(a,a,a,e10.3,a)') 'quad',atypei(it),'                 = ',quad_efg(it),' mb'
+      WRITE ( kunit ,'(a,a,a,e10.3,a)') 'quad',atypei(it),'                 = ',quad_nuc(it),' mb'
     enddo
     WRITE ( kunit ,'(a,e10.3)')         'total charge            = ',  qtot
     WRITE ( kunit ,'(a,e10.3)')         'second moment of charge = ',  qtot2

@@ -164,7 +164,7 @@ SUBROUTINE typeinfo_init
   USE constants, ONLY :  dp
   USE config ,  ONLY :  atype , atypei , itype , natmi , natm , ntype , massia, dipia , qia , &
                         quadia , ipolar , poldipia , polquadia, invpoldipia 
-  USE field ,   ONLY :  mass, qch , quad_efg , dip , lpolar , poldip
+  USE field ,   ONLY :  mass, qch , quad_nuc , dip , quad , lpolar , poldip
   USE io,       ONLY :  stdout
   
   implicit none
@@ -192,7 +192,7 @@ SUBROUTINE typeinfo_init
       itype ( ia )                = it
       qia   ( ia )                = qch ( it )
       massia( ia )                = mass( it )
-      quadia( ia )                = quad_efg ( it )   
+      quadia_nuc ( ia )           = quad_nuc ( it )   
       dipia ( : , ia )            = dip ( : , it )
       quadia ( : , : , ia )       = quad ( : , : , it )
       ipolar ( ia )               = lpolar ( it )
