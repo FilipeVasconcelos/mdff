@@ -1,8 +1,0 @@
-# Temperature Total and per Region
-#   Step Nr.  Time[fs]          Temp.[K]
-       0       0.000           0.0000000000
-# TEMPERATURE REGIONS:          1
-#                              0.0000000000
-       1       1.000         331.3804742063
-# TEMPERATURE REGIONS:          1
-#                            331.3804742063

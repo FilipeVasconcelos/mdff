@@ -2476,17 +2476,48 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
           ! =========================================
           !   multipole interaction tensor rank = 2
           ! =========================================
+!          T2%ab = 0.0_dp
+!          do j = 1 , 3
+!            do k = 1 , 3
+!              if ( j .gt. k ) cycle
+!                T2%ab (j,k) = ( 3.0_dp * rij(j) * rij(k) * F2 ) * dm5
+!              if ( j .eq. k ) T2%ab (j,j) = T2%ab (j,j) - F1 * dm3
+!            enddo
+!          enddo
+!          T2%ab (2,1) = T2%ab (1,2)
+!          T2%ab (3,1) = T2%ab (1,3)
+!          T2%ab (3,2) = T2%ab (2,3)
+
+          ! =========================================
+          !   multipole interaction tensor rank = 2 
+          !   nb of components = 6 => reduced = 5
+          !   + damping 
+          ! =========================================
           T2%ab = 0.0_dp
+          T2%ab_damp = 0.0_dp
+          T2%ab_damp2 = 0.0_dp
+          F2_dm5   = 3.0_dp * F2   * dm5
+          F2d_dm5  = 3.0_dp * F2d  * dm5
+          F2d2_dm5 = 3.0_dp * F2d2 * dm5
+          F1_dm3   = F1   * dm3
+          F1d_dm3  = F1d  * dm3
+          F1d2_dm3 = F1d2 * dm3
           do j = 1 , 3
             do k = 1 , 3
-              if ( j .gt. k ) cycle
-                T2%ab (j,k) = ( 3.0_dp * rij(j) * rij(k) * F2 ) * dm5
-              if ( j .eq. k ) T2%ab (j,j) = T2%ab (j,j) - F1 * dm3
-            enddo
+                                T2%ab (j,k) = rij(j) * rij(k) * F2_dm5
+                if ( j .eq. k ) T2%ab (j,j) = T2%ab (j,j) - F1_dm3
+                if ( ldamp ) then
+                                  T2%ab_damp  (j,k) = rij(j) * rij(k) * F2d_dm5
+                                  T2%ab_damp2 (j,k) = rij(j) * rij(k) * F2d2_dm5
+                  if ( j .eq. k ) then
+                    T2%ab_damp (j,j)  = T2%ab_damp (j,j)  - F1d_dm3
+                    T2%ab_damp2 (j,j) = T2%ab_damp2 (j,j) - F1d2_dm3
+                  endif
+                endif
+             enddo
           enddo
-          T2%ab (2,1) = T2%ab (1,2)
-          T2%ab (3,1) = T2%ab (1,3)
-          T2%ab (3,2) = T2%ab (2,3)
+
+
           ! =========================================
           !  "Thole" functions (linear)
           !  B.T. Thole, Chem. Phys. 59 p341 (1981)
@@ -2607,78 +2638,78 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
           endif
 
           ! damping
-          if ( ldamp ) then
-            T2%ab_damp = 0.0_dp
-            do j = 1 , 3
-              do k = 1 , 3 
-                if ( j .gt. k ) cycle
-                                  T2%ab_damp (j,k) = ( 3.0_dp * rij(j) * rij(k) * F2d ) * dm5
-                  if ( j .eq. k ) T2%ab_damp (j,j) = T2%ab_damp (j,j) - F1d * dm3
-               enddo
-            enddo
-            T2%ab_damp (2,1) = T2%ab_damp (1,2)
-            T2%ab_damp (3,1) = T2%ab_damp (1,3)
-            T2%ab_damp (3,2) = T2%ab_damp (2,3)
-            T2%ab_damp2 = 0.0_dp
-            do j = 1 , 3
-              do k = 1 , 3 
-                if ( j .gt. k ) cycle
-                  T2%ab_damp2 (j,k) = ( 3.0_dp * rij(j) * rij(k) * F2d2 ) * dm5
-                  if ( j .eq. k ) T2%ab_damp2 (j,j) = T2%ab_damp2 (j,j) - F1d2 * dm3
-               enddo
-            enddo
-            T2%ab_damp2 (2,1) = T2%ab_damp2 (1,2)
-            T2%ab_damp2 (3,1) = T2%ab_damp2 (1,3)
-            T2%ab_damp2 (3,2) = T2%ab_damp2 (2,3)
-          endif
+!          if ( ldamp ) then
+!            T2%ab_damp = 0.0_dp
+!            do j = 1 , 3
+!              do k = 1 , 3 
+!                if ( j .gt. k ) cycle
+!                                  T2%ab_damp (j,k) = ( 3.0_dp * rij(j) * rij(k) * F2d ) * dm5
+!                  if ( j .eq. k ) T2%ab_damp (j,j) = T2%ab_damp (j,j) - F1d * dm3
+!               enddo
+!            enddo
+!            T2%ab_damp (2,1) = T2%ab_damp (1,2)
+!            T2%ab_damp (3,1) = T2%ab_damp (1,3)
+!            T2%ab_damp (3,2) = T2%ab_damp (2,3)
+!            T2%ab_damp2 = 0.0_dp
+!            do j = 1 , 3
+!              do k = 1 , 3 
+!                if ( j .gt. k ) cycle
+!                  T2%ab_damp2 (j,k) = ( 3.0_dp * rij(j) * rij(k) * F2d2 ) * dm5
+!                  if ( j .eq. k ) T2%ab_damp2 (j,j) = T2%ab_damp2 (j,j) - F1d2 * dm3
+!               enddo
+!            enddo
+!            T2%ab_damp2 (2,1) = T2%ab_damp2 (1,2)
+!            T2%ab_damp2 (3,1) = T2%ab_damp2 (1,3)
+!            T2%ab_damp2 (3,2) = T2%ab_damp2 (2,3)
+!          endif
 
           ! =========================================
           !   multipole interaction tensor rank = 3  
           ! =========================================
-          !T3%abc = 0.0_dp
-          !do i = 1 , 3
-          !  do j = 1 , 3
-          !    do k = 1 , 3
-          !      if ( j .gt. k ) cycle 
-          !      if ( i .gt. j ) cycle 
-          !      T3%abc (i,j,k) = - rij(i) * rij(j) * rij(k) * F3 * dm7 * 15.0_dp
-          !      if ( i .eq. j .and. j.eq.k ) then
-          !        T3%abc (i,j,k) = T3%abc (i,j,k) +    rij(i) * F2 * dm5 * 9.0_dp
-          !      else
-          !        if ( i.eq.j ) T3%abc (i,j,k) = T3%abc (i,j,k) + rij(k) * F2 * dm5 * 3.0_dp
-          !        if ( i.eq.k ) T3%abc (i,j,k) = T3%abc (i,j,k) + rij(j) * F2 * dm5 * 3.0_dp 
-          !        if ( j.eq.k ) T3%abc (i,j,k) = T3%abc (i,j,k) + rij(i) * F2 * dm5 * 3.0_dp
-          !      endif
-          !    enddo
-          !  enddo
-          !enddo
-          !T3%abc(1,3,2) = T3%abc(1,2,3)
-          !T3%abc(3,1,2) = T3%abc(1,2,3)
-          !T3%abc(3,2,1) = T3%abc(1,2,3)
-          !T3%abc(2,3,1) = T3%abc(1,2,3)
-          !T3%abc(2,1,3) = T3%abc(1,2,3)
-          !T3%abc(1,2,1) = T3%abc(1,1,2)
-          !T3%abc(2,1,1) = T3%abc(1,1,2)
-          !T3%abc(1,3,1) = T3%abc(1,1,3)
-          !T3%abc(3,1,1) = T3%abc(1,1,3)
-          !T3%abc(2,2,1) = T3%abc(1,2,2)
-          !T3%abc(2,1,2) = T3%abc(1,2,2)
-          !T3%abc(3,3,1) = T3%abc(1,3,3) 
-          !T3%abc(3,1,3) = T3%abc(1,3,3) 
-          !T3%abc(2,3,2) = T3%abc(2,2,3)
-          !T3%abc(3,2,2) = T3%abc(2,2,3)
-          !T3%abc(3,3,2) = T3%abc(2,3,3) 
-          !T3%abc(3,2,3) = T3%abc(2,3,3) 
+!          T3%abc = 0.0_dp
+!          do i = 1 , 3
+!            do j = 1 , 3
+!              do k = 1 , 3
+!                if ( j .gt. k ) cycle 
+!                if ( i .gt. j ) cycle 
+!                T3%abc (i,j,k) = - rij(i) * rij(j) * rij(k) * F3 * dm7 * 15.0_dp
+!                if ( i .eq. j .and. j.eq.k ) then
+!                  T3%abc (i,j,k) = T3%abc (i,j,k) +    rij(i) * F2 * dm5 * 9.0_dp
+!                else
+!                  if ( i.eq.j ) T3%abc (i,j,k) = T3%abc (i,j,k) + rij(k) * F2 * dm5 * 3.0_dp
+!                  if ( i.eq.k ) T3%abc (i,j,k) = T3%abc (i,j,k) + rij(j) * F2 * dm5 * 3.0_dp 
+!                  if ( j.eq.k ) T3%abc (i,j,k) = T3%abc (i,j,k) + rij(i) * F2 * dm5 * 3.0_dp
+!                endif
+!              enddo
+!            enddo
+!          enddo
+!          T3%abc(1,3,2) = T3%abc(1,2,3)
+!          T3%abc(3,1,2) = T3%abc(1,2,3)
+!          T3%abc(3,2,1) = T3%abc(1,2,3)
+!          T3%abc(2,3,1) = T3%abc(1,2,3)
+!          T3%abc(2,1,3) = T3%abc(1,2,3)
+!          T3%abc(1,2,1) = T3%abc(1,1,2)
+!          T3%abc(2,1,1) = T3%abc(1,1,2)
+!          T3%abc(1,3,1) = T3%abc(1,1,3)
+!          T3%abc(3,1,1) = T3%abc(1,1,3)
+!          T3%abc(2,2,1) = T3%abc(1,2,2)
+!          T3%abc(2,1,2) = T3%abc(1,2,2)
+!          T3%abc(3,3,1) = T3%abc(1,3,3) 
+!          T3%abc(3,1,3) = T3%abc(1,3,3) 
+!          T3%abc(2,3,2) = T3%abc(2,2,3)
+!          T3%abc(3,2,2) = T3%abc(2,2,3)
+!          T3%abc(3,3,2) = T3%abc(2,3,3) 
+!          T3%abc(3,2,3) = T3%abc(2,3,3) 
 
           ! =========================================
           !   multipole interaction tensor rank = 3  
           !   nb of components = 27 => reduced = 10
           ! =========================================
-          !F3_dm7 = F3 * dm7 * 15.0_dp
-          !T3%abc = 0.0_dp
-          !do i = 1 , 3
-          !  do j = 1 , 3
-          !    do k = 1 , 3
+          F3_dm7 = F3 * dm7 * 15.0_dp
+          T3%abc = 0.0_dp
+          do i = 1 , 3
+            do j = 1 , 3
+              do k = 1 , 3
                 T3%abc (i,j,k)               = - rij(i) * rij(j) * rij(k) * F3_dm7
                 if ( i.eq.j ) T3%abc (i,j,k) = T3%abc (i,j,k) + rij(k) * F2_dm5
                 if ( i.eq.k ) T3%abc (i,j,k) = T3%abc (i,j,k) + rij(j) * F2_dm5
@@ -2686,7 +2717,6 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
               enddo
             enddo
           enddo
-
 
           ! =========================================
           !   multipole interaction tensor rank = 4  
@@ -2712,6 +2742,7 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
           !    enddo
           !  enddo
           !enddo
+        
           ! =========================================
           !   multipole interaction tensor rank = 5  
           !   nb of components = 243 => reduced = ?
@@ -2851,12 +2882,13 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
 
 
           ! forces
-          ! remarque pour garder la construction : 
+          ! remarque 1 : pour garder la construction : 
           !           f(ia) = f(ia) - fij 
           !           f(ja) = f(ja) + fij 
           ! en fin de boucle uniquement, 
           ! nous avons ici un changement de signe sur la somme sur j malgré
           ! le fait que le tenseur d'interaction soit paire (e.g T2 )
+          ! remarque 2 : thole functions only apply to fields not forces 
           if ( do_forces ) then
             do j = 1 , 3
               do k = 1 , 3
@@ -2881,8 +2913,36 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
             endif
           endif
 
-
         endif qd
+
+        ! ===========================================================
+        !                  charge-quadrupole interaction
+        ! ===========================================================
+        qquad : if ( charge_quadrupole ) then
+          ! electrostatic energy
+          do k = 1 , 3
+            do j = 1 , 3
+              u_dir = u_dir + qi *  T2%ab(k,j) * thetaj(k,j) / 3.0_dp
+              u_dir = u_dir + qj *  T2%ab(k,j) * thetai(k,j) / 3.0_dp
+            enddo
+          enddo
+        endif qquad
+        
+        ! ===========================================================
+        !                  dipole-quadrupole interaction
+        ! ===========================================================
+        dquad : if ( dipole_quadrupole ) then
+          ! electrostatic energy
+          do l = 1 , 3
+            do k = 1 , 3
+              do j = 1 , 3
+                u_dir = u_dir + mui(l) * T3%abc(l,k,j) * thetaj(k,j) / 3.0_dp
+                u_dir = u_dir - muj(l) * T3%abc(l,k,j) * thetai(k,j) / 3.0_dp
+              enddo
+            enddo
+          enddo
+        endif dquad
+
 
         ! forces
         if ( do_forces ) then
@@ -2996,17 +3056,19 @@ SUBROUTINE multipole_ES_rec ( u_rec , ef_rec, efg_rec , fx_rec , fy_rec , fz_rec
   integer           :: ia , ik , ierr
   real(kind=dp)     :: qi
   real(kind=dp)     :: muix, muiy, muiz
+  real(kind=dp)     :: thetaixx, thetaiyy, thetaizz
+  real(kind=dp)     :: thetaixy, thetaixz, thetaiyz
   real(kind=dp)     :: kx   , ky   , kz , kk, Ak
   real(kind=dp)     :: rxi  , ryi  , rzi
   real(kind=dp)     :: fxij , fyij , fzij
-  real(kind=dp)     :: str, str_frc, k_dot_r ,  k_dot_mu , recarg, kcoe , rhonk_R , rhonk_I, recarg2
+  real(kind=dp)     :: str, str_frc, k_dot_r ,  k_dot_mu , K_dot_Q , recarg, kcoe , rhonk_R , rhonk_I, recarg2
   real(kind=dp)     :: alpha2, tpi_V , fpi_V , f0
   real(kind=dp)     :: rhonk_R_st_x , rhonk_R_st_y , rhonk_R_st_z 
   real(kind=dp)     :: rhonk_I_st_x , rhonk_I_st_y , rhonk_I_st_z 
   real(kind=dp)     ,dimension (:), allocatable :: ckr , skr, tmp 
   real(kind=dp)     :: ckria , skria
   real(kind=dp)     :: tau_rec_tmp(3,3) 
-  logical           :: ldip 
+  logical           :: ldip , lquad
   real(kind=dp)     :: ttt1,ttt2
 
   ! =================
@@ -3065,6 +3127,19 @@ SUBROUTINE multipole_ES_rec ( u_rec , ef_rec, efg_rec , fx_rec , fy_rec , fz_rec
         k_dot_mu = ( muix * kx + muiy * ky + muiz * kz )
         rhonk_R    = rhonk_R - k_dot_mu * skr(ia) 
         rhonk_I    = rhonk_I + k_dot_mu * ckr(ia) ! rhon_R + i rhon_I
+        if ( .not. lquad ) cycle
+        thetaixx = theta ( ia , 1 , 1 )
+        thetaiyy = theta ( ia , 2 , 2 )
+        thetaizz = theta ( ia , 3 , 3 )
+        thetaixy = theta ( ia , 1 , 2 )
+        thetaixz = theta ( ia , 1 , 3 )
+        thetaiyz = theta ( ia , 2 , 3 )
+        K_dot_Q =           thetaixx * kx * kx + thetaixy * kx * ky + thetaixz * kx * kz
+        K_dot_Q = K_dot_Q + thetaixy * kx * ky + thetaiyy * ky * ky + thetaiyz * ky * kz
+        K_dot_Q = K_dot_Q + thetaixz * kz * kx + thetaiyz * ky * kz + thetaizz * kz * kz
+        K_dot_Q = K_dot_Q / 3.0_dp
+        rhonk_R    = rhonk_R - K_dot_Q * ckr(ia)
+        rhonk_I    = rhonk_I - K_dot_Q * skr(ia)  ! rhon_R + i rhon_I
       enddo
 #ifdef MPI
       ttt2 = MPI_WTIME(ierr)

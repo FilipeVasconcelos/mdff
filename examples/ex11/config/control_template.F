@@ -30,9 +30,11 @@
         ! ewald summation
         lautoES       = .true.
         epsw          = 1.e-4
-        algo_moment_from_pola='scf_kO_v2'
+        algo_moment_from_pola='scf_kO_v4_1'
         omegakO       = 0.8 
         conv_tol_ind  = 1e-4
+        algo_ext_dipole = 'aspc'
+        extrapolate_order = 2
 
         !INCLUDE <IONS.POT>
         !INCLUDE <PIM.POT>

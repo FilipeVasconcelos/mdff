@@ -1,4 +1,0 @@
-#!/bin/bash
-mdff.x control_pim.F > log
-tail -n+10 CONTFF > frce_mdff
-paste frce_mdff frce_cp2k > frce_comp
