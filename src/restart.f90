@@ -68,6 +68,7 @@ SUBROUTINE restart_init ( MDFF )
   READ( kunit_RESTART   ) lvnlist        
   READ( kunit_RESTART   ) lstatic        
   READ( kunit_RESTART   ) lreduced       
+  READ( kunit_RESTART   ) lreducedN       
   READ( kunit_RESTART   ) ltest          
   READ( kunit_RESTART   ) lmsd           
   READ( kunit_RESTART   ) lvacf          
@@ -280,6 +281,7 @@ SUBROUTINE write_RESTART
   WRITE( kunit_RESTART   ) lvnlist        
   WRITE( kunit_RESTART   ) lstatic        
   WRITE( kunit_RESTART   ) lreduced       
+  WRITE( kunit_RESTART   ) lreducedN       
   WRITE( kunit_RESTART   ) ltest          
   WRITE( kunit_RESTART   ) lmsd           
   WRITE( kunit_RESTART   ) lvacf          

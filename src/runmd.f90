@@ -63,7 +63,8 @@ SUBROUTINE md_run
 
   USE thermodynamic,            ONLY :  e_tot, u_lj_r, h_tot, e_kin , temp_r , init_general_accumulator , write_thermo ,  write_average_thermo , calc_thermo
   USE time,                     ONLY :  mdsteptimetot
-  USE field,                    ONLY :  engforce_driver , doefg , doefield , ef_t , efg_t , mu_t , lwfc , lwrite_dip , write_DIPFF
+  USE field,                    ONLY :  engforce_driver , doefg , doefield , ef_t , efg_t , mu_t , lwfc , lwrite_dip , lwrite_quad,  &
+                                        lwrite_ef , lwrite_efg , write_DIPFF , write_EFGALL , write_EFALL, write_QUADFF
   USE mpimdff
   USE msd
   USE vacf
@@ -207,9 +208,15 @@ SUBROUTINE md_run
   ! =======================
   !  stress tensor at t=0
   ! =======================
-  io_node blankline(stdout)
-  io_node WRITE ( stdout , '(a)' ) 'stress tensor of initial configuration' 
-  io_node blankline(stdout)
+  if ( .not. lstatic ) then
+    io_node blankline(stdout)
+    io_node WRITE ( stdout , '(a)' ) 'stress tensor of initial configuration' 
+    io_node blankline(stdout)
+  else
+    io_node blankline(stdout)
+    io_node WRITE ( stdout , '(a)' ) 'stress tensor :' 
+    io_node blankline(stdout)
+  endif    
 
   if ( non_bonded ) then 
     io_node WRITE ( stdout , '(a)' )   "non_bonded stress tensor"
@@ -225,10 +232,12 @@ SUBROUTINE md_run
   ! =========================
   !   MAIN LOOP ( TIME )
   ! =========================
+  if ( .not. lstatic ) then
   io_node blankline(stdout)
   io_node WRITE ( stdout , '(a)' ) 'starting main loop'
-
   separator(stdout)
+  endif
+
   ! ===========
   !  time info
   ! ===========
@@ -333,75 +342,33 @@ MAIN:  do itime = 1 , npas
            rz = ztmp
 
            ! ================================
+           !  write EFALL file (trajectory)
+           ! ================================
+             if ( lwrite_ef ) then
+               CALL write_EFALL
+             endif
+
+           ! ================================
            !  write EFGALL file (trajectory)
            ! ================================
-           efg : if ( ionode .and. doefg ) then
-
-             if ( iefgall_format .ne. 0 ) then
-               WRITE ( kunit_EFGALL , * )  natm
-               WRITE ( kunit_EFGALL , * )  system
-               WRITE ( kunit_EFGALL , * )  simu_cell%A(1,1) , simu_cell%A(2,1) , simu_cell%A(3,1)
-               WRITE ( kunit_EFGALL , * )  simu_cell%A(1,2) , simu_cell%A(2,2) , simu_cell%A(3,2)
-               WRITE ( kunit_EFGALL , * )  simu_cell%A(1,3) , simu_cell%A(2,3) , simu_cell%A(3,3)
-               WRITE ( kunit_EFGALL , * )  ntype
-               WRITE ( kunit_EFGALL , * )  ( atypei ( it ) , it = 1 , ntype )
-               WRITE ( kunit_EFGALL , * )  ( natmi  ( it ) , it = 1 , ntype )
-               WRITE ( kunit_EFGALL ,'(a)') &
-              '      ia type                   vxx                   vyy                    vzz                   vxy                   vxz                   vyz'
-               do ia = 1 , natm
-                 it = itype ( ia )
-                 if ( lwfc( it ) .ge. 0 ) then
-                   WRITE ( kunit_EFGALL ,'(i8,2x,a3,6e24.16)') ia , atype ( ia ) , efg_t ( 1 , 1 , ia ) , efg_t ( 2 , 2 , ia ) , &
-                                                                                   efg_t ( 3 , 3 , ia ) , efg_t ( 1 , 2 , ia ) , &
-                                                                                   efg_t ( 1 , 3 , ia ) , efg_t ( 2 , 3 , ia )
-                 endif
-               enddo
+             if ( lwrite_efg ) then
+                     write(*,*) 'in runmd write_efg'
+               CALL write_EFGALL
              endif
-
-             if ( iefgall_format .eq. 0 ) then
-               WRITE ( kunit_EFGALL )  natm
-               WRITE ( kunit_EFGALL )  system
-               WRITE ( kunit_EFGALL )  simu_cell%A(1,1) , simu_cell%A(2,1) , simu_cell%A(3,1)
-               WRITE ( kunit_EFGALL )  simu_cell%A(1,2) , simu_cell%A(2,2) , simu_cell%A(3,2)
-               WRITE ( kunit_EFGALL )  simu_cell%A(1,3) , simu_cell%A(2,3) , simu_cell%A(3,3)
-               WRITE ( kunit_EFGALL )  ntype
-               WRITE ( kunit_EFGALL )  ( atypei ( it ) , it = 1 , ntype )
-               WRITE ( kunit_EFGALL )  ( natmi  ( it ) , it = 1 , ntype )
-               WRITE ( kunit_EFGALL )  efg_t
-             endif
-           endif efg
 
            ! ================================
            !  write DIPFF file (trajectory)
            ! ================================
              if ( lwrite_dip ) then
-               CALL write_DIPFF ( mu_t )
+               CALL write_DIPFF 
              endif
 
            ! ================================
-           !  write EFALL electric field file (trajectory)
+           !  write DIPFF file (trajectory)
            ! ================================
-           ef : if ( ionode .and. doefield ) then
-             WRITE ( kunit_EFALL , * )  natm
-             WRITE ( kunit_EFALL , * )  system
-             WRITE ( kunit_EFALL , * )  simu_cell%A(1,1) , simu_cell%A(2,1) , simu_cell%A(3,1)
-             WRITE ( kunit_EFALL , * )  simu_cell%A(1,2) , simu_cell%A(2,2) , simu_cell%A(3,2)
-             WRITE ( kunit_EFALL , * )  simu_cell%A(1,3) , simu_cell%A(2,3) , simu_cell%A(3,3)
-             WRITE ( kunit_EFALL , * )  ntype
-             WRITE ( kunit_EFALL , * )  ( atypei ( it ) , it = 1 , ntype )
-             WRITE ( kunit_EFALL , * )  ( natmi  ( it ) , it = 1 , ntype )
-             WRITE ( kunit_EFALL ,'(a)') &
-            '      ia type                   Ex                   Ey                Ez'
-             do ia = 1 , natm
-               it = itype ( ia )
-               if ( lwfc( it ) .ge. 0 ) then
-                 WRITE ( kunit_EFALL ,'(i8,2x,a3,6e24.16)') ia , atype ( ia ) , ef_t ( 1 , ia ) , ef_t ( 2 , ia ) ,  ef_t ( 3 , ia ) 
-               endif
-             enddo
-        
-           endif ef
-
-
+             if ( lwrite_quad ) then
+               CALL write_QUADFF 
+             endif
 
          endif
 
@@ -523,26 +490,31 @@ MAIN:  do itime = 1 , npas
   enddo MAIN
  
   separator(stdout) 
- 
-  io_node WRITE ( stdout , '(a)' ) 'end of the main loop'
-  io_node blankline(stdout)
-  io_node blankline(stdout)
-  io_node WRITE ( stdout , '(a)' ) 'stress tensor of final configuration' 
-  if ( ionode ) then
-    if ( non_bonded ) then 
-      WRITE ( stdout , '(a)' )   "non_bonded stress tensor"
-      CALL print_tensor_n ( tau_nonb ) 
-    endif
-    if ( lcoulomb )   then
-      WRITE ( stdout , '(a)' )    "coulombic stress tensor"
-      CALL print_tensor_n ( tau_coul  ) 
-    endif
-  endif
-  io_node WRITE ( stdout , '(a)' )    "total stress tensor"
-  CALL print_tensor_n ( tau_coul+tau_nonb  ) 
-  if ( ionode .and. lvnlist .and. updatevnl .ne. 0 ) WRITE ( stdout , '(a,i10,e17.8)' ) 'verlet list update frequency',updatevnl,REAL(npas,kind=dp)/REAL(updatevnl,kind=dp)
 
-  CALL  write_average_thermo ( stdout ) 
+  ! ===================================
+  ! attention lstatic output condition  
+  ! ===================================
+  if ( .not. lstatic ) then
+    io_node WRITE ( stdout , '(a)' ) 'end of the main loop'
+    io_node blankline(stdout)
+    io_node blankline(stdout)
+    io_node WRITE ( stdout , '(a)' ) 'stress tensor of final configuration' 
+    if ( ionode ) then
+      if ( non_bonded ) then 
+        WRITE ( stdout , '(a)' )   "non_bonded stress tensor"
+        CALL print_tensor_n ( tau_nonb ) 
+      endif
+      if ( lcoulomb )   then
+        WRITE ( stdout , '(a)' )    "coulombic stress tensor"
+        CALL print_tensor_n ( tau_coul  ) 
+      endif
+    endif
+    io_node WRITE ( stdout , '(a)' )    "total stress tensor"
+    CALL print_tensor_n ( tau_coul+tau_nonb  ) 
+    if ( ionode .and. lvnlist .and. updatevnl .ne. 0 ) WRITE ( stdout , '(a,i10,e17.8)' ) 'verlet list update frequency',updatevnl,REAL(npas,kind=dp)/REAL(updatevnl,kind=dp)
+
+    CALL  write_average_thermo ( stdout ) 
+  endif
 
   ! ===================
   !  properties output

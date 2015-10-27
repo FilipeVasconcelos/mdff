@@ -47,7 +47,8 @@ MODULE control
   logical,           SAVE :: lvnlist          !< verlet list if .true.                            
   logical,           SAVE :: lrestart         !< restart or not if true strart from the velocities read in POSFF
   logical,           SAVE :: full_restart     !< restart or not if true strart from the velocities read in POSFF
-  logical,           SAVE :: lreduced         !< print reduced thermo quantites by the number of atoms (natm)
+  logical,           SAVE :: lreduced         !< print reduced units ( see reduced_units subroutine in constants.f90 )
+  logical,           SAVE :: lreducedN        !< print reduced thermo quantites by the number of atoms (natm)
   logical,           SAVE :: lnmlj            !< n-m lennard-jones potential
   logical,           SAVE :: lbmhft           !< born huggins Mayer potential
   logical,           SAVE :: lbmhftd          !< born huggins Mayer potential + damping
@@ -136,6 +137,7 @@ SUBROUTINE control_init ( MDFF )
                          lvnlist        , &
                          lstatic        , &
                          lreduced       , & 
+                         lreducedN      , & 
                          ltest          , &
                          lmsd           , &
                          lvacf          , &
@@ -214,6 +216,7 @@ SUBROUTINE control_default_tag
   lvnlist       = .true.
   lstatic       = .false.
   lreduced      = .false.
+  lreducedN     = .false.
   ltest         = .false.
   lmsd          = .false.
   lvacf         = .false.
@@ -442,6 +445,7 @@ SUBROUTINE control_print_info( kunit , MDFF )
      WRITE ( kunit ,'(a,l2)')    'lvnlist     = ', lvnlist
      WRITE ( kunit ,'(a,l2)')    'lstatic     = ', lstatic
      WRITE ( kunit ,'(a,l2)')    'lreduced    = ', lreduced 
+     WRITE ( kunit ,'(a,l2)')    'lreducedN   = ', lreducedN 
      WRITE ( kunit ,'(a,l2)')    'lrestart    = ', lrestart 
      if ( full_restart ) then
        WRITE ( kunit ,'(a)')     'restarting from RESTART file (full restart) '

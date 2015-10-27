@@ -115,7 +115,7 @@ CONTAINS
 SUBROUTINE calc_thermo
 
   USE constants,                ONLY :  boltz_unit , press_unit
-  USE control,                  ONLY :  lreduced , lcsvr
+  USE control,                  ONLY :  lreducedN , lcsvr
   USE config,                   ONLY :  natm , rho , simu_cell 
   USE md,                       ONLY :  integrator, press, itime
   USE io,                       ONLY :  ioprint
@@ -126,7 +126,7 @@ SUBROUTINE calc_thermo
   omega = simu_cell%omega
  !!!! WARNING virials are wrong
 
-  if (lreduced) then
+  if (lreducedN) then
     u_lj_r   = u_lj         / REAL ( natm , kind = dp )
     u_morse_r= u_morse      / REAL ( natm , kind = dp )
     u_bmhft_r= u_bmhft      / REAL ( natm , kind = dp )
@@ -160,7 +160,7 @@ SUBROUTINE calc_thermo
   pressure_morse= pvirial_morse
   pressure_bmhft= pvirial_bmhft
   pressure_coul = pvirial_coul 
-  if (lreduced) then
+  if (lreducedN) then
     pvirial_lj_r    = pvirial_lj    / REAL ( natm , kind = dp )
     pvirial_morse_r = pvirial_morse / REAL ( natm , kind = dp ) 
     pvirial_coul_r  = pvirial_coul  / REAL ( natm , kind = dp ) 

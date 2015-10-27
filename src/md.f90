@@ -381,7 +381,7 @@ END SUBROUTINE extended_coordinates_dealloc
 SUBROUTINE md_print_info(kunit)
 
   USE constants,        ONLY :  boltz_unit , time_unit, press_unit
-  USE control,          ONLY :  ltraj , lstatic , lvnlist , lreduced , lcsvr , itraj_start , itraj_period , itraj_format  
+  USE control,          ONLY :  ltraj , lstatic , lvnlist , lreducedN , lreduced , lcsvr , itraj_start , itraj_period , itraj_format  
   USE io,               ONLY :  ionode 
 
   implicit none
@@ -400,7 +400,8 @@ SUBROUTINE md_print_info(kunit)
                                           WRITE ( kunit ,'(a)')       'periodic boundary conditions  '  
                                           WRITE ( kunit ,'(a)')       'using minimum image convention                 '  
         if ( lvnlist )                    WRITE ( kunit ,'(a)')       'verlet list used '  
-        if ( lreduced )                   WRITE ( kunit ,'(a)')       'units reduced by the number of atom'
+        if ( lreduced )                   WRITE ( kunit ,'(a)')       'unit constant set to one == reduced units'
+        if ( lreducedN )                  WRITE ( kunit ,'(a)')       'units reduced by the number of atom'
         if ( .not.lstatic)                WRITE ( kunit ,'(a)')       'dynamic calculation'
         if ( integrator .eq. 'nve-lf')    WRITE ( kunit ,'(a)')       'NVE ensemble --- leap-frog integrator          '
         if ( integrator .eq. 'nve-be')    WRITE ( kunit ,'(a)')       'NVE ensemble --- beeman integrator             '

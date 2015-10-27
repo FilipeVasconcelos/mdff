@@ -32,9 +32,9 @@ echo " STRESS TENSOR (GPa) "
 echo " "
 echo " (MDFF) :"
 awk 'BEGIN{ns=0} {if (($1=="total")&&($2=="stress")&&($3=="tensor")){lr=NR;ns+=1} 
-                  if ((NR==lr+1)&&(ns==2)&&(lr!=0)) {printf("%20.12e %20.12e %20.12e\n",$1,$2,$3)}
-                  if ((NR==lr+2)&&(ns==2)&&(lr!=0)) {printf("%20.12e %20.12e %20.12e\n",$1,$2,$3)}
-                  if ((NR==lr+3)&&(ns==2)&&(lr!=0)) {printf("%20.12e %20.12e %20.12e\n",$1,$2,$3)}
+                  if ((NR==lr+1)&&(ns==1)&&(lr!=0)) {printf("%20.12e %20.12e %20.12e\n",$1,$2,$3)}
+                  if ((NR==lr+2)&&(ns==1)&&(lr!=0)) {printf("%20.12e %20.12e %20.12e\n",$1,$2,$3)}
+                  if ((NR==lr+3)&&(ns==1)&&(lr!=0)) {printf("%20.12e %20.12e %20.12e\n",$1,$2,$3)}
 
                  }' log
 

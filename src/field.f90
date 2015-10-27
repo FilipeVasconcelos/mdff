@@ -18,9 +18,9 @@
 
 ! ======= Hardware =======
 #include "symbol.h"
-!#define debug
-!#define debug_ES
-!#define debug_ES_field_forces
+#define debug
+#define debug_ES
+#define debug_ES_field_forces
 !#define debug_ES_energy
 !#define debug_ES_stress
 !#define debug_ES_efg
@@ -71,6 +71,8 @@ MODULE field
   logical, SAVE     :: ldip_wfc          !< calculate electrostatic contribution from dipolar momemt coming from wfc
   logical, SAVE     :: lquiet            !< internal stuff 
   logical, SAVE     :: symmetric_pot     !< symmetric potential ( default .true. but who knows ?)
+  logical, SAVE     :: lwrite_efg 
+  logical, SAVE     :: lwrite_ef
   integer, dimension (:) , allocatable :: pair_thole
   real(kind=dp), dimension (:) , allocatable :: pair_thole_distance
 
@@ -135,7 +137,7 @@ MODULE field
   real(kind=dp)    :: mass     ( ntypemax )            !< masses ( not yet tested everywhere )
   real(kind=dp)    :: qch      ( ntypemax )            !< charges 
   real(kind=dp)    :: quad_efg ( ntypemax )            !< quadrupolar moment
-  real(kind=dp)    :: dip      ( 3 , ntypemax )        !< dipoles 
+  real(kind=dp)    :: dip      ( ntypemax , 3 )        !< dipoles 
   real(kind=dp)    :: pol      ( ntypemax , 3 , 3 )    !< polarizability if lpolar( it ) = .true. 
 
   ! =====================================================
@@ -180,10 +182,11 @@ MODULE field
   TYPE ( rmesh )   :: rm_coul                          !< real space mesh ( see rspace.f90 )
   logical          :: doefield , doefg
 
+  real(kind=dp), dimension ( : , : )     , allocatable :: mu_t         !< total dipoles at ions
+  real(kind=dp), dimension ( : , : , : ) , allocatable :: theta_t      !< total quadupole at ions
   real(kind=dp), dimension ( : , : )     , allocatable :: ef_t         !< electric field vector
-  real(kind=dp), dimension ( : , : )     , allocatable :: mu_t         !< total dipole 
   real(kind=dp), dimension ( : , : , : ) , allocatable :: efg_t        !< electric field gradient tensor
-  real(kind=dp), dimension ( : , : , : ) , allocatable :: dipia_ind_t  !< induced dipole on ion at (t)
+  real(kind=dp), dimension ( : , : , : ) , allocatable :: dipia_ind_t  !< induced dipole at ions 
 
 CONTAINS
 
@@ -238,25 +241,28 @@ SUBROUTINE field_default_tag
   doefield      = .false. ! calculate electric field ( it is internally swicth on for induced polarization calculation )
   doefg         = .false. ! electric field gradient
   lwrite_dip    = .false.            
+  lwrite_quad   = .false.            
+  lwrite_ef     = .false.            
+  lwrite_efg    = .false.            
 
   ! polarization
-  lpolar        = .false. 
-  pol           = 0.0_dp
-  pol_damp_b    = 0.0_dp
-  pol_damp_c    = 0.0_dp
-  pol_damp_k    = 0
-  ldip_damping  = .false.
-  conv_tol_ind  = 1e-6
-  min_scf_pol_iter = 3
-  max_scf_pol_iter = 100
-  extrapolate_order = 0 
-  algo_ext_dipole = 'poly'
+  lpolar                = .false. 
+  pol                   = 0.0_dp
+  pol_damp_b            = 0.0_dp
+  pol_damp_c            = 0.0_dp
+  pol_damp_k            = 0
+  ldip_damping          = .false.
+  conv_tol_ind          = 1e-6
+  min_scf_pol_iter      = 3
+  max_scf_pol_iter      = 100
+  extrapolate_order     = 0 
+  algo_ext_dipole       = 'poly'
   algo_moment_from_pola = 'scf'
-  thole_functions = .false.
-  thole_function_type = 'linear'
-  thole_param    = 1.662_dp
+  thole_functions       = .false.
+  thole_function_type   = 'linear'
+  thole_param           = 1.662_dp
 
-  omegakO        = 0.7_dp 
+  omegakO               = 0.7_dp 
 
   ! wannier centers related
   lwfc           = 0
@@ -464,6 +470,9 @@ SUBROUTINE field_init
                          lwfc          , &            
                          lwrite_dip_wfc, &            
                          lwrite_dip    , &            
+                         lwrite_quad   , &            
+                         lwrite_ef     , &            
+                         lwrite_efg    , &            
                          ldip_wfc      , &            
                          rcut_wfc      , &            
                          lpolar        , &
@@ -541,7 +550,7 @@ END SUBROUTINE field_init
 SUBROUTINE field_print_info ( kunit , quiet )
 
   USE config,           ONLY :  natm , ntype , atypei , natmi , simu_cell , rho
-  USE control,          ONLY :  calc , cutshortrange , lnmlj , lmorse , lbmhft , lbmhftd , lcoulomb , longrange , lreduced , cutlongrange
+  USE control,          ONLY :  calc , cutshortrange , lnmlj , lmorse , lbmhft , lbmhftd , lcoulomb , longrange , lreducedN , cutlongrange
   USE io,               ONLY :  ionode 
   USE constants,        ONLY :  pi , pisq, g_to_am
 
@@ -566,7 +575,7 @@ SUBROUTINE field_print_info ( kunit , quiet )
   do it = 1 , ntype
       qtot  = qtot  +   qch(it) * natmi ( it )
       qtot2 = qtot2 + ( qch(it) * natmi ( it ) ) * ( qch(it) * natmi ( it ) )
-      mu_sum = mu_sum + dip(:,it)
+      mu_sum = mu_sum + dip(it,:)
   enddo
   linduced = .false.
   do it = 1 , ntype
@@ -602,9 +611,9 @@ SUBROUTINE field_print_info ( kunit , quiet )
     WRITE ( kunit ,'(a)')               'static dipoles: '
     lseparator(kunit) 
     do it = 1 , ntype
-      WRITE ( kunit ,'(a,a,a,3e12.3)')  'mu',atypei(it),'      = ',dip(1,it),dip(2,it),dip(3,it)
+      WRITE ( kunit ,'(a,a,a,3e12.3)')  'mu',atypei(it),'      = ',dip(it,1),dip(it,2),dip(it,3)
     enddo
-    WRITE ( kunit ,'(a,3e12.3)')        'sum of dipoles          = ',mu_sum(1),mu_sum(2),mu_sum(3)
+    WRITE ( kunit ,'(a,3e12.3)')        'sum        = ',mu_sum(1),mu_sum(2),mu_sum(3)
     blankline(kunit)
     if ( linduced ) then 
       lseparator(kunit) 
@@ -620,16 +629,16 @@ SUBROUTINE field_print_info ( kunit , quiet )
           WRITE ( kunit ,'(3f12.4)')      ( pol ( it1 , 2 , j ) , j = 1 , 3 ) 
           WRITE ( kunit ,'(3f12.4)')      ( pol ( it1 , 3 , j ) , j = 1 , 3 ) 
           blankline(kunit)
-          !if ( ldamp ) then
+          if ( ldamp ) then
             WRITE ( kunit ,'(a)') 'damping functions : '
             WRITE ( kunit ,'(a)') '                    b           c              k'
             do it2 = 1 ,ntype 
-          !    if ( ldip_damping(it1,it1,it2 ) )  &
+              if ( ldip_damping(it1,it1,it2 ) )  &
               WRITE ( kunit ,'(a,a,a,a,2f12.4,i2,a,2f12.4,i2,a)') atypei(it1),' - ',atypei(it2), ' : ' ,& 
                                                     pol_damp_b(it1,it1,it2),pol_damp_c(it1,it1,it2),pol_damp_k(it1,it1,it2),&
                                               ' ( ',pol_damp_b(it1,it2,it1),pol_damp_c(it1,it2,it1),pol_damp_k(it1,it2,it1),' ) '
             enddo
-          !endif
+          endif
         else
           WRITE ( kunit ,'(a,a2)')      'no polarizability on type ', atypei(it1)
         endif
@@ -750,7 +759,7 @@ SUBROUTINE field_print_info ( kunit , quiet )
       blankline(kunit)
       WRITE ( kunit ,'(a,f10.5)')       'cutoff      = ',cutshortrange
       WRITE ( kunit ,'(a,a)')           'truncation  = ',ctrunc
-      if ( .not.lreduced ) &
+      if ( .not. lreducedN ) &
       WRITE ( kunit ,'(a,2f20.9)')      'long range correction (energy)   : ',utail
       WRITE ( kunit ,'(a,2f20.9)')      'long range correction (pressure) : ',ptail
       blankline(kunit)
@@ -925,7 +934,7 @@ SUBROUTINE initialize_param_non_bonded
 
   USE constants,                ONLY :  tpi , press_unit
   USE config,                   ONLY :  ntypemax , natm , natmi , rho , atype , itype  , ntype , simu_cell
-  USE control,                  ONLY :  skindiff , cutshortrange , lreduced, calc
+  USE control,                  ONLY :  skindiff , cutshortrange , calc
   USE io,                       ONLY :  ionode, stdout
 
   implicit none
@@ -1096,8 +1105,8 @@ SUBROUTINE initialize_param_non_bonded
     enddo
   enddo
            ptail = ptail /press_unit/simu_cell%omega/3.0d0 ! virial to pressure
-           io_node write(stdout,*) 'long range correction (init) energy   ',utail
-           io_node write(stdout,*) 'long range correction (init) pressure ',ptail
+           io_node write(stdout,'(a,e16.6)') 'long range correction (init) energy   ',utail
+           io_node write(stdout,'(a,e16.6)') 'long range correction (init) pressure ',ptail
  
 #ifdef debug_quadratic
   do it = 1 , ntype 
@@ -5142,7 +5151,8 @@ SUBROUTINE get_dipole_moments ( mu , didpim )
   enddo cataloop
   if ( lcata ) then 
     OPEN  ( kunit_DIPFF , file = 'DIPFF',STATUS = 'UNKNOWN')
-    CALL    write_DIPFF ( mu )
+    mu_t = mu
+    CALL    write_DIPFF 
     CLOSE ( kunit_DIPFF )
   endif
   if ( lcata .and. thole_functions ) then
@@ -5462,13 +5472,13 @@ SUBROUTINE polint(xa,ya,n,y,dy)
 END SUBROUTINE
 
 
-! *********************** SUBROUTINE write_CONTFF ******************************
+! *********************** SUBROUTINE write_DIPFF ******************************
 !
 !>\brief
-! write configuration (pos,vel) to CONTFF file
+! write dipoles at ions to DIPFF file
 !
 ! ******************************************************************************
-SUBROUTINE write_DIPFF ( mu )  
+SUBROUTINE write_DIPFF 
 
   USE io,                       ONLY :  ionode ,kunit_DIPFF, stdout
   USE cell,                     ONLY :  kardir , periodicbc , dirkar
@@ -5476,8 +5486,6 @@ SUBROUTINE write_DIPFF ( mu )
   USE config,                   ONLY :  system , natm , ntype , atype , simu_cell, atypei, natmi
 
   implicit none
-  ! global
-  real(kind=dp) :: mu ( 3 , natm ) 
 
   ! local
   integer :: ia , it
@@ -5498,7 +5506,7 @@ SUBROUTINE write_DIPFF ( mu )
     WRITE ( kunit_DIPFF ,'(a)') &
               '      ia type                   mux                  muy                 muz'
     do ia= 1 , natm
-      WRITE ( kunit_DIPFF , '(i8,2x,a3,6e24.16)' ) ia , atype( ia ) , mu ( 1 , ia ) , mu ( 2 , ia ) , mu ( 3 , ia )
+      WRITE ( kunit_DIPFF , '(i8,2x,a3,6e24.16)' ) ia , atype( ia ) , mu_t ( 1 , ia ) , mu_t ( 2 , ia ) , mu_t ( 3 , ia )
     enddo
   endif
 
@@ -5507,6 +5515,52 @@ SUBROUTINE write_DIPFF ( mu )
   return
 
 END SUBROUTINE write_DIPFF
+
+! *********************** SUBROUTINE write_QUADFF ******************************
+!
+!>\brief
+! write dipoles at ions to QUADFF file
+!
+! ******************************************************************************
+SUBROUTINE write_QUADFF 
+
+  USE io,                       ONLY :  ionode ,kunit_QUADFF, stdout
+  USE cell,                     ONLY :  kardir , periodicbc , dirkar
+  USE control,                  ONLY :  lstatic
+  USE config,                   ONLY :  system , natm , ntype , atype , simu_cell, atypei, natmi
+
+  implicit none
+
+  ! local
+  integer :: ia , it
+
+  if ( ionode ) then
+
+  write(stdout,'(a)') 'writing QUADFF'
+  if ( lstatic ) OPEN ( kunit_QUADFF ,file = 'QUADFF',STATUS = 'UNKNOWN')
+
+    WRITE ( kunit_QUADFF , * )  natm
+    WRITE ( kunit_QUADFF , * )  system
+    WRITE ( kunit_QUADFF , * )  simu_cell%A(1,1) , simu_cell%A(2,1) , simu_cell%A(3,1)
+    WRITE ( kunit_QUADFF , * )  simu_cell%A(1,2) , simu_cell%A(2,2) , simu_cell%A(3,2)
+    WRITE ( kunit_QUADFF , * )  simu_cell%A(1,3) , simu_cell%A(2,3) , simu_cell%A(3,3)
+    WRITE ( kunit_QUADFF , * )  ntype
+    WRITE ( kunit_QUADFF , * )  ( atypei ( it ) , it = 1 , ntype )
+    WRITE ( kunit_QUADFF , * )  ( natmi  ( it ) , it = 1 , ntype )
+    WRITE ( kunit_QUADFF ,'(a)') &
+      '      ia type                   thetaxx                     thetayy                     thetazz                     thetaxy                  thetaxz                     thetayz'
+    do ia= 1 , natm
+          WRITE ( kunit_QUADFF ,'(i8,2x,a3,6e24.16)') ia , atype ( ia ) , theta_t ( 1 , 1, ia) , theta_t ( 2 , 2, ia) , &
+                                                                          theta_t ( 3 , 3, ia) , theta_t ( 1 , 2, ia) , &
+                                                                          theta_t ( 1 , 3, ia) , theta_t ( 2 , 3, ia)
+    enddo
+  endif
+
+  if ( lstatic ) CLOSE( kunit_QUADFF )
+
+  return
+
+END SUBROUTINE write_QUADFF
 
 SUBROUTINE find_min ( g0 , g1 , d1 , gmin , dmin )
 
@@ -5675,6 +5729,116 @@ REAL(KIND=DP) FUNCTION DDOTF(v1,v2)
   
 
 END FUNCTION
+
+
+! *********************** SUBROUTINE write_EFGALL ******************************
+!
+!>\brief
+! write Electric Field Gradient at ions to EFGALL file
+!
+! ******************************************************************************
+SUBROUTINE write_EFGALL
+
+  USE io,                       ONLY :  kunit_EFGALL, ionode
+  USE cell,                     ONLY :  kardir , periodicbc , dirkar
+  USE control,                  ONLY :  lstatic, iefgall_format
+  USE config,                   ONLY :  system , natm , ntype , atype , itype , simu_cell, atypei, natmi
+
+  implicit none
+
+  ! local
+  integer :: ia , it
+
+  if ( ionode .and. doefg ) then
+
+    if ( lstatic ) OPEN ( kunit_EFGALL ,file = 'EFGALL',STATUS = 'UNKNOWN')
+    if ( iefgall_format .ne. 0 ) then
+      WRITE ( kunit_EFGALL , * )  natm
+      WRITE ( kunit_EFGALL , * )  system
+      WRITE ( kunit_EFGALL , * )  simu_cell%A(1,1) , simu_cell%A(2,1) , simu_cell%A(3,1)
+      WRITE ( kunit_EFGALL , * )  simu_cell%A(1,2) , simu_cell%A(2,2) , simu_cell%A(3,2)
+      WRITE ( kunit_EFGALL , * )  simu_cell%A(1,3) , simu_cell%A(2,3) , simu_cell%A(3,3)
+      WRITE ( kunit_EFGALL , * )  ntype
+      WRITE ( kunit_EFGALL , * )  ( atypei ( it ) , it = 1 , ntype )
+      WRITE ( kunit_EFGALL , * )  ( natmi  ( it ) , it = 1 , ntype )
+      WRITE ( kunit_EFGALL ,'(a)') &
+      '      ia type                   vxx                     vyy                     vzz                     vxy                     vxz                     vyz'
+      do ia = 1 , natm
+        it = itype ( ia )
+        if ( lwfc( it ) .ge. 0 ) then
+          WRITE ( kunit_EFGALL ,'(i8,2x,a3,6e24.16)') ia , atype ( ia ) , efg_t ( 1 , 1 , ia ) , efg_t ( 2 , 2 , ia ) , &
+                                                                          efg_t ( 3 , 3 , ia ) , efg_t ( 1 , 2 , ia ) , &
+                                                                          efg_t ( 1 , 3 , ia ) , efg_t ( 2 , 3 , ia )
+        endif
+      enddo
+    endif
+
+    if ( iefgall_format .eq. 0 ) then
+      WRITE ( kunit_EFGALL )  natm
+      WRITE ( kunit_EFGALL )  system
+      WRITE ( kunit_EFGALL )  simu_cell%A(1,1) , simu_cell%A(2,1) , simu_cell%A(3,1)
+      WRITE ( kunit_EFGALL )  simu_cell%A(1,2) , simu_cell%A(2,2) , simu_cell%A(3,2)
+      WRITE ( kunit_EFGALL )  simu_cell%A(1,3) , simu_cell%A(2,3) , simu_cell%A(3,3)
+      WRITE ( kunit_EFGALL )  ntype
+      WRITE ( kunit_EFGALL )  ( atypei ( it ) , it = 1 , ntype )
+      WRITE ( kunit_EFGALL )  ( natmi  ( it ) , it = 1 , ntype )
+      WRITE ( kunit_EFGALL )  efg_t
+    endif
+
+  endif
+
+  if ( lstatic ) CLOSE( kunit_EFGALL )
+
+  return
+
+END SUBROUTINE write_EFGALL
+
+! *********************** SUBROUTINE write_EFALL ******************************
+!
+!>\brief
+! write configuration (pos,vel) to CONTFF file
+!
+! ******************************************************************************
+SUBROUTINE write_EFALL
+
+  USE io,                       ONLY :  kunit_EFALL, ionode
+  USE cell,                     ONLY :  kardir , periodicbc , dirkar
+  USE control,                  ONLY :  lstatic
+  USE config,                   ONLY :  system , natm , ntype , atype , itype , simu_cell, atypei, natmi
+
+  implicit none
+
+  ! local
+  integer :: ia , it
+
+  if ( ionode .and. doefg ) then
+
+    if ( lstatic ) OPEN ( kunit_EFALL ,file = 'EFALL',STATUS = 'UNKNOWN')
+      WRITE ( kunit_EFALL , * )  natm
+      WRITE ( kunit_EFALL , * )  system
+      WRITE ( kunit_EFALL , * )  simu_cell%A(1,1) , simu_cell%A(2,1) , simu_cell%A(3,1)
+      WRITE ( kunit_EFALL , * )  simu_cell%A(1,2) , simu_cell%A(2,2) , simu_cell%A(3,2)
+      WRITE ( kunit_EFALL , * )  simu_cell%A(1,3) , simu_cell%A(2,3) , simu_cell%A(3,3)
+      WRITE ( kunit_EFALL , * )  ntype
+      WRITE ( kunit_EFALL , * )  ( atypei ( it ) , it = 1 , ntype )
+      WRITE ( kunit_EFALL , * )  ( natmi  ( it ) , it = 1 , ntype )
+      WRITE ( kunit_EFALL ,'(a)') &
+                                 '      ia type                   Ex                      Ey                      Ez'
+      do ia = 1 , natm
+        it = itype ( ia )
+        if ( lwfc( it ) .ge. 0 ) then
+          WRITE ( kunit_EFALL ,'(i8,2x,a3,3e24.16)') ia , atype ( ia ) , ef_t ( ia , 1 ) , ef_t ( ia , 2 ) , ef_t ( ia , 3 )
+        endif
+      enddo
+
+  endif
+
+  if ( lstatic ) CLOSE( kunit_EFALL )
+
+  return
+
+END SUBROUTINE write_EFALL
+
 
 
 END MODULE field 

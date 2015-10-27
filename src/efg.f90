@@ -1,7 +1,3 @@
-!!!!  WARNING deprecated  !!!!
-!!!!   test purpose only  !!!!
-
-
 ! MDFF parallel Molecular Dynamics ... For Fun
 ! Copyright (C) 2011  F. Vasconcelos
 !
@@ -19,6 +15,11 @@
 ! along with this program; if not, write to the Free Software
 ! Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 ! ===== fmV =====
+
+!!!!  WARNING deprecated  !!!!
+!!!!   test purpose only  !!!!
+!!!! most of routines are not used anymore !!!
+!!!! EFG core calculation is now done in field.f90 !!!
 
 ! ======= Hardware =======
 #include "symbol.h"
@@ -184,10 +185,10 @@ SUBROUTINE efg_default_tag
   lefg_stat          = .false.
   lefg_vasp_sign     = .false.
   lmp_correction     = .false.
-  reseta             =   0.1_dp
-  resvzz             =   0.1_dp
-  resu               =   0.1_dp 
-  ncefg              =   0
+  reseta             =  0.1_dp
+  resvzz             =  0.1_dp
+  resu               =  0.1_dp 
+  ncefg              =  0
   umin               =  0.0_dp
   smax               =  0.0_dp
   vzzmin             =  0.0_dp
@@ -357,9 +358,13 @@ SUBROUTINE efgcalc
   
 
   ! ==================================
-  !  if lefg_restart EFGALL are ready
+  !  there is no more EFG calculation directly 
+  !  from this module ...
+  !  EFGALL is always generate previously 
   ! ==================================
-  if ( .not. lefg_restart ) then
+  !  if lefg_restart EFGALL are ready
+  !if ( .not. lefg_restart ) then
+  if ( .FALSE. ) then
 
     if ( iefgall_format .ne. 0 ) OPEN (unit = kunit_EFGALL  ,file = 'EFGALL', STATUS='REPLACE')
     if ( iefgall_format .eq. 0 ) OPEN (unit = kunit_EFGALL  ,file = 'EFGALL', STATUS='REPLACE' , form ='unformatted')

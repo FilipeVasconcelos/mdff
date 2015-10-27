@@ -1,153 +1,278 @@
 #!/bin/bash
 
-EXE=../../src/./mdff.x
+EXE=mdff.x
 sep1='======================================================================================================================'
 sep2='---------------------------------------------------------'
 
 echo $sep1
-echo "EXAMPLE 4 : testing electric field gradient"
+echo "EXAMPLE 4 : testing electric field gradient / NMR"
 echo $sep1
 echo ""
 echo $sep2
-echo "First example: Two charges in a box=10"
+echo "First example: From [1] Nymand and Linse, J. Chem. Phys. 112, 6152 (2000) "
+echo "               Two charges / two dipoles / Two charges and two polarizabilities (reduced units)"
 echo $sep2
 echo " " 
-cp TRAJFF.twocharges TRAJFF
-cat > control.F << eof
+cat > control_twocharges.F << eof
+! field calculation
 &controltag
-        calc='efg'
+        calc='md'
         lcoulomb  = .true.
-        longrange = 'direct'
-	cutlongrange = 1000.0D0
-	lreduced=.true.
-&end
-&efgtag
-        lefgprintall=.true.
-        ncefg=1
+        longrange ='ewald'
+	cutlongrange = 5.0d0
+        lstatic=.true.
+        restart_data='rvf'
+	lreduced=.true.            ! reduced units 
+	lreducedN=.false.          ! NOT REDUCED BY N
 &end
 &fieldtag
-	qch(1) =  1.0
-	qch(2) = -1.0
-        ncelldirect = 40
-&end
-&mdtag
-&end
-eof
-echo $sep2
-echo "Direct summation"
-echo "ncelldirect = 40"
-echo $sep2
-echo ""
-$EXE control.F > stdout_direct_twocharges
-cat EFGALL > EFGALL.direct_twocharges
-tail -n3 EFGALL 
+	qch =  1.0 -1.0 , 
+	kES = 11 11 11,            ! Parameters from [1]
+	alphaES = 0.8              ! from [1]
 
-echo $sep2
-echo "Ewald summation"
-echo $sep2
-echo ""
-cat > control.F << eof
-&controltag
-        calc='efg'
-        lcoulomb  = .true.
-        longrange = 'ewald'
-	cutlongrange = 1000.0D0
-	lreduced=.true.
-&end
-&efgtag
-        lefgprintall=.true.
-        ncefg=1
-&end
-&fieldtag
-	qch(1) =  1.0
-	qch(2) = -1.0
-	kES = 11 11 11,
-	alphaES = 0.8
+        doefg=.true.               ! do EFG
+        doefield=.true.            ! do Electric Field
+        lwrite_efg=.true.          ! and write ...
+        lwrite_ef=.true.
 &end
 &mdtag
 &end
 eof
-$EXE control.F > stdout_ewald_twocharges
-cat EFGALL > EFGALL.ewald_twocharges
-tail -n3 EFGALL 
+cat > control_twodipoles.F << eof
+! field calculation
+&controltag
+        calc='md'
+        lcoulomb  = .true.
+        longrange ='ewald'
+	cutlongrange = 5.0d0
+        lstatic=.true.
+        restart_data='rvf'
+	lreduced=.true.            ! reduced units 
+	lreducedN=.false.          ! NOT REDUCED BY N
+&end
+&fieldtag
+        dip(1,1) =  1.0 
+        dip(2,1) =  1.0 
+	kES = 11 11 11,            ! Parameters from [1]
+	alphaES = 0.8              ! from [1]
+
+        doefg=.true.               ! do EFG
+        doefield=.true.            ! do Electric Field
+        lwrite_efg=.true.          ! and write ...
+        lwrite_ef=.true.
+&end
+&mdtag
+&end
+eof
+
+cat > control_twocharges_twodipoles.F << eof
+! field calculation
+&controltag
+        calc='md'
+        lcoulomb  = .true.
+        longrange ='ewald'
+	cutlongrange = 5.0d0
+        lstatic=.true.
+        restart_data='rvf'
+	lreduced=.true.            ! reduced units 
+	lreducedN=.false.          ! NOT REDUCED BY N
+&end
+&fieldtag
+	qch =  1.0 -1.0 , 
+	kES = 11 11 11,            ! Parameters from [1]
+	alphaES = 0.8              ! from [1]
+
+	lpolar(3) =.true.
+	pol(3,1,1) = 0.1d0
+
+	lpolar(4) =.true.
+	pol(4,1,1) = 0.1d0
+	pol(4,2,2) = 0.1d0
+	pol(4,3,3) = 0.1d0
+	ldip_damping = .false.
+
+        doefg=.true.               ! do EFG
+        doefield=.true.            ! do Electric Field
+        lwrite_efg=.true.          ! and write ...
+        lwrite_ef=.true.
+&end
+&mdtag
+&end
+eof
+
+
+tag=twocharges
+cp POSFF.$tag POSFF 
+$EXE control_$tag.F > stdout_$tag
+cat EFGALL > EFGALL.$tag
+cat EFALL > EFALL.$tag
+cat CONTFF > CONTFF.$tag
+
+
+Utmp=`grep Utot stdout_$tag | awk '{print $NF}'`
+Utmp2=`echo ${Utmp} | sed -e 's/[eE]+*/\\*10\\^/'`
+U=`echo "scale=8;$Utmp2" | bc -l | awk '{printf("%.8f\n", $1)}'`
+
+Etmp=`tail -n+10 EFALL | head -n 1 | awk '{print $3}'`
+Etmp2=`echo ${Etmp} | sed -e 's/[eE]+*/\\*10\\^/'`
+Ex=`echo "scale=8;$Etmp2" | bc -l | awk '{printf("%.8f\n", $1)}'`
+
+Vtmp=`tail -n+10 EFGALL | head -n 1 | awk '{print $3}'`
+Vtmp2=`echo ${Vtmp} | sed -e 's/[eE]+*/\\*10\\^/'`
+Vxx=`echo "scale=8;$Vtmp2" | bc -l | awk '{printf("%.8f\n", $1)}'`
+
+Vtmp=`tail -n+10 EFGALL | head -n 1 | awk '{print $4}'`
+Vtmp2=`echo ${Vtmp} | sed -e 's/[eE]+*/\\*10\\^/'`
+Vyy=`echo "scale=8;$Vtmp2" | bc -l | awk '{printf("%.8f\n", $1)}'`
+
+Ftmp=`tail -n+10 CONTFF | head -n 1 | awk '{print $8}'`
+Ftmp2=`echo ${Ftmp} | sed -e 's/[eE]+*/\\*10\\^/'`
+Fx=`echo "scale=8;$Ftmp2" | bc -l | awk '{printf("%.8f\n", $1)}'`
+
+
 echo $sep2
 echo "From Nymand and Linse, J. Chem. Phys. 112, 6152 (2000)"
 echo $sep2
+echo "                                        Two Charges "
+echo "Method           U              E1,x              V1,xx          V1,yy            f1,x"
+echo "ES             -1.0021255      0.9956865        2.0003749       -1.0001874       0.9956865"   
 echo ""
-echo "Method           V1,xx                 V1,yy"
-echo "ES             2.0003749            -1.0001874" 
-echo "DS             2.0003749            -1.0001874"
+echo "MDFF(this run) $U     $Ex       $Vxx      $Vyy      $Fx"
 echo ""
+
+tag=twodipoles
+cp POSFF.$tag POSFF 
+$EXE control_$tag.F > stdout_$tag
+cat EFGALL > EFGALL.$tag
+cat EFALL > EFALL.$tag
+cat CONTFF > CONTFF.$tag
+
+Utmp=`grep Utot stdout_twodipoles | awk '{print $NF}'`
+Utmp2=`echo ${Utmp} | sed -e 's/[eE]+*/\\*10\\^/'`
+U=`echo "scale=8;$Utmp2" | bc -l | awk '{printf("%.8f\n", $1)}'`
+
+Etmp=`tail -n+10 EFALL | head -n 1 | awk '{print $3}'`
+Etmp2=`echo ${Etmp} | sed -e 's/[eE]+*/\\*10\\^/'`
+Ex=`echo "scale=8;$Etmp2" | bc -l | awk '{printf("%.8f\n", $1)}'`
+
+Vtmp=`tail -n+10 EFGALL | head -n 1 | awk '{print $3}'`
+Vtmp2=`echo ${Vtmp} | sed -e 's/[eE]+*/\\*10\\^/'`
+Vxx=`echo "scale=8;$Vtmp2" | bc -l | awk '{printf("%.8f\n", $1)}'`
+
+Vtmp=`tail -n+10 EFGALL | head -n 1 | awk '{print $4}'`
+Vtmp2=`echo ${Vtmp} | sed -e 's/[eE]+*/\\*10\\^/'`
+Vyy=`echo "scale=8;$Vtmp2" | bc -l | awk '{printf("%.8f\n", $1)}'`
+
+Ftmp=`tail -n+10 CONTFF | head -n 1 | awk '{print $8}'`
+Ftmp2=`echo ${Ftmp} | sed -e 's/[eE]+*/\\*10\\^/'`
+Fx=`echo "scale=8;$Ftmp2" | bc -l | awk '{printf("%.8f\n", $1)}'`
+
+
+echo "                                        Two Dipoles"
+echo "ES             -2.0087525      2.0087525        5.9992460       -2.9996230       5.9992460 "   
+echo ""
+echo "MDFF(this run) $U     $Ex       $Vxx      $Vyy      $Fx"
+
+
+tag=twocharges_twopola
+cp TRAJFF.$tag POSFF 
+$EXE control_tc_tp.F > stdout_$tag
+cat EFGALL > EFGALL.$tag
+cat EFALL > EFALL.$tag
+cat CONTFF > CONTFF.$tag
+
+
+Utmp=`grep Utot stdout_$tag | awk '{print $NF}'`
+Utmp2=`echo ${Utmp} | sed -e 's/[eE]+*/\\*10\\^/'`
+U=`echo "scale=8;$Utmp2" | bc -l | awk '{printf("%.8f\n", $1)}'`
+
+Etmp=`tail -n+10 EFALL | head -n 1 | awk '{print $3}'`
+Etmp2=`echo ${Etmp} | sed -e 's/[eE]+*/\\*10\\^/'`
+Ex=`echo "scale=8;$Etmp2" | bc -l | awk '{printf("%.8f\n", $1)}'`
+
+Vtmp=`tail -n+10 EFGALL | head -n 1 | awk '{print $3}'`
+Vtmp2=`echo ${Vtmp} | sed -e 's/[eE]+*/\\*10\\^/'`
+Vxx=`echo "scale=8;$Vtmp2" | bc -l | awk '{printf("%.8f\n", $1)}'`
+
+Vtmp=`tail -n+10 EFGALL | head -n 1 | awk '{print $4}'`
+Vtmp2=`echo ${Vtmp} | sed -e 's/[eE]+*/\\*10\\^/'`
+Vyy=`echo "scale=8;$Vtmp2" | bc -l | awk '{printf("%.8f\n", $1)}'`
+
+Ftmp=`tail -n+10 CONTFF | head -n 1 | awk '{print $8}'`
+Ftmp2=`echo ${Ftmp} | sed -e 's/[eE]+*/\\*10\\^/'`
+Fx=`echo "scale=8;$Ftmp2" | bc -l | awk '{printf("%.8f\n", $1)}'`
+
+
+echo "                                        Two charges and two polarizabilities"
+echo "ES             -1.012 "   
+echo ""
+echo "MDFF(this run) $U     $Ex       $Vxx      $Vyy      $Fx"
+
+
+
+
 echo $sep1
 echo $sep2
 echo "Second example: cluster (9 atoms)"
 echo "EFG Tensor principal components (NMR) :"
 echo $sep2
 echo ""
-cp TRAJFF.cluster TRAJFF
-echo $sep2
-echo "Direct summation"
-echo $sep2
+
+
+
+
+
+cp POSFF.cluster POSFF 
+
+
 echo ""
-cat > control.F << eof
+cat > control_1.F << eof
 &controltag
-        calc='efg'
+        calc='md'
         lcoulomb  = .true.
-        longrange = 'direct'
-	cutlongrange = 100.0d0
-&end
-&efgtag
-        lefgprintall=.true.
-        lefg_vasp_sign=.true.
-	lefg_stat=.true.
-        ncefg=1
-	umin=-15.0
-	smax=25.0
-	vzzmin=-50.0
+        longrange ='ewald'
+	cutlongrange = 5.0d0
+        lstatic=.true.
+        restart_data='rvf'
 &end
 &fieldtag
-	qch(1) =  0.1 -0.8,
-        ncelldirect = 40
+	qch =  0.1 -0.8, 
+	lautoES=.true.
+	epsw=1e-12
+        doefg=.true.    
+        doefield=.true.    
+        lwrite_efg=.true.
+        lwrite_ef=.true.
 &end
 &mdtag
 &end
 eof
-$EXE control.F > stdout_direct_cluster
-cat NMRFF  > NMRFF.direct_cluster
-tail -n10 NMRFF 
-echo ""
-
-
-echo $sep2
-echo "Ewald summation"
-echo $sep2
-echo ""
-cat > control.F << eof
+cat > control_2.F << eof
 &controltag
         calc='efg'
         lcoulomb  = .true.
         longrange ='ewald'
 	cutlongrange = 5.0d0
+        lstatic=.true.
+        restart_data='rvf'
 &end
 &efgtag
-        lefgprintall=.true.
+        lefg_restart=.true.
+        lefg_stat=.true.
         lefg_vasp_sign=.true.
-	lefg_stat=.true.
         ncefg=1
 	umin=-15.0
 	smax=25.0
 	vzzmin=-50.0
 &end
 &fieldtag
-	qch =  0.1 -0.8, 
-	lautoES=.true.
-	epsw=1e-8    
 &end
 &mdtag
 &end
 eof
-$EXE control.F > stdout_ewald_cluster
-cat NMRFF  > NMRFF.ewald_cluster
+$EXE control_1.F > stdout_cluster_1
+$EXE control_2.F > stdout_cluster_2
+cat NMRFF  > NMRFF.cluster
 tail -n10 NMRFF 
 echo ""
 echo ""
