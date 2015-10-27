@@ -136,9 +136,6 @@ MODULE field
   ! type dependent properties
   real(kind=dp)    :: mass     ( ntypemax )            !< masses ( not yet tested everywhere )
   real(kind=dp)    :: qch      ( ntypemax )            !< charges 
-  !real(kind=dp)    :: quad_efg ( ntypemax )           !< quadrupolar moment
-  !real(kind=dp)    :: dip      ( 3 , ntypemax )       !< dipoles 
-  !real(kind=dp)    :: pol      ( ntypemax , 3 , 3 )   !< polarizability if ldip_polar( it ) = .true. 
 
   real(kind=dp)    :: dip      ( ntypemax , 3 )        !< dipoles 
   real(kind=dp)    :: quad     ( ntypemax , 3 , 3 )    !< quadrupoles
@@ -634,7 +631,7 @@ SUBROUTINE field_print_info ( kunit , quiet )
   do it = 1 , ntype
       qtot  = qtot  +   qch(it) * natmi ( it )
       qtot2 = qtot2 + ( qch(it) * natmi ( it ) ) * ( qch(it) * natmi ( it ) )
-      mu_sum = mu_sum + dip(:,it)
+      mu_sum = mu_sum + dip(it,:)
   enddo
   linduced = .false.
   do it = 1 , ntype
@@ -670,7 +667,7 @@ SUBROUTINE field_print_info ( kunit , quiet )
     WRITE ( kunit ,'(a)')               'static dipoles: '
     lseparator(kunit) 
     do it = 1 , ntype
-      WRITE ( kunit ,'(a,a,a,3f10.5)')  'mu',atypei(it),'      = ',dip(1,it),dip(2,it),dip(3,it)
+      WRITE ( kunit ,'(a,a,a,3f10.5)')  'mu',atypei(it),'      = ',dip(it,1),dip(it,2),dip(it,3)
     enddo
     WRITE ( kunit ,'(a,3e12.3)')        'sum of dipoles          = ',mu_sum(1),mu_sum(2),mu_sum(3)
     blankline(kunit)
