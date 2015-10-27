@@ -19,24 +19,24 @@
 ! ======= Hardware =======
 #include "symbol.h"
 #define debug
-#define debug_ES
-#define debug_ES_field_forces
+!#define debug_ES
+!#define debug_ES_field_forces
 !#define debug_ES_energy
 !#define debug_ES_stress
 !#define debug_ES_efg
 !#define debug_ES_dir
-!#define debug_scf_pola
+#define debug_scf_pola
 !#define debug_wfc
 !#define debug_morse
 !#define debug_nmlj
 !#define debug_nmlj_pbc
 !#define debug_quadratic
 !#define debug_para
-!#define debug_mu
+#define debug_mu
 !#define debug_cg
 !#define debug_extrapolate
-!#define debug_print_dipff_scf
-!#define debug_scf_kO_inner
+#define debug_print_dipff_scf
+#define debug_scf_kO_inner
 ! ======= Hardware =======
 
 ! *********************** MODULE field *****************************************
@@ -549,7 +549,7 @@ END SUBROUTINE field_init
 ! ******************************************************************************
 SUBROUTINE field_print_info ( kunit , quiet )
 
-  USE config,           ONLY :  natm , ntype , atypei , natmi , simu_cell , rho
+  USE config,           ONLY :  natm , ntype , atype , atypei , natmi , simu_cell , rho , polia , invpolia
   USE control,          ONLY :  calc , cutshortrange , lnmlj , lmorse , lbmhft , lbmhftd , lcoulomb , longrange , lreducedN , cutlongrange
   USE io,               ONLY :  ionode 
   USE constants,        ONLY :  pi , pisq, g_to_am
@@ -558,7 +558,7 @@ SUBROUTINE field_print_info ( kunit , quiet )
 
   !local
   logical , optional :: quiet
-  integer :: kunit, it , it1 , it2 , i , j 
+  integer :: kunit, it , it1 , it2 , i , j , ia 
   real(kind=dp) :: rcut2 , kmax2 , alpha2 , ereal , ereci(3) , ereci2(3) , qtot , qtot2, total_mass
   logical :: linduced, ldamp
   real(kind=dp) :: Athole, dist_cata , dist_corr, mu_sum(3)      
@@ -629,16 +629,18 @@ SUBROUTINE field_print_info ( kunit , quiet )
           WRITE ( kunit ,'(3f12.4)')      ( pol ( it1 , 2 , j ) , j = 1 , 3 ) 
           WRITE ( kunit ,'(3f12.4)')      ( pol ( it1 , 3 , j ) , j = 1 , 3 ) 
           blankline(kunit)
-          if ( ldamp ) then
+          !if ( ldamp ) then
             WRITE ( kunit ,'(a)') 'damping functions : '
             WRITE ( kunit ,'(a)') '                    b           c              k'
             do it2 = 1 ,ntype 
-              if ( ldip_damping(it1,it1,it2 ) )  &
+              !if ( ldip_damping(it1,it1,it2 ) )  &
               WRITE ( kunit ,'(a,a,a,a,2f12.4,i2,a,2f12.4,i2,a)') atypei(it1),' - ',atypei(it2), ' : ' ,& 
                                                     pol_damp_b(it1,it1,it2),pol_damp_c(it1,it1,it2),pol_damp_k(it1,it1,it2),&
                                               ' ( ',pol_damp_b(it1,it2,it1),pol_damp_c(it1,it2,it1),pol_damp_k(it1,it2,it1),' ) '
             enddo
-          endif
+          !endif
+
+
         else
           WRITE ( kunit ,'(a,a2)')      'no polarizability on type ', atypei(it1)
         endif
@@ -1809,11 +1811,16 @@ SUBROUTINE induced_moment_inner ( f_ind_ext , mu_ind )
     do alpha = 1 , 3 
       do beta = 1 , 3  
         mu_ind ( alpha , ia ) = mu_ind ( alpha , ia ) + polia ( alpha , beta  , ia ) * ( f_ind_total ( beta , ia ) )
+        write(*,'(3i5,3f12.8)') ia , alpha, beta, mu_ind ( alpha , ia ) , f_ind_total ( beta , ia ) , polia ( alpha , beta  , ia ) 
       enddo
     enddo
   enddo
   mu_ind = omegakO * mu_ind  
 
+  do ia=1,natm
+    write(*,'(4f12.8)') mu_ind(1,ia), mu_ind(2,ia) , mu_ind(3,ia) ,omegakO
+  enddo
+  !stop
 
   inner_loop : do while ( iscf_inner .le. 10 .and. rmsd_inner .gt. 0.1_dp * rmsd_ref )  
     mu_prev      = mu_ind 
@@ -3600,7 +3607,7 @@ SUBROUTINE moment_from_pola_scf ( mu_ind , didpim )
  
 #ifdef debug_print_dipff_scf
   do ia = 1 , natm
-  if ( mu_ind ( 1 , ia ) .eq. 0._dp ) cycle
+  !if ( mu_ind ( 1 , ia ) .eq. 0._dp ) cycle
   write(kkkk,'(3e16.8)') (mu_ind ( alpha , ia ),alpha=1,3)
   enddo
   kkkk = kkkk + 1 
@@ -3624,7 +3631,7 @@ SUBROUTINE moment_from_pola_scf ( mu_ind , didpim )
 #ifdef debug_mu
   if ( ionode ) then
     WRITE ( stdout , '(a)' )     'Induced dipoles at atoms : '
-    do ia = 1 , 5
+    do ia = 1 , natm 
       WRITE ( stdout , '(i5,a3,a,3f18.10)' ) &
       ia,atype(ia),' mu_ind = ', mu_ind ( 1 , ia ) , mu_ind ( 2 , ia ) , mu_ind ( 3 , ia )
     enddo
@@ -3790,15 +3797,17 @@ SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , didpim )
 
           CALL induced_moment_inner ( f_ind , dmu_ind )         
           mu_ind = mu_ind + dmu_ind
+          print*,'here 1',dmu_ind(1,3)
     else
 
+            print*,'here 2',algo_ext_dipole
       if ( algo_ext_dipole .eq. 'poly' ) CALL extrapolate_dipole_poly ( mu_ind ) 
       if ( algo_ext_dipole .eq. 'aspc' ) CALL extrapolate_dipole_aspc ( mu_ind , Efield , key=1 )  ! predictor
 
 #ifdef debug_mu
       if ( ionode ) then
         WRITE ( stdout , '(a)' )     'Induced dipoles at atoms from extrapolation: '
-        do ia = 1 , 5 
+        do ia = 1 , natm 
           WRITE ( stdout , '(i5,a3,a,3f18.10)' ) &
           ia,atype(ia),' mu_ind = ', mu_ind ( 1 , ia ) , mu_ind ( 2 , ia ) , mu_ind ( 3 , ia )
         enddo
@@ -3869,7 +3878,7 @@ SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , didpim )
  
 #ifdef debug_print_dipff_scf
   do ia = 1 , natm
-  if ( mu_ind ( 1 , ia ) .eq. 0._dp ) cycle
+  !if ( mu_ind ( 1 , ia ) .eq. 0._dp ) cycle
   write(kkkk,'(3e16.8)') (mu_ind ( alpha , ia ),alpha=1,3)
   enddo
   kkkk = kkkk + 1 
@@ -3893,7 +3902,7 @@ SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , didpim )
 #ifdef debug_mu
   if ( ionode ) then
     WRITE ( stdout , '(a)' )     'Induced dipoles at atoms : '
-    do ia = 1 , 5
+    do ia = 1 , natm 
       WRITE ( stdout , '(i5,a3,a,3f18.10)' ) &
       ia,atype(ia),' mu_ind = ', mu_ind ( 1 , ia ) , mu_ind ( 2 , ia ) , mu_ind ( 3 , ia )
     enddo
@@ -4082,7 +4091,7 @@ SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , didpim )
 #ifdef debug_mu
       if ( ionode ) then
         WRITE ( stdout , '(a)' )     'Induced dipoles at atoms from extrapolation: '
-        do ia = 1 , 5 
+        do ia = 1 , natm 
           WRITE ( stdout , '(i5,a3,a,3f18.10)' ) &
           ia,atype(ia),' mu_ind = ', mu_ind ( 1 , ia ) , mu_ind ( 2 , ia ) , mu_ind ( 3 , ia )
         enddo
@@ -4194,7 +4203,7 @@ SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , didpim )
 #ifdef debug_mu
   if ( ionode ) then
     WRITE ( stdout , '(a)' )     'Induced dipoles at atoms : '
-    do ia = 1 , 5
+    do ia = 1 , natm 
       WRITE ( stdout , '(i5,a3,a,3f18.10)' ) &
       ia,atype(ia),' mu_ind = ', mu_ind ( 1 , ia ) , mu_ind ( 2 , ia ) , mu_ind ( 3 , ia )
     enddo
@@ -4513,7 +4522,7 @@ SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , didpim )
 #ifdef debug_mu
   if ( ionode ) then
     WRITE ( stdout , '(a)' )     'Induced dipoles at atoms : '
-    do ia = 1 , 5
+    do ia = 1 , natm 
       WRITE ( stdout , '(i5,a3,a,3f18.10)' ) &
       ia,atype(ia),' mu_ind = ', mu_ind ( 1 , ia ) , mu_ind ( 2 , ia ) , mu_ind ( 3 , ia )
     enddo
@@ -4804,7 +4813,7 @@ SUBROUTINE moment_from_pola_scf_kO_v4 ( mu_ind , didpim )
 #ifdef debug_mu
   if ( ionode ) then
     WRITE ( stdout , '(a)' )     'Induced dipoles at atoms : '
-    do ia = 1 , 5
+    do ia = 1 , natm 
       WRITE ( stdout , '(i5,a3,a,3f18.10)' ) &
       ia,atype(ia),' mu_ind = ', mu_ind ( 1 , ia ) , mu_ind ( 2 , ia ) , mu_ind ( 3 , ia )
     enddo
@@ -5317,7 +5326,7 @@ END SUBROUTINE extrapolate_dipole_poly
 ! as the zero order is taking juste 
 SUBROUTINE extrapolate_dipole_aspc ( mu_ind , Efield , key ) 
 
-  USE config,           ONLY :  natm, invpolia
+  USE config,           ONLY :  atype, natm, invpolia
   USE md,               ONLY :  itime 
   USE io,               ONLY :  stdout, ioprintnode
 
@@ -5406,16 +5415,16 @@ SUBROUTINE extrapolate_dipole_aspc ( mu_ind , Efield , key )
     mu_ind = w_ASPC * mu_ind + ( 1.0_dp - w_ASPC ) * mu_p_save 
   endif
 
-#ifdef debug_mu
-      if ( ionode ) then
-        WRITE ( stdout , '(a)' )     'Induced dipoles at atoms from extrapolation: '
-        do ia = 1 , 5 
-          WRITE ( stdout , '(i5,a3,a,3f18.10)' ) &
-          ia,atype(ia),' mu_ind = ', mu_ind ( 1 , ia ) , mu_ind ( 2 , ia ) , mu_ind ( 3 , ia )
-        enddo
-        blankline(stdout)
-      endif
-#endif
+!#ifdef debug_mu
+!      if ( ionode ) then
+!        WRITE ( stdout , '(a)' )     'Induced dipoles at atoms from extrapolation: '
+!        do ia = 1 , natm 
+!          WRITE ( stdout , '(i5,a3,a,3f18.10)' ) &
+!          ia,atype(ia),' mu_ind = ', mu_ind ( 1 , ia ) , mu_ind ( 2 , ia ) , mu_ind ( 3 , ia )
+!        enddo
+!        blankline(stdout)
+!      endif
+!#endif
 
   return
 

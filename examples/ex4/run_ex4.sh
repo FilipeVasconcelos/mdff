@@ -65,7 +65,7 @@ cat > control_twodipoles.F << eof
 &end
 eof
 
-cat > control_twocharges_twodipoles.F << eof
+cat > control_twocharges_twopola.F << eof
 ! field calculation
 &controltag
         calc='md'
@@ -76,11 +76,18 @@ cat > control_twocharges_twodipoles.F << eof
         restart_data='rvf'
 	lreduced=.true.            ! reduced units 
 	lreducedN=.false.          ! NOT REDUCED BY N
+	lsurf=.true.
 &end
 &fieldtag
 	qch =  1.0 -1.0 , 
 	kES = 11 11 11,            ! Parameters from [1]
 	alphaES = 0.8              ! from [1]
+        min_scf_pol_iter = 3
+        max_scf_pol_iter = 3
+        conv_tol_ind = 1e-6
+	!algo_moment_from_pola = 'scf'
+	algo_moment_from_pola = 'scf_kO_v2'
+
 
 	lpolar(3) =.true.
 	pol(3,1,1) = 0.1d0
@@ -175,8 +182,8 @@ echo "MDFF(this run) $U     $Ex       $Vxx      $Vyy      $Fx"
 
 
 tag=twocharges_twopola
-cp TRAJFF.$tag POSFF 
-$EXE control_tc_tp.F > stdout_$tag
+cp POSFF.$tag POSFF 
+$EXE control_$tag.F > stdout_$tag
 cat EFGALL > EFGALL.$tag
 cat EFALL > EFALL.$tag
 cat CONTFF > CONTFF.$tag
@@ -217,8 +224,6 @@ echo "Second example: cluster (9 atoms)"
 echo "EFG Tensor principal components (NMR) :"
 echo $sep2
 echo ""
-
-
 
 
 

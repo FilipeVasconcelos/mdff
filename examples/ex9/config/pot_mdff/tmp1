@@ -33,7 +33,28 @@
         !         O       Si         B
         qch= -2.0d0      4.0d0     3.0d0
         !INCLUDE <PIM.POT>
-        !INCLUDE <PIMD.POT>
+       ! polar on O
+        lpolar(1)=.true.
+        pol(1,1,1)=0.93971813676926158987
+        pol(1,2,2)=0.93971813676926158987
+        pol(1,3,3)=0.93971813676926158987
+
+        ! O - O
+        ldip_damping(1,1,1) = .true.
+        pol_damp_b(1,1,1) = 5.58406251008641721012
+        pol_damp_c(1,1,1) = 2.8904937083E+00
+        pol_damp_k(1,1,1) = 4
+        ! O - Si
+        ldip_damping(1,1,2) = .true.
+        pol_damp_b(1,1,2) = 3.66418041600447487325
+        pol_damp_c(1,1,2) = 1.4460000000E+00
+        pol_damp_k(1,1,2) = 4
+        ! O - B 
+        ldip_damping(1,1,3) = .true.
+        pol_damp_b(1,1,3) = 4.48243215408077070621
+        pol_damp_c(1,1,3) = 1.3650000000E+00
+        pol_damp_k(1,1,3) = 4
+
         !O-O               eV                  hartree
         Abmhftd(1,1)  = 1.26277351E+04 ! 4.6406074534E+02
         Bbmhftd(1,1)  = 5.02221846716694036211

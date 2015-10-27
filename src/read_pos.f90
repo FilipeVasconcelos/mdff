@@ -19,7 +19,8 @@
 
 ! ======= Hardware =======
 #include "symbol.h"
-!#define debug_read_pos
+#define debug
+#define debug_read_pos
 ! ======= Hardware =======
 
 ! *********************** SUBROUTINE read_pos **********************************
@@ -217,6 +218,20 @@ SUBROUTINE typeinfo_init
   enddo
   natmi  ( 0 ) = natm
   atypei ( 0 ) = 'ALL'
+
+#ifdef debug
+do ia=1,natm
+ WRITE ( stdout ,'(a,a2,a,f12.4)')'polarizability on ion ', atype(ia),' : '
+ WRITE ( stdout ,'(3f12.4)')      ( polia ( 1 , j , ia ) , j = 1 , 3 )
+ WRITE ( stdout ,'(3f12.4)')      ( polia ( 2 , j , ia ) , j = 1 , 3 )
+ WRITE ( stdout ,'(3f12.4)')      ( polia ( 3 , j , ia ) , j = 1 , 3 )
+
+ WRITE ( stdout ,'(a,a2,a,f12.4)')'inverse polarizability on ion ', atype(ia),' : '
+ WRITE ( stdout ,'(3f12.4)')      ( invpolia ( 1 , j , ia ) , j = 1 , 3 )
+ WRITE ( stdout ,'(3f12.4)')      ( invpolia ( 2 , j , ia ) , j = 1 , 3 )
+ WRITE ( stdout ,'(3f12.4)')      ( invpolia ( 3 , j , ia ) , j = 1 , 3 )
+enddo
+#endif
 
   return
 
