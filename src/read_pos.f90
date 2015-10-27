@@ -40,7 +40,7 @@ SUBROUTINE read_pos
   USE config,                   ONLY :  rx , ry , rz , vx , vy , vz , fx , fy , fz , atype , atypei , itype , &
                                         natmi , natm , dipia , qia , ipolar , rho , system , ntype , config_alloc , &
                                         simu_cell , config_print_info , coord_format_allowed , write_CONTFF
-  USE field,                    ONLY :  qch , dip , lpolar , field_init
+  USE field,                    ONLY :  qch , dip , quad, ldip_polar , field_init
   USE io,                       ONLY :  ionode , stdout , kunit_POSFF
   USE cell,                     ONLY :  lattice, periodicbc , dirkar, kardir
 
@@ -163,8 +163,9 @@ END SUBROUTINE read_pos
 SUBROUTINE typeinfo_init
 
   USE constants, ONLY :  dp
-  USE config ,  ONLY :  atype , atypei , itype , natmi , natm , ntype , massia, dipia , qia , quadia , ipolar , polia , invpolia 
-  USE field ,   ONLY :  mass, qch , quad_efg , dip , lpolar , pol
+  USE config ,  ONLY :  atype , atypei , itype , natmi , natm , ntype , massia, dipia , quadia, qia , &
+                        quadia_nuc , ipolar , poldipia , polquadia, invpoldipia 
+  USE field ,   ONLY :  mass, qch , quad_nuc , dip , quad , ldip_polar , poldip , polquad
   USE io,       ONLY :  stdout
   
   implicit none
@@ -188,28 +189,24 @@ SUBROUTINE typeinfo_init
     ccs = cc
     cc = cc + natmi ( it )
     do ia = ccs + 1 , cc
-      atype ( ia )     = atypei ( it )
-      itype ( ia )     = it
-      qia   ( ia )     = qch ( it )
-      massia( ia )     = mass( it )
-      quadia( ia )     = quad_efg ( it )   
-      dipia ( 1 , ia ) = dip ( it , 1 )
-      dipia ( 2 , ia ) = dip ( it , 2 )
-      dipia ( 3 , ia ) = dip ( it , 3 )
-      ipolar ( ia )    = lpolar ( it )
-      do i = 1 , 3
-        do j = 1 , 3
-          polia ( i , j  , ia ) = pol ( it , i , j )
-        enddo
-      enddo 
-      if ( .not. lpolar ( it ) ) cycle
-      invpolia ( : , : , ia )  = polia ( : , : , ia )
-      CALL DGETRF( 3, 3, invpolia(:,:,ia), 3, ipiv, ierr )  
+      atype ( ia )                = atypei ( it )
+      itype ( ia )                = it
+      qia   ( ia )                = qch ( it )
+      massia( ia )                = mass( it )
+      quadia_nuc ( ia )           = quad_nuc ( it )   
+      dipia ( : , ia )            = dip ( it , : )
+      quadia ( : , : , ia )       = quad (it , : , : )
+      ipolar ( ia )               = ldip_polar ( it )
+      poldipia ( : , :  , ia )    = poldip ( it , : , : )
+      polquadia( : , : , : , ia ) = polquad ( it , : , : , : )
+      if ( .not. ldip_polar ( it ) ) cycle
+      invpoldipia ( : , : , ia )  = poldipia ( : , : , ia )
+      CALL DGETRF( 3, 3, invpoldipia(:,:,ia), 3, ipiv, ierr )  
       if ( ierr.lt.0 ) then
         WRITE( stdout , '(a,i6)' ) 'ERROR call to DGETRF failed in induced_moment',ierr
         STOP
       endif
-      CALL DGETRI( 3 , invpolia(:,:,ia) , 3 ,  ipiv , WORK, LWORK, ierr )
+      CALL DGETRI( 3 , invpoldipia(:,:,ia) , 3 ,  ipiv , WORK, LWORK, ierr )
       if ( ierr.lt.0 ) then
         WRITE( stdout , '(a,i6)' ) 'ERROR call to DGETRI failed in induced_moment',ierr
         STOP

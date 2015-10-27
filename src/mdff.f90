@@ -79,7 +79,6 @@ PROGRAM main_MDFF
   ! local
   integer       :: argc               ! input argument of the executable
   dectime                             ! timing declaration ( ierr also declared ) 
-  !character(len=80) :: SVNREV         ! svn revision 
 
 #ifdef MULTRUN
   integer :: irun          

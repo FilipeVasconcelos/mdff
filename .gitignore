@@ -46,14 +46,13 @@ VECTFF*
 *.toc
 *.eps
 
-doc/missfont.log
 doc/mdff.log
+doc/missfont.log
 examples/ex1/dl_poly/
 examples/ex1/mdff/
 examples/ex1/plot
 examples/ex10/control_files/
 examples/ex11/md_runs/
-examples/ex5/fort.180
 examples/ex5/plot.band
 examples/ex5/plot.dos
 examples/ex5/stdout.vib

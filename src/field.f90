@@ -68,6 +68,8 @@ MODULE field
   logical, SAVE     :: lwrite_dip_wfc    !< write dipoles from wannier centers to file
   logical, SAVE     :: lwrite_dip        !< write dipoles 
   logical, SAVE     :: lwrite_quad       !< write quadrupoles to QUADFF
+  logical, SAVE     :: lwrite_efg        !< write electric field gradient to EFGALL
+  logical, SAVE     :: lwrite_ef         !< write electric field s to EFALL
   logical, SAVE     :: ldip_wfc          !< calculate electrostatic contribution from dipolar momemt coming from wfc
   logical, SAVE     :: lquiet            !< internal stuff 
   logical, SAVE     :: symmetric_pot     !< symmetric potential ( default .true. but who knows ?)
@@ -136,9 +138,14 @@ MODULE field
   ! type dependent properties
   real(kind=dp)    :: mass     ( ntypemax )            !< masses ( not yet tested everywhere )
   real(kind=dp)    :: qch      ( ntypemax )            !< charges 
-  real(kind=dp)    :: quad_efg ( ntypemax )            !< quadrupolar moment
   real(kind=dp)    :: dip      ( ntypemax , 3 )        !< dipoles 
-  real(kind=dp)    :: pol      ( ntypemax , 3 , 3 )    !< polarizability if lpolar( it ) = .true. 
+  real(kind=dp)    :: quad     ( ntypemax , 3 , 3 )    !< quadrupoles
+  real(kind=dp)    :: poldip   ( ntypemax , 3 , 3 )    !< dipole     polarizability if ldip_polar( it ) = .true. 
+  real(kind=dp)    :: poldip_iso ( ntypemax )          !< isotropic dipole polarizability if ldip_polar( it ) = .true.
+  real(kind=dp)    :: polquad  ( ntypemax , 3 , 3 , 3 )!< quadrupole polarizability if lquad_polar( it ) = .true.
+  real(kind=dp)    :: polquad_iso ( ntypemax )         !< isotropic quadrupole polarizability if ldip_polar( it ) = .true. 
+  real(kind=dp)    :: quad_nuc ( ntypemax )            !< quadrupolar moment nucleus NMR
+
 
   ! =====================================================
   !                 polarizability  
@@ -148,11 +155,14 @@ MODULE field
   integer          :: min_scf_pol_iter                               !< 
   integer          :: max_scf_pol_iter                               !< 
   integer          :: extrapolate_order                              !< 
-  logical          :: lpolar   ( ntypemax )                          !< induced moment from pola. Is this type of ion polarizable ?
+  logical          :: ldip_polar   ( ntypemax )                          !< induced moment from pola. Is this type of ion polarizable ?
   logical          :: ldip_damping ( ntypemax , ntypemax , ntypemax) !< dipole damping 
   real(kind=dp)    :: pol_damp_b ( ntypemax, ntypemax,ntypemax )     !< dipole damping : parameter b [length]^-1
   real(kind=dp)    :: pol_damp_c ( ntypemax, ntypemax,ntypemax )     !< dipole damping : parameter c no units
   integer          :: pol_damp_k ( ntypemax, ntypemax,ntypemax )     !< dipole damping : Tang-Toennies function order
+  logical          :: lquad_polar    ( ntypemax )                    !< induced quadrupole from pola
+
+  ! THOLE FUNCTION RELATED
   logical          :: thole_functions                                !< use thole functions correction on dipole-dipole interaction
   real(kind=dp)    :: thole_param (ntypemax,ntypemax)                !< use thole functions correction on dipole-dipole interaction
   character(len=6) :: thole_function_type
@@ -176,7 +186,8 @@ MODULE field
   real(kind=dp)    :: alphaES                          !< Ewald sum parameter 
   integer          :: kES(3)                           !< kmax of ewald sum in reciprocal space
   TYPE ( kmesh )   :: km_coul                          !< kpoint mesh ( see kspace.f90 )
-  logical          :: task_coul(3)                     !< q-q, q-d qnd d-d task
+  logical          :: task_coul(6)                     !< q-q, q-d, d-d q-Q d-Q and Q-Q tasks
+
   ! direct sum
   integer          :: ncelldirect                      !< number of cells  in the direct summation
   TYPE ( rmesh )   :: rm_coul                          !< real space mesh ( see rspace.f90 )
@@ -236,7 +247,7 @@ SUBROUTINE field_default_tag
 
   ! field
   qch           = 0.0_dp  ! charge
-  quad_efg      = 0.0_dp  ! quadrupolar moment
+  quad_nuc      = 0.0_dp  ! quadrupolar moment
   dip           = 0.0_dp  ! dipolar moment
   doefield      = .false. ! calculate electric field ( it is internally swicth on for induced polarization calculation )
   doefg         = .false. ! electric field gradient
@@ -246,17 +257,18 @@ SUBROUTINE field_default_tag
   lwrite_efg    = .false.            
 
   ! polarization
-  lpolar                = .false. 
-  pol                   = 0.0_dp
-  pol_damp_b            = 0.0_dp
-  pol_damp_c            = 0.0_dp
-  pol_damp_k            = 0
-  ldip_damping          = .false.
-  conv_tol_ind          = 1e-6
-  min_scf_pol_iter      = 3
-  max_scf_pol_iter      = 100
-  extrapolate_order     = 0 
-  algo_ext_dipole       = 'poly'
+  ldip_polar        = .false. 
+  poldip        = 0.0_dp
+  polquad       = 0.0_dp
+  pol_damp_b    = 0.0_dp
+  pol_damp_c    = 0.0_dp
+  pol_damp_k    = 0
+  ldip_damping  = .false.
+  conv_tol_ind  = 1e-6
+  min_scf_pol_iter = 3
+  max_scf_pol_iter = 100
+  extrapolate_order = 0 
+  algo_ext_dipole = 'aspc'
   algo_moment_from_pola = 'scf'
   thole_functions       = .false.
   thole_function_type   = 'linear'
@@ -294,7 +306,7 @@ SUBROUTINE field_check_tag
 
   ! local
   integer :: i, it, it2
-  logical :: allowed , ldamp , ldip, lqch
+  logical :: allowed , ldamp , ldip, lqua, lqch
 
   allowed = .false.
   ! ========
@@ -367,21 +379,44 @@ SUBROUTINE field_check_tag
 
   if ( ldamp .or. lbmhftd ) CALL get_TT_damp
 
-  ! coulombic task 
+  ! ===============================
+  !       coulombic tasks
+  ! ===============================
   if ( lcoulomb ) then
+
     lqch = .false.
     ldip = .false.
-    if ( any(qch.ne.0.0_dp) ) lqch=.true.
-    if ( lqch ) task_coul(1) = .true.
+    lqua = .false.
+
+    ! static moments     
+    if ( any(qch .ne.0.0_dp) ) lqch =.true. !charge
+    if ( any(dip .ne.0.0_dp) ) ldip =.true. !dipoles     
+    if ( any(quad.ne.0.0_dp) ) lqua =.true. !quadrupoles     
+
+    ! dipole polarizabilities
     do it = 1 , ntype
-      if ( lpolar(it) )  ldip = .true.
+      if ( ldip_polar(it) )   ldip = .true.
     enddo
-    if ( any(dip.ne.0.0_dp) ) ldip=.true.     
+    ! quadrupole polarizabilities
+    do it = 1 , ntype
+      if ( lquad_polar(it) )  lqua = .true.
+    enddo
+
+    ! set tasks
+    if ( lqch ) task_coul(1) = .true.   ! q-q
     if ( ldip ) then
-      if ( lqch ) task_coul(2) = .true.
-      task_coul(3) = .true.
+      if ( lqch ) task_coul(2) = .true. ! q-d
+      task_coul(3) = .true.             ! d-d
     endif
+    if ( lqua ) then
+      if ( lqch ) task_coul(4) = .true. ! q-Q
+      if ( ldip ) task_coul(5) = .true. ! d-Q
+      task_coul(6) = .true.             ! Q-Q
+    endif
+
   endif
+
+
 
   allowed = .false.
   ! =======================
@@ -410,6 +445,28 @@ SUBROUTINE field_check_tag
   if ( thole_function_type .eq. 'expon1' ) thole_param = 0.572_dp
   if ( thole_function_type .eq. 'expon2' ) thole_param = 1.9088_dp
   if ( thole_function_type .eq. 'gauss' ) thole_param = 0.957_dp
+
+
+  ! =================================================
+  ! isotropic values for polarizabilities in input 
+  ! set the tensors
+  ! =================================================
+  do it = 1, ntype
+    if ( poldip_iso(it) .ne. 0.0_dp ) then
+      poldip(it,:,:) = 0.0_dp
+      poldip(it,1,1) = poldip_iso(it)
+      poldip(it,2,2) = poldip_iso(it)
+      poldip(it,3,3) = poldip_iso(it)
+    endif
+    if ( polquad_iso(it) .ne. 0.0_dp ) then
+      polquad(it,:,:,:) = 0.0_dp
+      polquad(it,1,1,1) = polquad_iso(it)
+      polquad(it,2,2,2) = polquad_iso(it)
+      polquad(it,3,3,3) = polquad_iso(it)
+    endif
+    !write(stdout,'(a,i,4e16.8)')'debug',it,polquad(it,1,1,1), polquad(it,2,2,2),polquad(it,3,3,3) ,polquad_iso(it)
+  enddo
+
 
 
 
@@ -449,9 +506,13 @@ SUBROUTINE field_init
                          doefield      , &
                          doefg         , &
                          qch           , &
-                         quad_efg      , &
+                         quad_nuc      , &
                          dip           , &
-                         pol           , &  
+                         quad          , &
+                         poldip        , &  
+                         poldip_iso    , &  
+                         polquad       , &  
+                         polquad_iso   , &  
                          pol_damp_b    , &  
                          pol_damp_c    , &  
                          pol_damp_k    , &  
@@ -475,8 +536,9 @@ SUBROUTINE field_init
                          lwrite_efg    , &            
                          ldip_wfc      , &            
                          rcut_wfc      , &            
-                         lpolar        , &
+                         ldip_polar    , &
                          ldip_damping  , &
+                         lquad_polar   , &
                          Abmhftd       , &  
                          Bbmhftd       , &
                          Cbmhftd       , &
@@ -579,7 +641,7 @@ SUBROUTINE field_print_info ( kunit , quiet )
   enddo
   linduced = .false.
   do it = 1 , ntype
-    if ( lpolar(it) )  linduced = .true.
+    if ( ldip_polar(it) )  linduced = .true.
   enddo
   ldamp = .false.
   if ( any ( ldip_damping )  )  ldamp = .true.
@@ -602,7 +664,7 @@ SUBROUTINE field_print_info ( kunit , quiet )
     lseparator(kunit) 
     do it = 1 , ntype 
       WRITE ( kunit ,'(a,a,a,e10.3)')   'q   ',atypei(it),'                 = ',qch(it)
-      WRITE ( kunit ,'(a,a,a,e10.3,a)') 'quad',atypei(it),'                 = ',quad_efg(it),' mb'
+      WRITE ( kunit ,'(a,a,a,e10.3,a)') 'quad',atypei(it),'                 = ',quad_nuc(it),' mb'
     enddo
     WRITE ( kunit ,'(a,e10.3)')         'total charge            = ',  qtot
     WRITE ( kunit ,'(a,e10.3)')         'second moment of charge = ',  qtot2
@@ -623,11 +685,11 @@ SUBROUTINE field_print_info ( kunit , quiet )
 
       lseparator(kunit) 
       do it1 = 1 , ntype
-        if ( lpolar( it1 ) ) then
+        if ( ldip_polar( it1 ) ) then
           WRITE ( kunit ,'(a,a2,a,f12.4)')'polarizability on type ', atypei(it1),' : ' 
-          WRITE ( kunit ,'(3f12.4)')      ( pol ( it1 , 1 , j ) , j = 1 , 3 ) 
-          WRITE ( kunit ,'(3f12.4)')      ( pol ( it1 , 2 , j ) , j = 1 , 3 ) 
-          WRITE ( kunit ,'(3f12.4)')      ( pol ( it1 , 3 , j ) , j = 1 , 3 ) 
+          WRITE ( kunit ,'(3f12.4)')      ( poldip ( it1 , 1 , j ) , j = 1 , 3 ) 
+          WRITE ( kunit ,'(3f12.4)')      ( poldip ( it1 , 2 , j ) , j = 1 , 3 ) 
+          WRITE ( kunit ,'(3f12.4)')      ( poldip ( it1 , 3 , j ) , j = 1 , 3 ) 
           blankline(kunit)
           !if ( ldamp ) then
             WRITE ( kunit ,'(a)') 'damping functions : '
@@ -653,10 +715,14 @@ SUBROUTINE field_print_info ( kunit , quiet )
     ! =================================
     if ( lcoulomb )    then 
       lseparator(kunit) 
-      WRITE ( kunit ,'(a)')               'coulombic interaction : '
-      WRITE ( kunit ,'(a,l)')             'task : charge-charge', task_coul(1)
-      WRITE ( kunit ,'(a,l)')             'task : charge-dipole', task_coul(2)
-      WRITE ( kunit ,'(a,l)')             'task : dipole-dipole', task_coul(3)
+      WRITE ( kunit ,'(a)')           'coulombic interaction : '
+      WRITE ( kunit ,'(a,l)')         'task : charge-charge        ', task_coul(1)
+      WRITE ( kunit ,'(a,l)')         'task : charge-dipole        ', task_coul(2)
+      WRITE ( kunit ,'(a,l)')         'task : dipole-dipole        ', task_coul(3)
+      WRITE ( kunit ,'(a,l)')         'task : charge-quadrupole    ', task_coul(4)
+      WRITE ( kunit ,'(a,l)')         'task : dipole-quadrupole    ', task_coul(5)
+      WRITE ( kunit ,'(a,l)')         'task : quadrupole-quadrupole', task_coul(6)
+
       lseparator(kunit) 
       blankline(kunit)
       if ( task_coul(1) .and. .not. task_coul(3)) then
@@ -682,7 +748,7 @@ SUBROUTINE field_print_info ( kunit , quiet )
         WRITE ( kunit ,'(a)')             'pair               a              dc              dt'
         do it1 = 1 , ntype
           do it2 = it1 , ntype
-            Athole    = ( pol (it1,1,1) * pol (it2,1,1) ) ** (1.0_dp / 6.0_dp )
+            Athole    = ( poldip (it1,1,1) * poldip (it2,1,1) ) ** (1.0_dp / 6.0_dp )
             dist_cata = ( 4.0_dp ) ** (1.0_dp / 6.0_dp ) * Athole
             dist_corr = Athole * thole_param ( it1 , it2 )
             WRITE ( kunit ,120)   atypei(it1),'-',atypei(it2),'    ',thole_param ( it1 , it2 ), dist_cata , dist_corr 
@@ -1140,6 +1206,7 @@ SUBROUTINE engforce_driver
   ! local 
   real(kind=dp) , allocatable :: ef ( : , : ) , efg ( : , : , : ) 
   real(kind=dp) , allocatable :: mu ( : , : )
+  real(kind=dp) , allocatable :: theta ( : , : , : )
   logical :: didpim
 
   ! test purpose only
@@ -1163,29 +1230,32 @@ SUBROUTINE engforce_driver
   ! =================================
   if ( lcoulomb ) then
 
-     allocate( ef(3,natm) , efg(3,3,natm) , mu(3,natm) )     
+     allocate( ef(3,natm) , efg(3,3,natm) , mu(3,natm) , theta(3,3,natm))     
      allocate ( pair_thole ( natm ) ) 
      allocate ( pair_thole_distance ( natm ) ) 
      pair_thole = 0
      pair_thole_distance = 0.0_dp
-     mu=0.0d0
+     mu=0.0_dp
+     theta=0.0_dp
 
      ! this subroutine set the total dipole moment from :
      ! static          (if given in control file dip TODO: read from DIPFF )
      ! wannier centers (if given in POSFF )
      ! induced         (if polar are set in control file)
-     CALL get_dipole_moments ( mu , didpim )
+     CALL get_dipole_moments ( mu , theta , didpim )
  
      ! ====================================
      ! get all the electrostatic quantities
      ! ====================================
-     CALL multipole_ES ( ef , efg , mu , task_coul , damp_ind=.true. , &
+     CALL multipole_ES ( ef , efg , mu , theta , task_coul , damp_ind=.true. , &
                          do_efield=doefield , do_efg=doefg , do_forces=.true. , &
                          do_stress=.true. , do_rec=.true. , do_dir=.true. , do_strucfact =.false. , use_ckrskr = didpim )
-     mu_t  = mu
-     ef_t  = ef
-     efg_t = efg
-     deallocate( ef , efg , mu )      
+     mu_t     = mu
+     theta_t  = theta
+     ef_t     = ef
+     efg_t    = efg
+
+     deallocate( ef , efg , mu , theta )      
      deallocate ( pair_thole )  
      deallocate ( pair_thole_distance )  
    
@@ -1755,13 +1825,13 @@ END SUBROUTINE finalize_coulomb
 !> \param[in]  f_ind_ext 
 !> \param[out] mu_ind induced electric dipole define at ion position 
 !> \note
-!! polia is the polarizability tensor
+!! poldipia is the polarizability tensor
 !! algorithm by kO ( Kirill Okhotnikov ) afternoon of 28/10/14 
 ! ******************************************************************************
-SUBROUTINE induced_moment_inner ( f_ind_ext , mu_ind )
+SUBROUTINE induced_moment_inner ( f_ind_ext , mu_ind , theta_ind )
 
   USE constants,        ONLY : coul_unit
-  USE config,           ONLY : natm , itype , atypei, ntype , polia, invpolia, atype 
+  USE config,           ONLY : natm , itype , atypei, ntype , poldipia, invpoldipia, atype 
   USE io,               ONLY : stdout, ioprintnode
 
   implicit none
@@ -1769,6 +1839,7 @@ SUBROUTINE induced_moment_inner ( f_ind_ext , mu_ind )
   ! global
   real(kind=dp) , intent ( in  ) :: f_ind_ext ( 3 , natm ) 
   real(kind=dp) , intent ( out ) :: mu_ind    ( 3 , natm ) 
+  real(kind=dp) , intent ( out ) :: theta_ind    ( 3 , 3 , natm ) 
 
   ! local
   real(kind=dp), dimension(:,:), allocatable :: mu_prev , f_ind_total , zerovec , f_ind
@@ -1801,17 +1872,16 @@ SUBROUTINE induced_moment_inner ( f_ind_ext , mu_ind )
   ! note on units :
   ! everything are in internal units :
   !    [ f_ind_ext ] = e / A^2
-  !    [ polia  ] = A ^ 3
+  !    [ poldipia  ] = A ^ 3
   !    [ mu_ind ] = e A 
   ! ---------------------------------------------------------------
   mu_ind = 0.0_dp
   do ia = 1 , natm 
     it = itype(ia) 
-    if ( .not. lpolar ( it ) ) cycle
+    if ( .not. ldip_polar ( it ) ) cycle
     do alpha = 1 , 3 
       do beta = 1 , 3  
-        mu_ind ( alpha , ia ) = mu_ind ( alpha , ia ) + polia ( alpha , beta  , ia ) * ( f_ind_total ( beta , ia ) )
-        write(*,'(3i5,3f12.8)') ia , alpha, beta, mu_ind ( alpha , ia ) , f_ind_total ( beta , ia ) , polia ( alpha , beta  , ia ) 
+        mu_ind ( alpha , ia ) = mu_ind ( alpha , ia ) + poldipia ( alpha , beta  , ia ) * ( f_ind_total ( beta , ia ) )
       enddo
     enddo
   enddo
@@ -1829,7 +1899,7 @@ SUBROUTINE induced_moment_inner ( f_ind_ext , mu_ind )
     ! only real part is calculated in the inner loop
     alphaES = 0.001_dp
     ! note that do_strucfact , use_ckrskr has no effect as do_rec=.false.
-    CALL  multipole_ES ( f_ind , efg_dummy, mu_ind , task_ind , &
+    CALL  multipole_ES ( f_ind , efg_dummy, mu_ind , theta_ind , task_ind , &
                          damp_ind = .false. , do_efield=.true. , do_efg = .false. , &
                          do_forces = .false. , do_stress =.false. , do_rec=.false., do_dir=.true. , &
                          do_strucfact=.false. , use_ckrskr=.false. ) 
@@ -1842,16 +1912,16 @@ SUBROUTINE induced_moment_inner ( f_ind_ext , mu_ind )
     ! note on units :
     ! everything are in internal units :
     !    [ f_ind_ext ] = e / A^2
-    !    [ polia  ] = A ^ 3
+    !    [ poldipia  ] = A ^ 3
     !    [ mu_ind ] = e A 
     ! ---------------------------------------------------------------
     mu_ind = 0.0_dp
     do ia = 1 , natm 
       it = itype(ia) 
-      if ( .not. lpolar ( it ) ) cycle
+      if ( .not. ldip_polar ( it ) ) cycle
       do alpha = 1 , 3 
         do beta = 1 , 3  
-          mu_ind ( alpha , ia ) = mu_ind ( alpha , ia ) + polia ( alpha , beta  , ia ) * ( f_ind_total ( beta , ia ) )
+          mu_ind ( alpha , ia ) = mu_ind ( alpha , ia ) + poldipia ( alpha , beta  , ia ) * ( f_ind_total ( beta , ia ) )
         enddo
       enddo
     enddo
@@ -1885,12 +1955,12 @@ END SUBROUTINE induced_moment_inner
 !> \param[in]  Efield electric field vector define at ion position 
 !> \param[out] mu_ind induced electric dipole define at ion position 
 !> \note
-!! polia is the polarizability tensor
+!! poldipia is the polarizability tensor
 ! ******************************************************************************
 SUBROUTINE induced_moment ( Efield , mu_ind )
 
   USE constants,        ONLY : coul_unit
-  USE config,           ONLY : natm , itype , atypei, ntype , polia, atype 
+  USE config,           ONLY : natm , itype , atypei, ntype , poldipia, atype 
   USE io,               ONLY : stdout
 
   implicit none
@@ -1910,16 +1980,16 @@ SUBROUTINE induced_moment ( Efield , mu_ind )
   ! note on units :
   ! everything are in internal units :
   !    [ Efield ] = e / A^2
-  !    [ polia  ] = A ^ 3
+  !    [ poldipia  ] = A ^ 3
   !    [ mu_ind ] = e A 
   ! ---------------------------------------------------------------
   mu_ind = 0.0_dp
   do ia = 1 , natm 
     it = itype(ia) 
-    if ( .not. lpolar ( it ) ) cycle
+    if ( .not. ldip_polar ( it ) ) cycle
     do alpha = 1 , 3 
       do beta = 1 , 3  
-        mu_ind ( alpha , ia ) = mu_ind ( alpha , ia ) + polia ( alpha , beta , ia ) * Efield ( beta , ia )  
+        mu_ind ( alpha , ia ) = mu_ind ( alpha , ia ) + poldipia ( alpha , beta , ia ) * Efield ( beta , ia )  
       enddo
     enddo
   enddo
@@ -1940,7 +2010,7 @@ END SUBROUTINE induced_moment
 !> \todo
 !! make it more condensed 
 ! ******************************************************************************
-SUBROUTINE multipole_ES ( ef , efg , mu , task , damp_ind , &
+SUBROUTINE multipole_ES ( ef , efg , mu , theta , task , damp_ind , &
                           do_efield , do_efg , do_forces , do_stress , do_rec , do_dir , do_strucfact , use_ckrskr )
 
   USE control,          ONLY :  lsurf
@@ -1958,6 +2028,7 @@ SUBROUTINE multipole_ES ( ef , efg , mu , task , damp_ind , &
   real(kind=dp)     :: ef     ( : , : )
   real(kind=dp)     :: efg    ( : , : , : )
   real(kind=dp)     :: mu     ( : , : )
+  real(kind=dp)     :: theta  ( : , : , : )
   logical           :: task   ( : )
   logical           :: damp_ind , do_efield , do_efg, do_forces, do_stress, do_rec , do_dir , do_strucfact , use_ckrskr 
 
@@ -2036,7 +2107,7 @@ SUBROUTINE multipole_ES ( ef , efg , mu , task , damp_ind , &
 #ifdef MPI
     ttt1 = MPI_WTIME(ierr)
 #endif
-      CALL multipole_ES_dir ( u_dir , ef_dir, efg_dir, fx_dir , fy_dir , fz_dir , tau_dir , mu , task , damp_ind , & 
+      CALL multipole_ES_dir ( u_dir , ef_dir, efg_dir, fx_dir , fy_dir , fz_dir , tau_dir , mu , theta , task , damp_ind , & 
                               do_efield , do_efg , do_forces , do_stress )
 #ifdef MPI
     ttt2 = MPI_WTIME(ierr)
@@ -2052,7 +2123,7 @@ SUBROUTINE multipole_ES ( ef , efg , mu , task , damp_ind , &
 #ifdef MPI
     ttt1 = MPI_WTIME(ierr)
 #endif
-    CALL multipole_ES_rec ( u_rec , ef_rec , efg_rec , fx_rec , fy_rec , fz_rec , tau_rec , mu , task , & 
+    CALL multipole_ES_rec ( u_rec , ef_rec , efg_rec , fx_rec , fy_rec , fz_rec , tau_rec , mu , theta , task , & 
                             do_efield , do_efg , do_forces , do_stress , do_strucfact , use_ckrskr )
 #ifdef MPI
     ttt2 = MPI_WTIME(ierr)
@@ -2196,15 +2267,15 @@ do ia = 1 , natm
 END SUBROUTINE multipole_ES
 
 
-SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_dir , tau_dir , mu , & 
+SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_dir , tau_dir , mu , theta , & 
                               task , damp_ind , do_efield , do_efg , do_forces , do_stress )
 
   USE control,                  ONLY :  lvnlist
-  USE config,                   ONLY :  natm, ntype,simu_cell, qia, rx ,ry ,rz ,itype , atom_dec, verlet_coul , atype, polia, ipolar
+  USE config,                   ONLY :  natm, ntype,simu_cell, qia, rx ,ry ,rz ,itype , atom_dec, verlet_coul , atype, poldipia, ipolar
   USE constants,                ONLY :  piroot
   USE cell,                     ONLY :  kardir , dirkar
   USE io,                       ONLY :  stdout, ionode, ioprintnode, ioprint
-  USE tensors_rk,               ONLY :  tensor_rank0, tensor_rank1, tensor_rank2, tensor_rank3 
+  USE tensors_rk,               ONLY :  tensor_rank0, tensor_rank1, tensor_rank2, tensor_rank3 , tensor_rank4 , tensor_rank5
   USE dumb
  
  
@@ -2214,28 +2285,31 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
   real(kind=dp) :: u_dir 
   real(kind=dp) :: ef_dir   ( : , : )
   real(kind=dp) :: efg_dir  ( : , : , : )
-  real(kind=dp) :: fx_dir ( : ) , fy_dir ( : ) , fz_dir ( : )
-  real(kind=dp) :: tau_dir ( : , : )
-  real(kind=dp) :: mu     ( : , :  )
+  real(kind=dp) :: fx_dir   ( : ) , fy_dir ( : ) , fz_dir ( : )
+  real(kind=dp) :: tau_dir  ( : , : )
+  real(kind=dp) :: mu       ( : , :  )
+  real(kind=dp) :: theta    ( : , :  , : )
   logical       :: task ( : ) , damp_ind, do_efield , do_efg , do_forces , do_stress, store_interaction
 
   ! local 
-  integer       :: ia , ja , ita, jta, j1 , jb ,je , i , j , k, it1,it2 , ierr
+  integer       :: ia , ja , ita, jta, j1 , jb ,je , i , j , k, l , m , it1,it2 , ierr
   real(kind=dp) :: qi, qj , qij , u_damp 
   real(kind=dp) :: mui(3)
   real(kind=dp) :: muj(3)
+  real(kind=dp) :: thetai(3,3)
+  real(kind=dp) :: thetaj(3,3)
   real(kind=dp) :: cutsq
   real(kind=dp) :: rxi  , ryi  , rzi
   real(kind=dp) :: rxj  , ryj  , rzj
   real(kind=dp) :: rij(3)
   real(kind=dp) :: sij(3)
   real(kind=dp) :: fij(3)
-  real(kind=dp) :: d , d2 , d3  , d5
-  real(kind=dp) :: dm1 , dm3 , dm5 , dm7
-  real(kind=dp) :: F0 , F1 , F2 , F3
+  real(kind=dp) :: d , d2 , d3  , d5 , d7 , d9
+  real(kind=dp) :: dm1 , dm3 , dm5 , dm7 , dm9, dm11
+  real(kind=dp) :: F0 , F1 , F2 , F3 , F4 , F5
   real(kind=dp) :: F1d , F2d 
   real(kind=dp) :: F1d2 , F2d2 
-  real(kind=dp) :: alpha2 , alpha3 , alpha5 , expon 
+  real(kind=dp) :: alpha2 , alpha3 , alpha5 , alpha7 , alpha9 , expon 
   real(kind=dp), external :: errfc
   real(kind=dp), external :: errf
   real(kind=dp) :: fdamp , fdampdiff
@@ -2244,23 +2318,33 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
   real(kind=dp) :: expthole, Athole , arthole, arthole2 , arthole3 , twopiroot, erfra , ra
   real(kind=dp) :: ttt1, ttt2 
   real(kind=dp) , dimension (:) , allocatable :: tmp 
+  real(kind=dp) :: F1_dm3 , F1d_dm3 , F1d2_dm3 , F2_dm5 , F2d_dm5 , F2d2_dm5 , F3_dm7 , F4_dm9 , F5_dm11
   integer       :: cthole
   logical       :: ipol, jpol
   logical       :: ldamp 
-  logical       :: charge_charge, charge_dipole, dipole_dipole, dip_i , dip_j
+  logical       :: charge_charge, charge_dipole, dipole_dipole, charge_quadrupole, dipole_quadrupole, quadrupole_quadrupole , dip_i  , dip_j
   
   TYPE ( tensor_rank0 ) :: T0
   TYPE ( tensor_rank1 ) :: T1
   TYPE ( tensor_rank2 ) :: T2
   TYPE ( tensor_rank3 ) :: T3
+  TYPE ( tensor_rank4 ) :: T4
+  TYPE ( tensor_rank5 ) :: T5
 
-  charge_charge = task(1)
-  charge_dipole = task(2)
-  dipole_dipole = task(3)
+  charge_charge         = task(1)
+  charge_dipole         = task(2)
+  dipole_dipole         = task(3)
+  charge_quadrupole     = task(4)
+  dipole_quadrupole     = task(5)
+  quadrupole_quadrupole = task(6)
+
+  !  few constants
   cutsq  = verlet_coul%cut * verlet_coul%cut !cutlongrange
   alpha2 = alphaES * alphaES
   alpha3 = alpha2  * alphaES
   alpha5 = alpha3  * alpha2
+  alpha7 = alpha5  * alpha2
+
   onesixth = 1.0_dp / 6.0_dp
   twopiroot = 2.0_dp / piroot
   twothird  = onesixth * 4.0_dp  
@@ -2301,8 +2385,9 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
     rzi = rz(ia)
     qi  = qia(ia)
     mui = mu ( : , ia )
+    thetai = theta ( : , : , ia )
     ipol = ipolar(ia)
-    ialpha = polia(1,1,ia)
+    ialpha = poldipia(1,1,ia)
 
     dip_i = any ( mui .ne. 0.0d0 ) 
 
@@ -2320,6 +2405,7 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
         jta  = itype(ja)
         qj   = qia(ja)
         muj = mu ( : , ja )
+        thetaj = theta ( : , : , ja )
         dip_j = any ( muj .ne. 0.0d0 ) 
         qij  = qi * qj
         rxj  = rx(ja)
@@ -2331,7 +2417,7 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
         sij = rij - nint ( rij )
         rij=0.0_dp
         jpol = ipolar(ja)
-        jalpha = polia(1,1,ja)
+        jalpha = poldipia(1,1,ja)
         
         do j=1, 3
           do k=1, 3
@@ -2341,13 +2427,17 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
         d2  = rij(1) * rij(1) + rij(2) * rij(2) + rij(3) * rij(3)
         if ( d2 .gt. cutsq ) cycle
 
-          d   = SQRT ( d2 )
-          d3  = d2 * d
-          d5  = d3 * d2
-          dm1 = 1.0_dp / d
-          dm3 = dm1 / d2
-          dm5 = dm3 / d2
-          dm7 = dm5 / d2
+          d    = SQRT ( d2 )
+          d3   = d2 * d
+          d5   = d3 * d2
+          d7   = d5 * d2
+          d9   = d7 * d2
+          dm1  = 1.0_dp / d
+          dm3  = dm1 / d2
+          dm5  = dm3 / d2
+          dm7  = dm5 / d2
+          dm9  = dm7 / d2
+          dm11 = dm9 / d2
 
           ! damping function 
           ldamp = .false.
@@ -2368,6 +2458,8 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
           F1    = F0 + 2.0_dp * alphaES * d  * expon
           F2    = F1 + 4.0_dp * alpha3  * d3 * expon / 3.0_dp
           F3    = F2 + 8.0_dp * alpha5  * d5 * expon / 15.0_dp
+          F4    = F3 + 16.0_dp * alpha7  * d7 * expon / 105.0_dp
+          F5    = F4 + 32.0_dp * alpha9  * d9 * expon / 945.0_dp
 
           ! damping if no damping fdamp == 1 and fdampdiff == 0
           F1d   = - fdamp + 1.0d0 
@@ -2393,17 +2485,48 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
           ! =========================================
           !   multipole interaction tensor rank = 2
           ! =========================================
+!          T2%ab = 0.0_dp
+!          do j = 1 , 3
+!            do k = 1 , 3
+!              if ( j .gt. k ) cycle
+!                T2%ab (j,k) = ( 3.0_dp * rij(j) * rij(k) * F2 ) * dm5
+!              if ( j .eq. k ) T2%ab (j,j) = T2%ab (j,j) - F1 * dm3
+!            enddo
+!          enddo
+!          T2%ab (2,1) = T2%ab (1,2)
+!          T2%ab (3,1) = T2%ab (1,3)
+!          T2%ab (3,2) = T2%ab (2,3)
+
+          ! =========================================
+          !   multipole interaction tensor rank = 2 
+          !   nb of components = 6 => reduced = 5
+          !   + damping 
+          ! =========================================
           T2%ab = 0.0_dp
+          T2%ab_damp = 0.0_dp
+          T2%ab_damp2 = 0.0_dp
+          F2_dm5   = 3.0_dp * F2   * dm5
+          F2d_dm5  = 3.0_dp * F2d  * dm5
+          F2d2_dm5 = 3.0_dp * F2d2 * dm5
+          F1_dm3   = F1   * dm3
+          F1d_dm3  = F1d  * dm3
+          F1d2_dm3 = F1d2 * dm3
           do j = 1 , 3
             do k = 1 , 3
-              if ( j .gt. k ) cycle
-                T2%ab (j,k) = ( 3.0_dp * rij(j) * rij(k) * F2 ) * dm5
-              if ( j .eq. k ) T2%ab (j,j) = T2%ab (j,j) - F1 * dm3
-            enddo
+                                T2%ab (j,k) = rij(j) * rij(k) * F2_dm5
+                if ( j .eq. k ) T2%ab (j,j) = T2%ab (j,j) - F1_dm3
+                if ( ldamp ) then
+                                  T2%ab_damp  (j,k) = rij(j) * rij(k) * F2d_dm5
+                                  T2%ab_damp2 (j,k) = rij(j) * rij(k) * F2d2_dm5
+                  if ( j .eq. k ) then
+                    T2%ab_damp (j,j)  = T2%ab_damp (j,j)  - F1d_dm3
+                    T2%ab_damp2 (j,j) = T2%ab_damp2 (j,j) - F1d2_dm3
+                  endif
+                endif
+             enddo
           enddo
-          T2%ab (2,1) = T2%ab (1,2)
-          T2%ab (3,1) = T2%ab (1,3)
-          T2%ab (3,2) = T2%ab (2,3)
+
+
           ! =========================================
           !  "Thole" functions (linear)
           !  B.T. Thole, Chem. Phys. 59 p341 (1981)
@@ -2524,68 +2647,155 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
           endif
 
           ! damping
-          if ( ldamp ) then
-            T2%ab_damp = 0.0_dp
-            do j = 1 , 3
-              do k = 1 , 3 
-                if ( j .gt. k ) cycle
-                                  T2%ab_damp (j,k) = ( 3.0_dp * rij(j) * rij(k) * F2d ) * dm5
-                  if ( j .eq. k ) T2%ab_damp (j,j) = T2%ab_damp (j,j) - F1d * dm3
-               enddo
-            enddo
-            T2%ab_damp (2,1) = T2%ab_damp (1,2)
-            T2%ab_damp (3,1) = T2%ab_damp (1,3)
-            T2%ab_damp (3,2) = T2%ab_damp (2,3)
-            T2%ab_damp2 = 0.0_dp
-            do j = 1 , 3
-              do k = 1 , 3 
-                if ( j .gt. k ) cycle
-                  T2%ab_damp2 (j,k) = ( 3.0_dp * rij(j) * rij(k) * F2d2 ) * dm5
-                  if ( j .eq. k ) T2%ab_damp2 (j,j) = T2%ab_damp2 (j,j) - F1d2 * dm3
-               enddo
-            enddo
-            T2%ab_damp2 (2,1) = T2%ab_damp2 (1,2)
-            T2%ab_damp2 (3,1) = T2%ab_damp2 (1,3)
-            T2%ab_damp2 (3,2) = T2%ab_damp2 (2,3)
-          endif
+!          if ( ldamp ) then
+!            T2%ab_damp = 0.0_dp
+!            do j = 1 , 3
+!              do k = 1 , 3 
+!                if ( j .gt. k ) cycle
+!                                  T2%ab_damp (j,k) = ( 3.0_dp * rij(j) * rij(k) * F2d ) * dm5
+!                  if ( j .eq. k ) T2%ab_damp (j,j) = T2%ab_damp (j,j) - F1d * dm3
+!               enddo
+!            enddo
+!            T2%ab_damp (2,1) = T2%ab_damp (1,2)
+!            T2%ab_damp (3,1) = T2%ab_damp (1,3)
+!            T2%ab_damp (3,2) = T2%ab_damp (2,3)
+!            T2%ab_damp2 = 0.0_dp
+!            do j = 1 , 3
+!              do k = 1 , 3 
+!                if ( j .gt. k ) cycle
+!                  T2%ab_damp2 (j,k) = ( 3.0_dp * rij(j) * rij(k) * F2d2 ) * dm5
+!                  if ( j .eq. k ) T2%ab_damp2 (j,j) = T2%ab_damp2 (j,j) - F1d2 * dm3
+!               enddo
+!            enddo
+!            T2%ab_damp2 (2,1) = T2%ab_damp2 (1,2)
+!            T2%ab_damp2 (3,1) = T2%ab_damp2 (1,3)
+!            T2%ab_damp2 (3,2) = T2%ab_damp2 (2,3)
+!          endif
 
           ! =========================================
           !   multipole interaction tensor rank = 3  
           ! =========================================
+!          T3%abc = 0.0_dp
+!          do i = 1 , 3
+!            do j = 1 , 3
+!              do k = 1 , 3
+!                if ( j .gt. k ) cycle 
+!                if ( i .gt. j ) cycle 
+!                T3%abc (i,j,k) = - rij(i) * rij(j) * rij(k) * F3 * dm7 * 15.0_dp
+!                if ( i .eq. j .and. j.eq.k ) then
+!                  T3%abc (i,j,k) = T3%abc (i,j,k) +    rij(i) * F2 * dm5 * 9.0_dp
+!                else
+!                  if ( i.eq.j ) T3%abc (i,j,k) = T3%abc (i,j,k) + rij(k) * F2 * dm5 * 3.0_dp
+!                  if ( i.eq.k ) T3%abc (i,j,k) = T3%abc (i,j,k) + rij(j) * F2 * dm5 * 3.0_dp 
+!                  if ( j.eq.k ) T3%abc (i,j,k) = T3%abc (i,j,k) + rij(i) * F2 * dm5 * 3.0_dp
+!                endif
+!              enddo
+!            enddo
+!          enddo
+!          T3%abc(1,3,2) = T3%abc(1,2,3)
+!          T3%abc(3,1,2) = T3%abc(1,2,3)
+!          T3%abc(3,2,1) = T3%abc(1,2,3)
+!          T3%abc(2,3,1) = T3%abc(1,2,3)
+!          T3%abc(2,1,3) = T3%abc(1,2,3)
+!          T3%abc(1,2,1) = T3%abc(1,1,2)
+!          T3%abc(2,1,1) = T3%abc(1,1,2)
+!          T3%abc(1,3,1) = T3%abc(1,1,3)
+!          T3%abc(3,1,1) = T3%abc(1,1,3)
+!          T3%abc(2,2,1) = T3%abc(1,2,2)
+!          T3%abc(2,1,2) = T3%abc(1,2,2)
+!          T3%abc(3,3,1) = T3%abc(1,3,3) 
+!          T3%abc(3,1,3) = T3%abc(1,3,3) 
+!          T3%abc(2,3,2) = T3%abc(2,2,3)
+!          T3%abc(3,2,2) = T3%abc(2,2,3)
+!          T3%abc(3,3,2) = T3%abc(2,3,3) 
+!          T3%abc(3,2,3) = T3%abc(2,3,3) 
+
+          ! =========================================
+          !   multipole interaction tensor rank = 3  
+          !   nb of components = 27 => reduced = 10
+          ! =========================================
+          F3_dm7 = F3 * dm7 * 15.0_dp
           T3%abc = 0.0_dp
           do i = 1 , 3
             do j = 1 , 3
               do k = 1 , 3
-                if ( j .gt. k ) cycle 
-                if ( i .gt. j ) cycle 
-                T3%abc (i,j,k) = - rij(i) * rij(j) * rij(k) * F3 * dm7 * 15.0_dp
-                if ( i .eq. j .and. j.eq.k ) then
-                  T3%abc (i,j,k) = T3%abc (i,j,k) +    rij(i) * F2 * dm5 * 9.0_dp
-                else
-                  if ( i.eq.j ) T3%abc (i,j,k) = T3%abc (i,j,k) + rij(k) * F2 * dm5 * 3.0_dp
-                  if ( i.eq.k ) T3%abc (i,j,k) = T3%abc (i,j,k) + rij(j) * F2 * dm5 * 3.0_dp 
-                  if ( j.eq.k ) T3%abc (i,j,k) = T3%abc (i,j,k) + rij(i) * F2 * dm5 * 3.0_dp
-                endif
+                T3%abc (i,j,k)               = - rij(i) * rij(j) * rij(k) * F3_dm7
+                if ( i.eq.j ) T3%abc (i,j,k) = T3%abc (i,j,k) + rij(k) * F2_dm5
+                if ( i.eq.k ) T3%abc (i,j,k) = T3%abc (i,j,k) + rij(j) * F2_dm5
+                if ( j.eq.k ) T3%abc (i,j,k) = T3%abc (i,j,k) + rij(i) * F2_dm5
               enddo
             enddo
           enddo
-          T3%abc(1,3,2) = T3%abc(1,2,3)
-          T3%abc(3,1,2) = T3%abc(1,2,3)
-          T3%abc(3,2,1) = T3%abc(1,2,3)
-          T3%abc(2,3,1) = T3%abc(1,2,3)
-          T3%abc(2,1,3) = T3%abc(1,2,3)
-          T3%abc(1,2,1) = T3%abc(1,1,2)
-          T3%abc(2,1,1) = T3%abc(1,1,2)
-          T3%abc(1,3,1) = T3%abc(1,1,3)
-          T3%abc(3,1,1) = T3%abc(1,1,3)
-          T3%abc(2,2,1) = T3%abc(1,2,2)
-          T3%abc(2,1,2) = T3%abc(1,2,2)
-          T3%abc(3,3,1) = T3%abc(1,3,3) 
-          T3%abc(3,1,3) = T3%abc(1,3,3) 
-          T3%abc(2,3,2) = T3%abc(2,2,3)
-          T3%abc(3,2,2) = T3%abc(2,2,3)
-          T3%abc(3,3,2) = T3%abc(2,3,3) 
-          T3%abc(3,2,3) = T3%abc(2,3,3) 
+
+          ! =========================================
+          !   multipole interaction tensor rank = 4  
+          !   nb of components = 81 => reduced = 15
+          ! =========================================
+          !T4%abcd = 0.0_dp
+          !F4_dm9 = dm9 * F4 * 105.0_dp
+          !do i = 1 , 3
+          !  do j = 1 , 3
+          !    do k = 1 , 3
+          !      do l = 1 , 3
+          !        T4%abcd  (i,j,k,l) = rij(i) * rij(j) * rij(k) * rij(l) * F4_dm9
+          !        if ( k.eq.l ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(i)*rij(j) * F3_dm7
+          !        if ( j.eq.l ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(i)*rij(k) * F3_dm7
+          !        if ( j.eq.k ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(i)*rij(l) * F3_dm7
+          !        if ( i.eq.l ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(j)*rij(k) * F3_dm7
+          !        if ( i.eq.k ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(j)*rij(l) * F3_dm7
+          !        if ( i.eq.j ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(k)*rij(l) * F3_dm7
+          !        if ( i .eq. j .and. k .eq. l ) T4%abcd  (i,j,k,l) = T4%abcd  (i,j,k,l) + F2_dm5
+          !        if ( i .eq. k .and. j .eq. l ) T4%abcd  (i,j,k,l) = T4%abcd  (i,j,k,l) + F2_dm5
+          !        if ( i .eq. l .and. j .eq. k ) T4%abcd  (i,j,k,l) = T4%abcd  (i,j,k,l) + F2_dm5
+          !      enddo
+          !    enddo
+          !  enddo
+          !enddo
+        
+          ! =========================================
+          !   multipole interaction tensor rank = 5  
+          !   nb of components = 243 => reduced = ?
+          ! =========================================
+          !T5%abcde = 0.0_dp
+          !F5_dm11 = dm11 * F5 * 945.0_dp
+          !do i = 1 , 3
+          !  do j = 1 , 3
+          !    do k = 1 , 3
+          !      do l = 1 , 3
+          !        do m = 1 , 3
+          !        T5%abcde  (i,j,k,l,m) = rij(i) * rij(j) * rij(k) * rij(l) * rij(m) * F5_dm11
+          !        if ( l.eq.m ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(i)*rij(j)*rij(k) * F4_dm9
+          !        if ( k.eq.m ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(i)*rij(j)*rij(l) * F4_dm9
+          !        if ( k.eq.l ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(i)*rij(j)*rij(m) * F4_dm9
+          !        if ( j.eq.m ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(i)*rij(k)*rij(l) * F4_dm9
+          !        if ( j.eq.l ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(i)*rij(k)*rij(m) * F4_dm9
+          !        if ( j.eq.k ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(i)*rij(l)*rij(m) * F4_dm9
+          !        if ( i.eq.m ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(j)*rij(k)*rij(l) * F4_dm9
+          !        if ( i.eq.l ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(j)*rij(k)*rij(m) * F4_dm9
+          !        if ( i.eq.k ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(j)*rij(l)*rij(m) * F4_dm9
+          !        if ( i.eq.j ) T5%abcde (i,j,k,l,m) = T5%abcde (i,j,k,l,m) - rij(k)*rij(l)*rij(m) * F4_dm9
+          !        if ( i .eq. j .and. k .eq. l ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(m) * F3_dm7
+          !        if ( i .eq. j .and. l .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(k) * F3_dm7
+          !        if ( i .eq. j .and. k .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(l) * F3_dm7
+          !        if ( i .eq. k .and. j .eq. l ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(m) * F3_dm7
+          !        if ( i .eq. k .and. l .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(j) * F3_dm7
+          !        if ( i .eq. k .and. j .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(l) * F3_dm7
+          !        if ( i .eq. l .and. k .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(j) * F3_dm7
+          !        if ( i .eq. l .and. j .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(k) * F3_dm7
+          !        if ( j .eq. k .and. l .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(i) * F3_dm7
+          !        if ( j .eq. k .and. i .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(l) * F3_dm7
+          !        if ( j .eq. k .and. i .eq. l ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(m) * F3_dm7
+          !        if ( j .eq. l .and. k .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(i) * F3_dm7
+          !        if ( j .eq. l .and. i .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(k) * F3_dm7
+          !        if ( k .eq. l .and. j .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(i) * F3_dm7
+          !        if ( k .eq. l .and. i .eq. m ) T5%abcde  (i,j,k,l,m) = T5%abcde (i,j,k,l,m) + rij(j) * F3_dm7
+          !        enddo
+          !      enddo
+          !    enddo
+          !  enddo
+          !enddo
+
+
 
         ! note :
         ! les termes faisant intervenir les tenseurs d'interactions : T0,T2,T4...
@@ -2681,12 +2891,13 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
 
 
           ! forces
-          ! remarque pour garder la construction : 
+          ! remarque 1 : pour garder la construction : 
           !           f(ia) = f(ia) - fij 
           !           f(ja) = f(ja) + fij 
           ! en fin de boucle uniquement, 
           ! nous avons ici un changement de signe sur la somme sur j malgré
           ! le fait que le tenseur d'interaction soit paire (e.g T2 )
+          ! remarque 2 : thole functions only apply to fields not forces 
           if ( do_forces ) then
             do j = 1 , 3
               do k = 1 , 3
@@ -2711,8 +2922,36 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
             endif
           endif
 
-
         endif qd
+
+        ! ===========================================================
+        !                  charge-quadrupole interaction
+        ! ===========================================================
+        qquad : if ( charge_quadrupole ) then
+          ! electrostatic energy
+          do k = 1 , 3
+            do j = 1 , 3
+              u_dir = u_dir + qi *  T2%ab(k,j) * thetaj(k,j) / 3.0_dp
+              u_dir = u_dir + qj *  T2%ab(k,j) * thetai(k,j) / 3.0_dp
+            enddo
+          enddo
+        endif qquad
+        
+        ! ===========================================================
+        !                  dipole-quadrupole interaction
+        ! ===========================================================
+        dquad : if ( dipole_quadrupole ) then
+          ! electrostatic energy
+          do l = 1 , 3
+            do k = 1 , 3
+              do j = 1 , 3
+                u_dir = u_dir + mui(l) * T3%abc(l,k,j) * thetaj(k,j) / 3.0_dp
+                u_dir = u_dir - muj(l) * T3%abc(l,k,j) * thetai(k,j) / 3.0_dp
+              enddo
+            enddo
+          enddo
+        endif dquad
+
 
         ! forces
         if ( do_forces ) then
@@ -2783,8 +3022,8 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
           ita= itype(ia)
           if ( pair_thole(ia) .ne. 0 ) then 
             jta= itype(pair_thole(ia))
-            ialpha = polia(1,1,ia)
-            jalpha = polia(1,1,pair_thole(ia))
+            ialpha = poldipia(1,1,ia)
+            jalpha = poldipia(1,1,pair_thole(ia))
             Athole = ( ialpha * jalpha ) ** onesixth 
             write(stdout, '(a,2i5,a5,a,a2,a,f8.5,a,f8.5,a,f8.5,a,f8.5,a)')  'pair : ',ia,pair_thole(ia), atype(ia) ,' -- ', atype(pair_thole(ia)),&
                   'distance = ',pair_thole_distance(ia),' catastrophe at distance = ',4.0_dp**onesixth*Athole,' thole param = ',thole_param(ita,jta) ,'(',thole_param(ita,jta)*Athole,')'
@@ -2801,7 +3040,7 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
 
 END SUBROUTINE multipole_ES_dir 
 
-SUBROUTINE multipole_ES_rec ( u_rec , ef_rec, efg_rec , fx_rec , fy_rec , fz_rec , tau_rec , mu , task , &
+SUBROUTINE multipole_ES_rec ( u_rec , ef_rec, efg_rec , fx_rec , fy_rec , fz_rec , tau_rec , mu , theta , task , &
                               do_efield , do_efg , do_forces , do_stress , do_strucfact , use_ckrskr )
 
   USE constants,                ONLY :  imag, tpi
@@ -2819,23 +3058,26 @@ SUBROUTINE multipole_ES_rec ( u_rec , ef_rec, efg_rec , fx_rec , fy_rec , fz_rec
   real(kind=dp) :: fx_rec  (:) , fy_rec (:) , fz_rec (:)
   real(kind=dp) :: tau_rec (:,:)
   real(kind=dp) :: mu      (:,:)
+  real(kind=dp) :: theta   (:,:,:)
   logical       :: task(:), do_efield , do_efg , do_forces , do_stress , do_strucfact , use_ckrskr 
 
   ! local
   integer           :: ia , ik , ierr
   real(kind=dp)     :: qi
   real(kind=dp)     :: muix, muiy, muiz
+  real(kind=dp)     :: thetaixx, thetaiyy, thetaizz
+  real(kind=dp)     :: thetaixy, thetaixz, thetaiyz
   real(kind=dp)     :: kx   , ky   , kz , kk, Ak
   real(kind=dp)     :: rxi  , ryi  , rzi
   real(kind=dp)     :: fxij , fyij , fzij
-  real(kind=dp)     :: str, str_frc, k_dot_r ,  k_dot_mu , recarg, kcoe , rhonk_R , rhonk_I, recarg2
+  real(kind=dp)     :: str, str_frc, k_dot_r ,  k_dot_mu , K_dot_Q , recarg, kcoe , rhonk_R , rhonk_I, recarg2
   real(kind=dp)     :: alpha2, tpi_V , fpi_V , f0
   real(kind=dp)     :: rhonk_R_st_x , rhonk_R_st_y , rhonk_R_st_z 
   real(kind=dp)     :: rhonk_I_st_x , rhonk_I_st_y , rhonk_I_st_z 
   real(kind=dp)     ,dimension (:), allocatable :: ckr , skr, tmp 
   real(kind=dp)     :: ckria , skria
   real(kind=dp)     :: tau_rec_tmp(3,3) 
-  logical           :: ldip 
+  logical           :: ldip , lquad
   real(kind=dp)     :: ttt1,ttt2
 
   ! =================
@@ -2894,6 +3136,19 @@ SUBROUTINE multipole_ES_rec ( u_rec , ef_rec, efg_rec , fx_rec , fy_rec , fz_rec
         k_dot_mu = ( muix * kx + muiy * ky + muiz * kz )
         rhonk_R    = rhonk_R - k_dot_mu * skr(ia) 
         rhonk_I    = rhonk_I + k_dot_mu * ckr(ia) ! rhon_R + i rhon_I
+        if ( .not. lquad ) cycle
+        thetaixx = theta ( ia , 1 , 1 )
+        thetaiyy = theta ( ia , 2 , 2 )
+        thetaizz = theta ( ia , 3 , 3 )
+        thetaixy = theta ( ia , 1 , 2 )
+        thetaixz = theta ( ia , 1 , 3 )
+        thetaiyz = theta ( ia , 2 , 3 )
+        K_dot_Q =           thetaixx * kx * kx + thetaixy * kx * ky + thetaixz * kx * kz
+        K_dot_Q = K_dot_Q + thetaixy * kx * ky + thetaiyy * ky * ky + thetaiyz * ky * kz
+        K_dot_Q = K_dot_Q + thetaixz * kz * kx + thetaiyz * ky * kz + thetaizz * kz * kz
+        K_dot_Q = K_dot_Q / 3.0_dp
+        rhonk_R    = rhonk_R - K_dot_Q * ckr(ia)
+        rhonk_I    = rhonk_I - K_dot_Q * skr(ia)  ! rhon_R + i rhon_I
       enddo
 #ifdef MPI
       ttt2 = MPI_WTIME(ierr)
@@ -3417,11 +3672,11 @@ END SUBROUTINE engforce_morse_pbc
 !! The stopping criteria is governed by conv_tol_ind
 !
 ! ******************************************************************************
-SUBROUTINE moment_from_pola_scf ( mu_ind , didpim ) 
+SUBROUTINE moment_from_pola_scf ( mu_ind , theta_ind , didpim ) 
 
   USE io,               ONLY :  ionode , stdout , ioprintnode
   USE constants,        ONLY :  coul_unit
-  USE config,           ONLY :  natm , atype , fx , fy , fz , ntype , dipia , qia , ntypemax, polia , invpolia , itype 
+  USE config,           ONLY :  natm , atype , fx , fy , fz , ntype , dipia , quadia , qia , ntypemax, poldipia , invpoldipia , itype 
   USE control,          ONLY :  longrange , calc
   USE thermodynamic,    ONLY :  u_pol, u_coul
   USE time,             ONLY :  time_moment_from_pola
@@ -3431,6 +3686,7 @@ SUBROUTINE moment_from_pola_scf ( mu_ind , didpim )
 
   ! global
   real(kind=dp) , intent (out) :: mu_ind ( : , : ) 
+  real(kind=dp) , intent (out) :: theta_ind ( : , : , : ) 
 
   ! local
   integer :: ia , iscf , it , npol, alpha, beta, t 
@@ -3464,7 +3720,7 @@ SUBROUTINE moment_from_pola_scf ( mu_ind , didpim )
   linduced = .false.
   didpim   = .false.
   do it = 1 , ntype
-    if ( lpolar ( it ) ) linduced = .true.
+    if ( ldip_polar ( it ) ) linduced = .true.
   enddo
   if ( .not. linduced ) then
 #ifdef debug
@@ -3499,7 +3755,7 @@ SUBROUTINE moment_from_pola_scf ( mu_ind , didpim )
   ! ==============================================
   ! do_strucfact = .true. : recalculate exp(ikr) for new r
   ! use_ckrskr  = .true. : use the store exp(ikr) 
-  CALL  multipole_ES ( Efield_stat , EfieldG_stat , dipia , task_static , & 
+  CALL  multipole_ES ( Efield_stat , EfieldG_stat , dipia , quadia , task_static , & 
                        damp_ind =.true. , do_efield=.true. , do_efg=.false. , & 
                        do_forces=.false. , do_stress = .false. , do_rec = .true. , do_dir = .true. , do_strucfact= .true. , use_ckrskr=.true. ) 
   u_coul_stat = u_coul 
@@ -3560,7 +3816,7 @@ SUBROUTINE moment_from_pola_scf ( mu_ind , didpim )
     !      u_pol = 1/ ( 2 alpha  ) * | mu_ind | ^ 2
     ! ---------------------------------------------------------------
     ! note on units :
-    !    [ polia  ] = A ^ 3
+    !    [ poldipia  ] = A ^ 3
     !    [ mu_ind ] = e A 
     !    [ u_pol  ] = e^2 / A ! electrostatic internal energy  
     ! ===============================================================
@@ -3568,7 +3824,7 @@ SUBROUTINE moment_from_pola_scf ( mu_ind , didpim )
     do ia = 1 , natm
       do alpha = 1 , 3
         do beta = 1 , 3
-          u_pol = u_pol + mu_ind ( alpha , ia ) * invpolia ( alpha , beta , ia ) * mu_ind ( beta , ia )
+          u_pol = u_pol + mu_ind ( alpha , ia ) * invpoldipia ( alpha , beta , ia ) * mu_ind ( beta , ia )
         enddo
       enddo
     enddo
@@ -3580,7 +3836,7 @@ SUBROUTINE moment_from_pola_scf ( mu_ind , didpim )
     !  calculate Efield_ind from mu_ind
     !  Efield_ind out , mu_ind in ==> charges and static dipoles = 0
     ! ==========================================================
-    CALL  multipole_ES ( Efield_ind , EfieldG_ind , mu_ind , task_ind , & 
+    CALL  multipole_ES ( Efield_ind , EfieldG_ind , mu_ind , theta_ind , task_ind , & 
                          damp_ind = .false. , do_efield=.true. , do_efg = .false. , &
                          do_forces = .false. , do_stress =.false. , do_rec=.true., do_dir=.true. , do_strucfact=.false. , use_ckrskr = .true. )
 
@@ -3601,8 +3857,12 @@ SUBROUTINE moment_from_pola_scf ( mu_ind , didpim )
 
     ! output
     if ( calc .ne. 'opt' ) then
+#ifdef debug
     io_printnode WRITE ( stdout ,'(a,i4,5(a,e16.8))') &
     'scf = ',iscf,' u_pol = ',u_pol * coul_unit , ' u_coul (qq)  = ', u_coul_stat, ' u_coul (dd)  = ', u_coul_ind,' u_coul_pol = ', u_coul_pol, ' rmsd       = ', rmsd
+#endif
+    io_printnode WRITE ( stdout ,'(a,i4,2(a,e16.8))') &
+    'scf = ',iscf,' u_pol = ',u_pol * coul_unit , ' rmsd       = ', rmsd
     endif
  
 #ifdef debug_print_dipff_scf
@@ -3672,11 +3932,11 @@ END SUBROUTINE moment_from_pola_scf
 !! The stopping criteria is governed by conv_tol_ind
 !
 ! ******************************************************************************
-SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , didpim ) 
+SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , theta_ind , didpim )
 
   USE io,               ONLY :  ionode , stdout , ioprintnode
   USE constants,        ONLY :  coul_unit
-  USE config,           ONLY :  natm , atype , fx , fy , fz , ntype , dipia , qia , ntypemax, polia , invpolia , itype 
+  USE config,           ONLY :  natm , atype , fx , fy , fz , ntype , dipia , quadia , qia , ntypemax, poldipia , invpoldipia , itype 
   USE control,          ONLY :  longrange , calc
   USE thermodynamic,    ONLY :  u_pol, u_coul
   USE time,             ONLY :  time_moment_from_pola
@@ -3686,6 +3946,7 @@ SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , didpim )
 
   ! global
   real(kind=dp) , intent (out) :: mu_ind ( : , : ) 
+  real(kind=dp) , intent (out) :: theta_ind ( :, : , : ) 
 
   ! local
   integer :: ia , iscf , it , npol, alpha, beta, t , kkkk
@@ -3696,6 +3957,8 @@ SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , didpim )
   real(kind=dp) :: qia_tmp ( natm )  , qch_tmp ( ntypemax ) , conv_tol_ind_ , rmsd_gmin
   logical       :: task_static (3), task_ind(3), ldip
   real(kind=dp) , dimension (:,:) , allocatable :: f_ind , dmu_ind, zerovec
+  real(kind=dp) , dimension (:,:,:) , allocatable :: dtheta_ind 
+
 #ifdef MPI
   dectime
 #endif
@@ -3713,7 +3976,7 @@ SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , didpim )
   linduced = .false.
   didpim   = .false.
   do it = 1 , ntype
-    if ( lpolar ( it ) ) linduced = .true.
+    if ( ldip_polar ( it ) ) linduced = .true.
   enddo
   if ( .not. linduced ) then
 #ifdef debug
@@ -3723,7 +3986,7 @@ SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , didpim )
   endif
   didpim = linduced
 
-  allocate ( f_ind ( 3 , natm ) , dmu_ind( 3 , natm ) , zerovec(3,natm) ) 
+  allocate ( f_ind ( 3 , natm ) , dmu_ind( 3 , natm ) , zerovec(3,natm) , dtheta_ind(3,3,natm) ) 
   f_ind = 0.0_dp
   dmu_ind = 0.0_dp
   zerovec = 0.0_dp
@@ -3751,7 +4014,7 @@ SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , didpim )
   ! ==============================================
   !          main ewald subroutine 
   ! ==============================================
-  CALL  multipole_ES ( Efield_stat , EfieldG_stat , dipia , task_static , & 
+  CALL  multipole_ES ( Efield_stat , EfieldG_stat , dipia , quadia , task_static , & 
                        damp_ind =.true. , do_efield=.true. , do_efg=.false. , & 
                        do_forces=.false. , do_stress = .false. , do_rec = .true. , do_dir = .true. , do_strucfact= .true. , use_ckrskr=.true. ) 
   u_coul_stat = u_coul 
@@ -3795,7 +4058,7 @@ SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , didpim )
     ! ==========================================================
     if ( iscf.ne.1 .or. ( calc .ne. 'md' .and.  calc .ne. 'opt' ) ) then
 
-          CALL induced_moment_inner ( f_ind , dmu_ind )         
+          CALL induced_moment_inner ( f_ind , dmu_ind , dtheta_ind )         
           mu_ind = mu_ind + dmu_ind
           print*,'here 1',dmu_ind(1,3)
     else
@@ -3820,7 +4083,7 @@ SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , didpim )
     !      u_pol = 1/ ( 2 alpha  ) * | mu_ind | ^ 2
     ! ---------------------------------------------------------------
     ! note on units :
-    !    [ polia  ] = A ^ 3
+    !    [ poldipia  ] = A ^ 3
     !    [ mu_ind ] = e A 
     !    [ u_pol  ] = e^2 / A ! electrostatic internal energy  
     ! ===============================================================
@@ -3828,7 +4091,7 @@ SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , didpim )
     do ia = 1 , natm
       do alpha = 1 , 3
         do beta = 1 , 3
-          u_pol = u_pol + mu_ind ( alpha , ia ) * invpolia ( alpha , beta , ia ) * mu_ind ( beta , ia )
+          u_pol = u_pol + mu_ind ( alpha , ia ) * invpoldipia ( alpha , beta , ia ) * mu_ind ( beta , ia )
         enddo
       enddo
     enddo
@@ -3839,7 +4102,7 @@ SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , didpim )
     !  calculate Efield_ind from mu_ind
     !  Efield_ind out , mu_ind in ==> charges and static dipoles = 0
     ! ==========================================================
-    CALL  multipole_ES ( Efield_ind , EfieldG_ind , mu_ind , task_ind , & 
+    CALL  multipole_ES ( Efield_ind , EfieldG_ind , mu_ind , theta_ind , task_ind , & 
                          damp_ind = .false. , do_efield=.true. , do_efg = .false. , &
                          do_forces = .false. , do_stress =.false. , do_rec=.true., do_dir=.true. , do_strucfact=.false. , use_ckrskr = .true. )
 
@@ -3864,17 +4127,22 @@ SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , didpim )
     do ia = 1 , natm
       do alpha = 1 , 3
         it = itype( ia)
-        if ( .not. lpolar( it ) ) cycle
-        f_ind(alpha,ia) = Efield(alpha,ia) - mu_ind(alpha,ia)/polia(alpha,alpha,ia)
+        if ( .not. ldip_polar( it ) ) cycle
+        f_ind(alpha,ia) = Efield(alpha,ia) - mu_ind(alpha,ia)/poldipia(alpha,alpha,ia)
       enddo
     enddo
 !kO
 
     ! output
     if ( calc .ne. 'opt' ) then
+#ifdef debug
     io_printnode WRITE ( stdout ,'(a,i4,5(a,e16.8))') &
     'scf = ',iscf,' u_pol = ',u_pol * coul_unit , ' u_coul (qq)  = ', u_coul_stat, ' u_coul (dd)  = ', u_coul_ind,' u_coul_pol = ', u_coul_pol, ' rmsd       = ', rmsd
+#endif
+    io_printnode WRITE ( stdout ,'(a,i4,2(a,e16.8))') &
+    'scf = ',iscf,' u_pol = ',u_pol * coul_unit , ' rmsd       = ', rmsd
     endif
+
  
 #ifdef debug_print_dipff_scf
   do ia = 1 , natm
@@ -3922,7 +4190,7 @@ SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , didpim )
 #endif
 
 
-  deallocate ( f_ind , dmu_ind , zerovec) 
+  deallocate ( f_ind , dmu_ind , zerovec ,dtheta_ind) 
 
 #ifdef MPI
   stotime
@@ -3946,11 +4214,11 @@ END SUBROUTINE moment_from_pola_scf_kO_v1
 !! The stopping criteria is governed by conv_tol_ind
 !
 ! ******************************************************************************
-SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , didpim ) 
+SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , theta_ind , didpim ) 
 
   USE io,               ONLY :  ionode , stdout , ioprintnode
   USE constants,        ONLY :  coul_unit
-  USE config,           ONLY :  natm , atype , fx , fy , fz , ntype , dipia , qia , ntypemax, polia , invpolia , itype 
+  USE config,           ONLY :  natm , atype , fx , fy , fz , ntype , dipia , quadia , qia , ntypemax, poldipia , invpoldipia , itype 
   USE control,          ONLY :  longrange , calc
   USE thermodynamic,    ONLY :  u_pol, u_coul
   USE time,             ONLY :  time_moment_from_pola
@@ -3960,6 +4228,7 @@ SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , didpim )
 
   ! global
   real(kind=dp) , intent (out) :: mu_ind ( : , : ) 
+  real(kind=dp) , intent (out) :: theta_ind ( : , : , : ) 
 
   ! local
   integer :: ia , iscf , it , npol, alpha, beta, t , kkkk
@@ -3970,6 +4239,7 @@ SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , didpim )
   real(kind=dp) :: qia_tmp ( natm )  , qch_tmp ( ntypemax ) , conv_tol_ind_ , rmsd_gmin
   logical       :: task_static (3), task_ind(3), ldip 
   real(kind=dp) , dimension (:,:) , allocatable :: f_ind , dmu_ind, f_ind_prev , gmin , mu_prev, dmin, zerovec, g_ind
+  real(kind=dp) , dimension (:,:,:) , allocatable :: dtheta_ind
 #ifdef MPI
   dectime
 #endif
@@ -3988,7 +4258,7 @@ SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , didpim )
   linduced = .false.
   didpim   = .false.
   do it = 1 , ntype
-    if ( lpolar ( it ) ) linduced = .true.
+    if ( ldip_polar ( it ) ) linduced = .true.
   enddo
   if ( .not. linduced ) then
 #ifdef debug
@@ -3999,6 +4269,7 @@ SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , didpim )
   didpim = linduced
 
   allocate ( f_ind ( 3 , natm ) , dmu_ind( 3 , natm )  , f_ind_prev( 3 ,natm ) , gmin( 3 , natm ) , mu_prev( 3 , natm ) , dmin(3,natm) , zerovec(3,natm) , g_ind(3,natm ) ) 
+  allocate ( dtheta_ind (3,3,natm) )
   f_ind = 0.0_dp
   dmu_ind = 0.0_dp
   f_ind_prev = 0.0_dp 
@@ -4031,7 +4302,7 @@ SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , didpim )
   ! ==============================================
   !          main ewald subroutine 
   ! ==============================================
-  CALL  multipole_ES ( Efield_stat , EfieldG_stat , dipia , task_static , & 
+  CALL  multipole_ES ( Efield_stat , EfieldG_stat , dipia , quadia , task_static , & 
                        damp_ind =.true. , do_efield=.true. , do_efg=.false. , & 
                        do_forces=.false. , do_stress = .false. , do_rec = .true. , do_dir = .true. , do_strucfact= .true. , use_ckrskr=.true. ) 
   u_coul_stat = u_coul 
@@ -4076,10 +4347,10 @@ SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , didpim )
     if ( iscf.ne.1 .or. ( calc .ne. 'md' .and.  calc .ne. 'opt' ) ) then
 
         if ( iscf .le. 2 ) then
-          CALL induced_moment_inner ( f_ind , dmu_ind )         
+          CALL induced_moment_inner ( f_ind , dmu_ind , dtheta_ind )         
           mu_ind = mu_ind + dmu_ind
         else
-          CALL induced_moment_inner ( gmin , dmu_ind  )          
+          CALL induced_moment_inner ( gmin , dmu_ind  , dtheta_ind )          
           mu_ind = mu_ind + dmu_ind
         endif
 
@@ -4104,7 +4375,7 @@ SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , didpim )
     !      u_pol = 1/ ( 2 alpha  ) * | mu_ind | ^ 2
     ! ---------------------------------------------------------------
     ! note on units :
-    !    [ polia  ] = A ^ 3
+    !    [ poldipia  ] = A ^ 3
     !    [ mu_ind ] = e A 
     !    [ u_pol  ] = e^2 / A ! electrostatic internal energy  
     ! ===============================================================
@@ -4112,7 +4383,7 @@ SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , didpim )
     do ia = 1 , natm
       do alpha = 1 , 3
         do beta = 1 , 3
-          u_pol = u_pol + mu_ind ( alpha , ia ) * invpolia ( alpha , beta , ia ) * mu_ind ( beta , ia )
+          u_pol = u_pol + mu_ind ( alpha , ia ) * invpoldipia ( alpha , beta , ia ) * mu_ind ( beta , ia )
         enddo
       enddo
     enddo
@@ -4123,7 +4394,7 @@ SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , didpim )
     !  calculate Efield_ind from mu_ind
     !  Efield_ind out , mu_ind in ==> charges and static dipoles = 0
     ! ==========================================================
-    CALL  multipole_ES ( Efield_ind , EfieldG_ind , mu_ind , task_ind , & 
+    CALL  multipole_ES ( Efield_ind , EfieldG_ind , mu_ind , theta_ind , task_ind , & 
                          damp_ind = .false. , do_efield=.true. , do_efg = .false. , &
                          do_forces = .false. , do_stress =.false. , do_rec=.true., do_dir=.true. , do_strucfact=.false. , use_ckrskr = .true. )
 
@@ -4147,8 +4418,8 @@ SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , didpim )
     do ia = 1 , natm
       do alpha = 1 , 3
         it = itype( ia)
-        if ( .not. lpolar( it ) ) cycle
-        f_ind(alpha,ia) = Efield(alpha,ia) - mu_ind(alpha,ia)/polia(alpha,alpha,ia)
+        if ( .not. ldip_polar( it ) ) cycle
+        f_ind(alpha,ia) = Efield(alpha,ia) - mu_ind(alpha,ia)/poldipia(alpha,alpha,ia)
       enddo
     enddo
 
@@ -4157,8 +4428,8 @@ SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , didpim )
       do ia = 1 , natm
         do alpha = 1 , 3
           it = itype( ia)
-          if ( .not. lpolar( it ) ) cycle
-          g_ind(alpha,ia) = gmin(alpha,ia) + mu_ind(alpha,ia)/polia(alpha,alpha,ia)
+          if ( .not. ldip_polar( it ) ) cycle
+          g_ind(alpha,ia) = gmin(alpha,ia) + mu_ind(alpha,ia)/poldipia(alpha,alpha,ia)
         enddo
       enddo
       mu_ind = mu_prev + dmin
@@ -4166,13 +4437,16 @@ SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , didpim )
     endif
 !kO
 
-
     ! output
     if ( calc .ne. 'opt' ) then
+#ifdef debug
     io_printnode WRITE ( stdout ,'(a,i4,5(a,e16.8))') &
     'scf = ',iscf,' u_pol = ',u_pol * coul_unit , ' u_coul (qq)  = ', u_coul_stat, ' u_coul (dd)  = ', u_coul_ind,' u_coul_pol = ', u_coul_pol, ' rmsd       = ', rmsd
+#endif
+    io_printnode WRITE ( stdout ,'(a,i4,2(a,e16.8))') &
+    'scf = ',iscf,' u_pol = ',u_pol * coul_unit , ' rmsd       = ', rmsd
     endif
- 
+
 #ifdef debug_print_dipff_scf
   do ia = 1 , natm
   if ( mu_ind ( 1 , ia ) .eq. 0._dp ) cycle
@@ -4247,11 +4521,11 @@ END SUBROUTINE moment_from_pola_scf_kO_v2
 !! The stopping criteria is governed by conv_tol_ind
 !
 ! ******************************************************************************
-SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , didpim ) 
+SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , theta_ind , didpim ) 
 
   USE io,               ONLY :  ionode , stdout , ioprintnode
   USE constants,        ONLY :  coul_unit
-  USE config,           ONLY :  natm , atype , fx , fy , fz , ntype , dipia , qia , ntypemax, polia , invpolia , itype 
+  USE config,           ONLY :  natm , atype , fx , fy , fz , ntype , dipia , quadia , qia , ntypemax, poldipia , invpoldipia , itype 
   USE control,          ONLY :  longrange , calc
   USE thermodynamic,    ONLY :  u_pol, u_coul
   USE time,             ONLY :  time_moment_from_pola
@@ -4261,6 +4535,7 @@ SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , didpim )
 
   ! global
   real(kind=dp) , intent (out) :: mu_ind ( : , : ) 
+  real(kind=dp) , intent (out) :: theta_ind ( : , : , : ) 
 
   ! local
   integer :: ia , iscf , it , npol, alpha, beta, t , kkkk
@@ -4289,7 +4564,7 @@ SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , didpim )
   linduced = .false.
   didpim   = .false.
   do it = 1 , ntype
-    if ( lpolar ( it ) ) linduced = .true.
+    if ( ldip_polar ( it ) ) linduced = .true.
   enddo
   if ( .not. linduced ) then
 #ifdef debug
@@ -4332,7 +4607,7 @@ SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , didpim )
   ! ==============================================
   !          main ewald subroutine 
   ! ==============================================
-  CALL  multipole_ES ( Efield_stat , EfieldG_stat , dipia , task_static , & 
+  CALL  multipole_ES ( Efield_stat , EfieldG_stat , dipia , quadia , task_static , & 
                        damp_ind =.true. , do_efield=.true. , do_efg=.false. , & 
                        do_forces=.false. , do_stress = .false. , do_rec = .true. , do_dir = .true. , do_strucfact= .true. , use_ckrskr=.true. ) 
   u_coul_stat = u_coul 
@@ -4378,7 +4653,7 @@ SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , didpim )
 
   
 
-    CALL  multipole_ES ( Efield_ind , EfieldG_ind , mu_ind , task_ind , &
+    CALL  multipole_ES ( Efield_ind , EfieldG_ind , mu_ind , theta_ind , task_ind , &
                          damp_ind = .false. , do_efield=.true. , do_efg = .false. , &
                          do_forces = .false. , do_stress =.false. , do_rec=.true.,  &
                          do_dir=.true. , do_strucfact=.false. , use_ckrskr = .true. )
@@ -4390,7 +4665,7 @@ SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , didpim )
   else
 
     print*,'null dipoles or extrapolates : lfirst inner = .false. '
-    CALL  multipole_ES ( Efield_ind , EfieldG_ind , mu_ind , task_ind , & 
+    CALL  multipole_ES ( Efield_ind , EfieldG_ind , mu_ind , theta_ind , task_ind , & 
                          damp_ind = .false. , do_efield=.true. , do_efg = .false. , &
                          do_forces = .false. , do_stress =.false. , do_rec=.true.,  &
                          do_dir=.true. , do_strucfact=.false. , use_ckrskr = .true. )
@@ -4400,7 +4675,7 @@ SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , didpim )
       CALL extrapolate_dipole_aspc ( mu_ind , Efield_ind , key=2 ) ! corrector
     endif
     
-    CALL  multipole_ES ( Efield_ind , EfieldG_ind , mu_ind , task_ind , & 
+    CALL  multipole_ES ( Efield_ind , EfieldG_ind , mu_ind , theta_ind , task_ind , & 
                          damp_ind = .false. , do_efield=.true. , do_efg = .false. , &
                          do_forces = .false. , do_stress =.false. , do_rec=.true.,  &
                          do_dir=.true. , do_strucfact=.false. , use_ckrskr = .true. )
@@ -4427,7 +4702,7 @@ SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , didpim )
     !      u_pol = 1/ ( 2 alpha  ) * | mu_ind | ^ 2
     ! ---------------------------------------------------------------
     ! note on units :
-    !    [ polia  ] = A ^ 3
+    !    [ poldipia  ] = A ^ 3
     !    [ mu_ind ] = e A 
     !    [ u_pol  ] = e^2 / A ! electrostatic internal energy  
     ! ===============================================================
@@ -4435,7 +4710,7 @@ SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , didpim )
     do ia = 1 , natm
       do alpha = 1 , 3
         do beta = 1 , 3
-          u_pol = u_pol + mu_ind ( alpha , ia ) * invpolia ( alpha , beta , ia ) * mu_ind ( beta , ia )
+          u_pol = u_pol + mu_ind ( alpha , ia ) * invpoldipia ( alpha , beta , ia ) * mu_ind ( beta , ia )
         enddo
       enddo
     enddo
@@ -4446,7 +4721,7 @@ SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , didpim )
     !  calculate Efield_ind from mu_ind
     !  Efield_ind out , mu_ind in ==> charges and static dipoles = 0
     ! ==========================================================
-    CALL  multipole_ES ( Efield_ind , EfieldG_ind , mu_ind , task_ind , & 
+    CALL  multipole_ES ( Efield_ind , EfieldG_ind , mu_ind , theta_ind , task_ind , & 
                          damp_ind = .false. , do_efield=.true. , do_efg = .false. , &
                          do_forces = .false. , do_stress =.false. , do_rec=.true., do_dir=.true. , do_strucfact=.false. , use_ckrskr = .true. )
 
@@ -4461,8 +4736,8 @@ SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , didpim )
     do ia = 1 , natm
       do alpha = 1 , 3
         it = itype( ia)
-        if ( .not. lpolar( it ) ) cycle
-        f_ind(alpha,ia) = Efield(alpha,ia) - mu_ind(alpha,ia)/polia(alpha,alpha,ia)
+        if ( .not. ldip_polar( it ) ) cycle
+        f_ind(alpha,ia) = Efield(alpha,ia) - mu_ind(alpha,ia)/poldipia(alpha,alpha,ia)
       enddo
     enddo
 
@@ -4474,8 +4749,8 @@ SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , didpim )
         do ia = 1 , natm
           do alpha = 1 , 3
             it = itype( ia)
-            if ( .not. lpolar( it ) ) cycle
-            g_ind(alpha,ia) = gmin(alpha,ia) + mu_ind(alpha,ia)/polia(alpha,alpha,ia)
+            if ( .not. ldip_polar( it ) ) cycle
+            g_ind(alpha,ia) = gmin(alpha,ia) + mu_ind(alpha,ia)/poldipia(alpha,alpha,ia)
           enddo
         enddo
         mu_ind = mu_prev + dmin
@@ -4488,8 +4763,12 @@ SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , didpim )
 
     ! output
     if ( calc .ne. 'opt' ) then
+#ifdef debug
     io_printnode WRITE ( stdout ,'(a,i4,5(a,e16.8))') &
     'scf = ',iscf,' u_pol = ',u_pol * coul_unit , ' u_coul (qq)  = ', u_coul_stat, ' u_coul (dd)  = ', u_coul_ind,' u_coul_pol = ', u_coul_pol, ' rmsd       = ', rmsd
+#endif
+    io_printnode WRITE ( stdout ,'(a,i4,2(a,e16.8))') &
+    'scf = ',iscf,' u_pol = ',u_pol * coul_unit , ' rmsd       = ', rmsd
     endif
  
 #ifdef debug_print_dipff_scf
@@ -4566,11 +4845,11 @@ END SUBROUTINE moment_from_pola_scf_kO_v3
 !! The stopping criteria is governed by conv_tol_ind
 !
 ! ******************************************************************************
-SUBROUTINE moment_from_pola_scf_kO_v4 ( mu_ind , didpim ) 
+SUBROUTINE moment_from_pola_scf_kO_v4 ( mu_ind , theta_ind , didpim ) 
 
   USE io,               ONLY :  ionode , stdout , ioprintnode
   USE constants,        ONLY :  coul_unit
-  USE config,           ONLY :  natm , atype , fx , fy , fz , ntype , dipia , qia , ntypemax, polia , invpolia , itype 
+  USE config,           ONLY :  natm , atype , fx , fy , fz , ntype , dipia , quadia , qia , ntypemax, poldipia , invpoldipia , itype 
   USE control,          ONLY :  longrange , calc
   USE thermodynamic,    ONLY :  u_pol, u_coul
   USE time,             ONLY :  time_moment_from_pola
@@ -4580,6 +4859,7 @@ SUBROUTINE moment_from_pola_scf_kO_v4 ( mu_ind , didpim )
 
   ! global
   real(kind=dp) , intent (out) :: mu_ind ( : , : ) 
+  real(kind=dp) , intent (out) :: theta_ind ( : , : , : ) 
 
   ! local
   integer :: ia , iscf , it , npol, alpha, beta, t 
@@ -4614,7 +4894,7 @@ SUBROUTINE moment_from_pola_scf_kO_v4 ( mu_ind , didpim )
   linduced = .false.
   didpim   = .false.
   do it = 1 , ntype
-    if ( lpolar ( it ) ) linduced = .true.
+    if ( ldip_polar ( it ) ) linduced = .true.
   enddo
   if ( .not. linduced ) then
 #ifdef debug
@@ -4655,7 +4935,7 @@ SUBROUTINE moment_from_pola_scf_kO_v4 ( mu_ind , didpim )
   ! ==============================================
   ! do_strucfact = .true. : recalculate exp(ikr) for new r
   ! use_ckrskr  = .true. : use the store exp(ikr) 
-  CALL  multipole_ES ( Efield_stat , EfieldG_stat , dipia , task_static , & 
+  CALL  multipole_ES ( Efield_stat , EfieldG_stat , dipia , quadia , task_static , & 
                        damp_ind =.true. , do_efield=.true. , do_efg=.false. , & 
                        do_forces=.false. , do_stress = .false. , do_rec = .true. , do_dir = .true. , do_strucfact= .true. , use_ckrskr=.true. ) 
   u_coul_stat = u_coul 
@@ -4710,7 +4990,7 @@ SUBROUTINE moment_from_pola_scf_kO_v4 ( mu_ind , didpim )
     !      u_pol = 1/ ( 2 alpha  ) * | mu_ind | ^ 2
     ! ---------------------------------------------------------------
     ! note on units :
-    !    [ polia  ] = A ^ 3
+    !    [ poldipia  ] = A ^ 3
     !    [ mu_ind ] = e A 
     !    [ u_pol  ] = e^2 / A ! electrostatic internal energy  
     ! ===============================================================
@@ -4718,7 +4998,7 @@ SUBROUTINE moment_from_pola_scf_kO_v4 ( mu_ind , didpim )
     do ia = 1 , natm
       do alpha = 1 , 3
         do beta = 1 , 3
-          u_pol = u_pol + mu_ind ( alpha , ia ) * invpolia ( alpha , beta , ia ) * mu_ind ( beta , ia )
+          u_pol = u_pol + mu_ind ( alpha , ia ) * invpoldipia ( alpha , beta , ia ) * mu_ind ( beta , ia )
         enddo
       enddo
     enddo
@@ -4728,7 +5008,7 @@ SUBROUTINE moment_from_pola_scf_kO_v4 ( mu_ind , didpim )
     !  calculate Efield_ind from mu_ind
     !  Efield_ind out , mu_ind in ==> charges and static dipoles = 0
     ! ==========================================================
-    CALL  multipole_ES ( Efield_ind , EfieldG_ind , mu_ind , task_ind , & 
+    CALL  multipole_ES ( Efield_ind , EfieldG_ind , mu_ind , theta_ind , task_ind , & 
                          damp_ind = .false. , do_efield=.true. , do_efg = .false. , &
                          do_forces = .false. , do_stress =.false. , do_rec=.true., do_dir=.true. , do_strucfact=.false. , use_ckrskr = .true. )
 
@@ -4743,12 +5023,12 @@ SUBROUTINE moment_from_pola_scf_kO_v4 ( mu_ind , didpim )
     do ia = 1 , natm
       do alpha = 1 , 3
         it = itype( ia)
-        if ( .not. lpolar( it ) ) cycle
+        if ( .not. ldip_polar( it ) ) cycle
       
         if ( algo_moment_from_pola .eq. 'scf_kO_v4_1' ) then 
-          F_ind(alpha,ia) = mu_ind(alpha,ia)/polia(alpha,alpha,ia) - Efield_ind(alpha,ia)  !!! find_min_ex
+          F_ind(alpha,ia) = mu_ind(alpha,ia)/poldipia(alpha,alpha,ia) - Efield_ind(alpha,ia)  !!! find_min_ex
         else
-          F_ind(alpha,ia) = mu_ind(alpha,ia)/polia(alpha,alpha,ia) - Efield(alpha,ia)       !!! find_min
+          F_ind(alpha,ia) = mu_ind(alpha,ia)/poldipia(alpha,alpha,ia) - Efield(alpha,ia)       !!! find_min
         endif
       enddo
     enddo
@@ -4766,8 +5046,8 @@ SUBROUTINE moment_from_pola_scf_kO_v4 ( mu_ind , didpim )
     do ia = 1 , natm
       do alpha = 1 , 3
         it = itype( ia)
-        if ( .not. lpolar( it ) ) cycle
-        Efield (alpha,ia) = - F_ind(alpha,ia) + mu_ind(alpha,ia)/polia(alpha,alpha,ia)    !!! for both 
+        if ( .not. ldip_polar( it ) ) cycle
+        Efield (alpha,ia) = - F_ind(alpha,ia) + mu_ind(alpha,ia)/poldipia(alpha,alpha,ia)    !!! for both 
       enddo
     enddo
 
@@ -4781,8 +5061,12 @@ SUBROUTINE moment_from_pola_scf_kO_v4 ( mu_ind , didpim )
 
     ! output
     if ( calc .ne. 'opt' ) then
+#ifdef debug
     io_printnode WRITE ( stdout ,'(a,i4,5(a,e16.8))') &
     'scf = ',iscf,' u_pol = ',u_pol * coul_unit , ' u_coul (qq)  = ', u_coul_stat, ' u_coul (dd)  = ', u_coul_ind,' u_coul_pol = ', u_coul_pol, ' rmsd       = ', rmsd
+#endif
+    io_printnode WRITE ( stdout ,'(a,i4,2(a,e16.8))') &
+    'scf = ',iscf,' u_pol = ',u_pol * coul_unit , ' rmsd       = ', rmsd
     endif
  
 #ifdef debug_print_dipff_scf
@@ -5066,26 +5350,29 @@ END SUBROUTINE moment_from_WFc
 !! February 2014
 !
 ! ******************************************************************************
-SUBROUTINE get_dipole_moments ( mu , didpim )
+SUBROUTINE get_dipole_moments ( mu , theta , didpim )
 
-  USE config,           ONLY : natm , ntype , dipia , dipia_wfc, fx,fy,fz, atype 
+  USE config,           ONLY : natm , ntype , dipia , quadia , dipia_wfc, fx,fy,fz, atype 
   USE io,               ONLY : ionode , stdout, kunit_DIPFF
 
   implicit none
 
   ! global
   real(kind=dp) , intent ( out ) :: mu (:,:)
+  real(kind=dp) , intent ( out ) :: theta (:,:,:)
 
   ! local
   integer :: it, ia ,ja 
   logical :: lwannier, lcata , didpim 
   real(kind=dp), dimension ( : )  , allocatable :: fx_save , fy_save, fz_save
   real(kind=dp), dimension ( : , :  ) , allocatable :: dipia_ind
+  real(kind=dp), dimension ( : , : , :  ) , allocatable :: quadia_ind
   integer :: ierr 
 
   ! save total force fx , fy, fz as they are overwritted by moment_from_pola
   allocate ( fx_save(natm)  , fy_save (natm) , fz_save(natm)  )
   allocate ( dipia_ind ( 3, natm)  )
+  allocate ( quadia_ind ( 3, 3, natm)  )
   fx_save = fx ; fy_save = fy ; fz_save = fz
   dipia_ind = 0.0d0
 
@@ -5093,16 +5380,16 @@ SUBROUTINE get_dipole_moments ( mu , didpim )
   !     induced moment from polarisation 
   ! ======================================
   if ( algo_moment_from_pola .eq. 'scf' ) then
-    CALL moment_from_pola_scf    ( dipia_ind , didpim )
+    CALL moment_from_pola_scf    ( dipia_ind , quadia_ind , didpim )
   else if ( algo_moment_from_pola .eq. 'scf_kO_v1' ) then
-    CALL moment_from_pola_scf_kO_v1 ( dipia_ind , didpim )
+    CALL moment_from_pola_scf_kO_v1 ( dipia_ind , quadia_ind , didpim )
   else if ( algo_moment_from_pola .eq. 'scf_kO_v2' ) then
-    CALL moment_from_pola_scf_kO_v2 ( dipia_ind , didpim )
+    CALL moment_from_pola_scf_kO_v2 ( dipia_ind , quadia_ind , didpim )
   else if ( algo_moment_from_pola .eq. 'scf_kO_v3' ) then
-    CALL moment_from_pola_scf_kO_v3 ( dipia_ind , didpim )
+    CALL moment_from_pola_scf_kO_v3 ( dipia_ind , quadia_ind , didpim )
   else if ( algo_moment_from_pola .eq. 'scf_kO_v4_1' .or. &
             algo_moment_from_pola .eq. 'scf_kO_v4_2'      ) then
-    CALL moment_from_pola_scf_kO_v4 ( dipia_ind , didpim )
+    CALL moment_from_pola_scf_kO_v4 ( dipia_ind , quadia_ind , didpim )
   endif
 
   ! =========================================================
@@ -5131,7 +5418,8 @@ SUBROUTINE get_dipole_moments ( mu , didpim )
           mu = dipia + dipia_ind
     endif
   else
-    mu = dipia + dipia_ind
+    mu    = dipia  + dipia_ind
+    theta = quadia + quadia_ind
   endif
 
   fx = fx_save
@@ -5140,6 +5428,7 @@ SUBROUTINE get_dipole_moments ( mu , didpim )
 
   deallocate ( fx_save, fy_save, fz_save ) 
   deallocate ( dipia_ind  )
+  deallocate ( quadia_ind  )
 
   ! =====================================
   ! check for POLARIZATION CATASTROPH
@@ -5326,7 +5615,7 @@ END SUBROUTINE extrapolate_dipole_poly
 ! as the zero order is taking juste 
 SUBROUTINE extrapolate_dipole_aspc ( mu_ind , Efield , key ) 
 
-  USE config,           ONLY :  atype, natm, invpolia
+  USE config,           ONLY :  atype, natm, invpoldipia
   USE md,               ONLY :  itime 
   USE io,               ONLY :  stdout, ioprintnode
 
@@ -5597,7 +5886,7 @@ SUBROUTINE find_min ( g0 , g1 , d1 , gmin , dmin )
   g0g1mg0 = 0.0_dp
   do ia=1 , natm  
     it = itype( ia)
-    if ( .not. lpolar( it ) ) cycle
+    if ( .not. ldip_polar( it ) ) cycle
     do k = 1 ,3  
       g0sq    = g0sq    + g0(k,ia)*g0   (k,ia)
       g0g1mg0 = g0g1mg0 + g0(k,ia)*g1mg0(k,ia)
@@ -5615,7 +5904,7 @@ END SUBROUTINE
 
 SUBROUTINE get_rmsd_mu ( rmsd , g0 , mu ) 
 
-  USE config,           ONLY :  natm , itype , polia
+  USE config,           ONLY :  natm , itype , poldipia
 
   implicit none 
   ! global
@@ -5630,11 +5919,11 @@ SUBROUTINE get_rmsd_mu ( rmsd , g0 , mu )
   npol=0
   do ia=1, natm
     it = itype( ia)
-    if ( .not. lpolar( it ) ) cycle
+    if ( .not. ldip_polar( it ) ) cycle
     npol = npol + 1
     do alpha = 1 , 3
-      if ( polia ( alpha , alpha  , ia ) .eq. 0.0_dp ) cycle
-      rmsd  = rmsd  +  ( mu ( alpha , ia ) / polia ( alpha , alpha , ia ) - g0 ( alpha , ia ) ) ** 2.0_dp
+      if ( poldipia ( alpha , alpha  , ia ) .eq. 0.0_dp ) cycle
+      rmsd  = rmsd  +  ( mu ( alpha , ia ) / poldipia ( alpha , alpha , ia ) - g0 ( alpha , ia ) ) ** 2.0_dp
     enddo
   enddo
   rmsd = SQRT ( rmsd /  REAL(npol,kind=dp) )
@@ -5730,7 +6019,7 @@ REAL(KIND=DP) FUNCTION DDOTF(v1,v2)
   DDOTF=0.0_dp 
   do ia=1 , natm
     it = itype( ia)
-    if ( .not. lpolar( it ) ) cycle
+    if ( .not. ldip_polar( it ) ) cycle
     do k = 1 ,3
       DDOTF = DDOTF + v1(k,ia)*v2(k,ia) 
     enddo

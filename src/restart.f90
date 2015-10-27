@@ -130,10 +130,11 @@ SUBROUTINE restart_init ( MDFF )
   READ( kunit_RESTART   ) verlet_coul%cut
   READ( kunit_RESTART   ) qia
   READ( kunit_RESTART   ) massia
-  READ( kunit_RESTART   ) quadia
+  READ( kunit_RESTART   ) quadia_nuc
   READ( kunit_RESTART   ) dipia
-  READ( kunit_RESTART   ) polia
-  READ( kunit_RESTART   ) invpolia
+  READ( kunit_RESTART   ) poldipia
+  READ( kunit_RESTART   ) polquadia
+  READ( kunit_RESTART   ) invpoldipia
   READ( kunit_RESTART   ) ipolar
 
   ! ... continue reading restart (md parameters)
@@ -221,8 +222,9 @@ SUBROUTINE restart_init ( MDFF )
   READ( kunit_RESTART   ) lwrite_dip
   READ( kunit_RESTART   ) ldip_wfc
   READ( kunit_RESTART   ) rcut_wfc
-  READ( kunit_RESTART   ) lpolar 
+  READ( kunit_RESTART   ) ldip_polar 
   READ( kunit_RESTART   ) ldip_damping
+  READ( kunit_RESTART   ) lquad_polar 
   READ( kunit_RESTART   ) Abmhftd 
   READ( kunit_RESTART   ) Bbmhftd 
   READ( kunit_RESTART   ) Cbmhftd 
@@ -327,10 +329,11 @@ SUBROUTINE write_RESTART
   WRITE( kunit_RESTART   ) verlet_coul%cut
   WRITE( kunit_RESTART   ) qia
   WRITE( kunit_RESTART   ) massia
-  WRITE( kunit_RESTART   ) quadia
+  WRITE( kunit_RESTART   ) quadia_nuc
   WRITE( kunit_RESTART   ) dipia
-  WRITE( kunit_RESTART   ) polia
-  WRITE( kunit_RESTART   ) invpolia
+  WRITE( kunit_RESTART   ) poldipia
+  WRITE( kunit_RESTART   ) polquadia
+  WRITE( kunit_RESTART   ) invpoldipia
   WRITE( kunit_RESTART   ) ipolar
   ! ... continue reading restart (md parameters)
   WRITE( kunit_RESTART   ) dt 
@@ -399,8 +402,9 @@ SUBROUTINE write_RESTART
   WRITE( kunit_RESTART   ) lwrite_dip
   WRITE( kunit_RESTART   ) ldip_wfc
   WRITE( kunit_RESTART   ) rcut_wfc
-  WRITE( kunit_RESTART   ) lpolar 
+  WRITE( kunit_RESTART   ) ldip_polar 
   WRITE( kunit_RESTART   ) ldip_damping
+  WRITE( kunit_RESTART   ) lquad_polar 
   WRITE( kunit_RESTART   ) Abmhftd 
   WRITE( kunit_RESTART   ) Bbmhftd 
   WRITE( kunit_RESTART   ) Cbmhftd 
