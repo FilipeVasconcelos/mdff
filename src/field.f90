@@ -73,8 +73,6 @@ MODULE field
   logical, SAVE     :: ldip_wfc          !< calculate electrostatic contribution from dipolar momemt coming from wfc
   logical, SAVE     :: lquiet            !< internal stuff 
   logical, SAVE     :: symmetric_pot     !< symmetric potential ( default .true. but who knows ?)
-  logical, SAVE     :: lwrite_efg 
-  logical, SAVE     :: lwrite_ef
   integer, dimension (:) , allocatable :: pair_thole
   real(kind=dp), dimension (:) , allocatable :: pair_thole_distance
 
@@ -611,7 +609,7 @@ END SUBROUTINE field_init
 ! ******************************************************************************
 SUBROUTINE field_print_info ( kunit , quiet )
 
-  USE config,           ONLY :  natm , ntype , atype , atypei , natmi , simu_cell , rho , polia , invpolia
+  USE config,           ONLY :  natm , ntype , atype , atypei , natmi , simu_cell , rho 
   USE control,          ONLY :  calc , cutshortrange , lnmlj , lmorse , lbmhft , lbmhftd , lcoulomb , longrange , lreducedN , cutlongrange
   USE io,               ONLY :  ionode 
   USE constants,        ONLY :  pi , pisq, g_to_am
