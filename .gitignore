@@ -50,6 +50,10 @@ log.*
 run/
 test/
 
+examples/ex0/cp2k/
+examples/ex0/dl_poly/
+examples/ex0/mdff/
+
 doc/mdff.log
 doc/missfont.log
 examples/ex1/dl_poly/
@@ -108,3 +112,5 @@ examples/ex9/config/pot_mdff/scr8
 examples/ex9/config/pot_mdff/scr9
 examples/ex9/cp2k/
 examples/ex9/mdff/
+examples/ex11/random_structs/*
+

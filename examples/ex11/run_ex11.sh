@@ -2,6 +2,8 @@
 
 pwds=$PWD
 
+do_mdff=false
+
 
 dir1=random_structs 
 dir2=md_runs
@@ -26,17 +28,17 @@ done
 
 cd $pwds 
 
-
 rm -rf $dir2
 mkdir -p $dir2
 cp config/*.POT $dir2
-cp config/quench.config $dir2
 cp config/control_template.F $dir2
+cp config/quench.config $dir2
 cp $dir1/POSFF.* $dir2
 cd $dir2
 
 gen_quench_controls
 
+if $do_mdff; then
 for file in POSFF.randomPY.*
 do
 	rm -rf r$file
@@ -53,4 +55,5 @@ do
 	cd ..
 
 done
+fi
 
