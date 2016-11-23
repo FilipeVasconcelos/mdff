@@ -20,6 +20,7 @@
 ! ======= Hardware =======
 #include "symbol.h"
 !#define debug
+!#define debug2
 !#define debug_nvt_nhc2
 !#define debug_nvt_nhcn
 !#define debug_npt_nhcnp
@@ -767,7 +768,9 @@ SUBROUTINE chain_nhcnp ( kin , vxi , xi , vxib , xib , ve , Q , Qb , W , L , tro
   !G(1)  = 2.0_dp*kin - L * temp
   Gb(1) = 0.5_dp * ve * ve / W - temp
   ! barostat
-!  write(stderr,'(a,i,<nhc_n>e60.48,5f60.48)') 'debug : ',myrank,G,kin,L,temp,2.0_dp*kin,L * temp
+#ifdef debug
+  write(stderr,'(a,i,<nhc_n>e60.48,5f60.48)') 'debug : ',myrank,G,kin,L,temp,2.0_dp*kin,L * temp
+#endif  
 
 
   msloop : do k=1,nhc_mults

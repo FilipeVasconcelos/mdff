@@ -298,10 +298,10 @@ SUBROUTINE md_check_tag
   endif
 
 
-  if ( nhc_n == 1 ) then
-    write(stdout,'(a)') 'ERROR : nhc_n = 1 is not allowed with Nose Hoover chains thermostats'
-    stop
-  endif
+  !if ( nhc_n == 1 ) then
+  !  write(stdout,'(a)') 'ERROR : nhc_n = 1 is not allowed with Nose Hoover chains thermostats'
+  !  stop
+  !endif
 
   ! annealing 
   if ( annealing .ne. 1.0_dp ) then

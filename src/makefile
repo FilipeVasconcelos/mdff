@@ -68,7 +68,8 @@ endif
 #FCFLAGS = -O1 -xHost -align all #-ip -static 
 #FCFLAGS = -O3 -xHost -align all 
 #FCFLAGS = -O3 -ip -static -align all 
-FCFLAGS = -O3 -static -xHost  -align all
+#FCFLAGS = -O3 -ip -static -xHost  -align all
+FCFLAGS = -O3 -xHost -align all
 #FCFLAGS = -O3 -ip -xW
 #FCFLAGS = -O0 -check all -warn all -debug 
 #FCFLAGS = -O0 -check all
@@ -120,7 +121,7 @@ endif
 #   on charrue
 # =================
 #ifeq ($(HOST),debian-charrue)
-	LDFLAGS=-Wl,-rpath,/opt/intel/mkl/lib/ia32/ -Wl,--start-group /opt/intel/mkl/lib/ia32/libmkl_intel.a /opt/intel/mkl/lib/ia32/libmkl_sequential.a /opt/intel/mkl/lib/ia32/libmkl_core.a -Wl,--end-group -lpthread -limf -lm
+	LDFLAGS=-Wl,-rpath,/opt/intel/mkl/lib/intel64/ -Wl,--start-group /opt/intel/mkl/lib/intel64/libmkl_intel_lp64.a /opt/intel/mkl/lib/intel64/libmkl_sequential.a /opt/intel/mkl/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread -limf -lm
 	INC=-I/opt/intel/mkl/include/fftw/
 #endif
 

@@ -18,25 +18,25 @@
 
 ! ======= Hardware =======
 #include "symbol.h"
-#define debug
+!#define debug
 !#define debug_ES
 !#define debug_ES_field_forces
-!#define debug_ES_energy
+#define debug_ES_energy
 !#define debug_ES_stress
 !#define debug_ES_efg
 !#define debug_ES_dir
-#define debug_scf_pola
+!#define debug_scf_pola
 !#define debug_wfc
 !#define debug_morse
 !#define debug_nmlj
 !#define debug_nmlj_pbc
 !#define debug_quadratic
 !#define debug_para
-#define debug_mu
+!#define debug_mu
 !#define debug_cg
 !#define debug_extrapolate
-#define debug_print_dipff_scf
-#define debug_scf_kO_inner
+!#define debug_print_dipff_scf
+!#define debug_scf_kO_inner
 ! ======= Hardware =======
 
 ! *********************** MODULE field *****************************************
@@ -618,10 +618,10 @@ SUBROUTINE field_print_info ( kunit , quiet )
 
   !local
   logical , optional :: quiet
-  integer :: kunit, it , it1 , it2 , i , j , ia 
-  real(kind=dp) :: rcut2 , kmax2 , alpha2 , ereal , ereci(3) , ereci2(3) , qtot , qtot2, total_mass
-  logical :: linduced, ldamp
-  real(kind=dp) :: Athole, dist_cata , dist_corr, mu_sum(3)      
+  integer            :: kunit, it , it1 , it2 , i , j , ia 
+  real(kind=dp)      :: rcut2 , kmax2 , alpha2 , ereal , ereci(3) , ereci2(3) , qtot , qtot2, total_mass
+  logical            :: linduced, ldamp
+  real(kind=dp)      :: Athole, dist_cata , dist_corr, mu_sum(3) , theta_sum(3,3)
 
   if ( ( present ( quiet ) .and. quiet ) .and. .not. lquiet ) then 
     lquiet = .true.
@@ -632,10 +632,12 @@ SUBROUTINE field_print_info ( kunit , quiet )
   qtot   = 0.0_dp
   qtot2  = 0.0_dp
   mu_sum = 0.0_dp
+  theta_sum = 0.0_dp
   do it = 1 , ntype
       qtot  = qtot  +   qch(it) * natmi ( it )
       qtot2 = qtot2 + ( qch(it) * natmi ( it ) ) * ( qch(it) * natmi ( it ) )
       mu_sum = mu_sum + dip(it,:)
+      theta_sum = theta_sum + quad(it,:,:)
   enddo
   linduced = .false.
   do it = 1 , ntype
@@ -661,19 +663,39 @@ SUBROUTINE field_print_info ( kunit , quiet )
     WRITE ( kunit ,'(a)')               'point charges: '
     lseparator(kunit) 
     do it = 1 , ntype 
-      WRITE ( kunit ,'(a,a,a,e10.3)')   'q   ',atypei(it),'                 = ',qch(it)
-      WRITE ( kunit ,'(a,a,a,e10.3,a)') 'quad',atypei(it),'                 = ',quad_nuc(it),' mb'
+      WRITE ( kunit ,'(a,a,a,e10.3)')   'q_',atypei(it),'                  = ',qch(it)
     enddo
     WRITE ( kunit ,'(a,e10.3)')         'total charge            = ',  qtot
     WRITE ( kunit ,'(a,e10.3)')         'second moment of charge = ',  qtot2
+    blankline(kunit)
+    WRITE ( kunit ,'(a)')               'quadrupolar nuclear moment: '
+    lseparator(kunit) 
+    do it = 1 , ntype 
+      WRITE ( kunit ,'(a,a,a,e10.3,a)') 'Q_',atypei(it),'                 = ',quad_nuc(it),' mb'
+    enddo
     blankline(kunit)
     lseparator(kunit) 
     WRITE ( kunit ,'(a)')               'static dipoles: '
     lseparator(kunit) 
     do it = 1 , ntype
-      WRITE ( kunit ,'(a,a,a,3e12.3)')  'mu',atypei(it),'      = ',dip(it,1),dip(it,2),dip(it,3)
+      WRITE ( kunit ,'(a,a,a,3e12.3)')  'mu_',atypei(it),'      = ',dip(it,1),dip(it,2),dip(it,3)
     enddo
-    WRITE ( kunit ,'(a,3e12.3)')        'sum        = ',mu_sum(1),mu_sum(2),mu_sum(3)
+    WRITE ( kunit ,'(a,3e12.3)')        'sum         = ',mu_sum(1),mu_sum(2),mu_sum(3)
+    blankline(kunit)
+    WRITE ( kunit ,'(a)')               'static quadrupoles: '
+    lseparator(kunit) 
+    do it = 1 , ntype
+      WRITE ( kunit ,'(a,a,a)')         'theta_',atypei(it),'      = '
+      do i = 1 , 3
+        WRITE ( kunit ,'(3e16.8)')      quad(it,i,1) , quad(it,i,2) , quad(it,i,3)
+      enddo
+      WRITE ( kunit ,'(a,e16.8)')       'iso = ',(quad(it,1,1) + quad(it,2,2) + quad(it,3,3))/3.0_dp
+    enddo
+      WRITE ( kunit ,'(a)')             'sum   = '
+      do i = 1 , 3
+        WRITE ( kunit ,'(3e16.8)')      theta_sum(i,1) , theta_sum(i,2) , theta_sum(i,3)
+      enddo
+      WRITE ( kunit ,'(a,e16.8)')       'iso = ',(theta_sum(1,1) + theta_sum(2,2) + theta_sum(3,3))/3.0_dp
     blankline(kunit)
     if ( linduced ) then 
       lseparator(kunit) 
@@ -1885,9 +1907,9 @@ SUBROUTINE induced_moment_inner ( f_ind_ext , mu_ind , theta_ind )
   enddo
   mu_ind = omegakO * mu_ind  
 
-  do ia=1,natm
-    write(*,'(4f12.8)') mu_ind(1,ia), mu_ind(2,ia) , mu_ind(3,ia) ,omegakO
-  enddo
+!  do ia=1,natm
+!    write(*,'(4f12.8)') mu_ind(1,ia), mu_ind(2,ia) , mu_ind(3,ia) ,omegakO
+!  enddo
   !stop
 
   inner_loop : do while ( iscf_inner .le. 10 .and. rmsd_inner .gt. 0.1_dp * rmsd_ref )  
@@ -2042,10 +2064,10 @@ SUBROUTINE multipole_ES ( ef , efg , mu , theta , task , damp_ind , &
   real(kind=dp), dimension(:)    , allocatable :: fx_surf , fy_surf , fz_surf
   real(kind=dp) :: tau_dir( 3 , 3 )
   real(kind=dp) :: tau_rec( 3 , 3 )
-  real(kind=dp) :: qtot ( 3 ) , qsq , mutot ( 3 ) , musq , qmu_sum ( 3 )
-  real(kind=dp) :: tpi_V, tpi_3V , fpi_3V , alpha2 , selfa , selfa2
+  real(kind=dp) :: qtot ( 3 ) , qsq , mutot ( 3 ) , musq , qmu_sum ( 3 ) , thetasq
+  real(kind=dp) :: tpi_V, tpi_3V , fpi_3V , alpha2 , selfa , selfa2, selfa3
   real(kind=dp) :: ttt1, ttt2 , ttt3, ttt4
-  real(kind=dp) :: u_self_1 , u_self_2
+  real(kind=dp) :: u_self_1 , u_self_2, u_self_3
 
 #ifdef debug_ES
         call print_config_sample(0,0)
@@ -2083,6 +2105,7 @@ SUBROUTINE multipole_ES ( ef , efg , mu , theta , task , damp_ind , &
     qtot ( 2 ) = qtot ( 2 ) + qia ( ia ) * ry ( ia )
     qtot ( 3 ) = qtot ( 3 ) + qia ( ia ) * rz ( ia )
     qsq = qsq + qia ( ia ) * qia ( ia )
+    thetasq= thetasq + (theta(1,1,ia)+theta(2,2,ia)+theta(3,3,ia))*qia(ia)
   enddo
   qmu_sum ( 1 ) = qtot ( 1 ) + mutot ( 1 )
   qmu_sum ( 2 ) = qtot ( 2 ) + mutot ( 2 )
@@ -2097,6 +2120,7 @@ SUBROUTINE multipole_ES ( ef , efg , mu , theta , task , damp_ind , &
   alpha2 = alphaES * alphaES
   selfa  = alphaES / piroot
   selfa2 = 2.0_dp * selfa * alpha2 / 3.0_dp
+  selfa3 = 2.0_dp * selfa2         / 3.0_dp
 
   ! ==============================================
   !        direct space part
@@ -2146,9 +2170,9 @@ SUBROUTINE multipole_ES ( ef , efg , mu , theta , task , damp_ind , &
     ef_surf ( 1 , ia ) = qmu_sum ( 1 )
     ef_surf ( 2 , ia ) = qmu_sum ( 2 )
     ef_surf ( 3 , ia ) = qmu_sum ( 3 )
-  !  fx_surf ( ia ) = qia ( ia ) * qmu_sum ( 1 )
-  !  fy_surf ( ia ) = qia ( ia ) * qmu_sum ( 2 )
-  !  fz_surf ( ia ) = qia ( ia ) * qmu_sum ( 3 )
+    !fx_surf ( ia ) = qia ( ia ) * qmu_sum ( 1 )
+    !fy_surf ( ia ) = qia ( ia ) * qmu_sum ( 2 )
+    !fz_surf ( ia ) = qia ( ia ) * qmu_sum ( 3 )
   enddo
   !fx_surf  = - fx_surf  * fpi_3V
   !fy_surf  = - fy_surf  * fpi_3V
@@ -2159,9 +2183,10 @@ SUBROUTINE multipole_ES ( ef , efg , mu , theta , task , damp_ind , &
   !              Self contribution 
   ! ====================================================== 
   ! electrostic energy 
-  u_self_1   =  - selfa * qsq                ! q-q
-  u_self_2   =  - selfa2 * musq              ! mu-mu
-  u_self = u_self_1 + u_self_2
+  u_self_1   =  - selfa  * qsq                ! q-q
+  u_self_2   =  - selfa2 * musq               ! mu-mu
+  u_self_3   =  - selfa3 * thetasq            ! theta-theta
+  u_self     = u_self_1 + u_self_2 + u_self_3
   do ia = 1 , natm
     ef_self( 1 , ia ) = 2.0_dp * selfa2 * mu ( 1 , ia )
     ef_self( 2 , ia ) = 2.0_dp * selfa2 * mu ( 2 , ia )
@@ -2174,9 +2199,10 @@ SUBROUTINE multipole_ES ( ef , efg , mu , theta , task , damp_ind , &
 
   ! =====================================================
   !                  TOTAL and units
-  !  TODO : electric field has not the correct unit !!!!
-  !         because of induced_moment subroutine 
-  !         make dipole, polarisation, electric field more coherent !!!
+  !  TODO : electric field has not the output unit !!!!
+  !         it keeps internal units because of induced_moment 
+  !         subroutine. Make dipole, polarisation, electric 
+  !         field more coherent !!!
   ! =====================================================
 
   if ( lsurf ) then
@@ -2232,6 +2258,7 @@ do ia = 1 , natm
   write(stdout , '(a)') 'self energies :'
   write(stdout , '(a,f12.6)') 'q-q         = ',u_self_1 
   write(stdout , '(a,f12.6)') 'µ-µ         = ',u_self_2 
+  write(stdout , '(a,f12.6)') 'Θ-Θ         = ',u_self_3
 #endif
 
 #ifdef debug_ES_stress
@@ -2453,9 +2480,9 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
 
           expon = EXP ( - alpha2 * d2 )    / piroot
           F0    = errfc( alphaES * d )
-          F1    = F0 + 2.0_dp * alphaES * d  * expon
-          F2    = F1 + 4.0_dp * alpha3  * d3 * expon / 3.0_dp
-          F3    = F2 + 8.0_dp * alpha5  * d5 * expon / 15.0_dp
+          F1    = F0 +  2.0_dp * alphaES * d  * expon
+          F2    = F1 +  4.0_dp * alpha3  * d3 * expon / 3.0_dp
+          F3    = F2 +  8.0_dp * alpha5  * d5 * expon / 15.0_dp
           F4    = F3 + 16.0_dp * alpha7  * d7 * expon / 105.0_dp
           F5    = F4 + 32.0_dp * alpha9  * d9 * expon / 945.0_dp
 
@@ -2571,6 +2598,10 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
                 else
                   T2%ab_thole = T2%ab
                 endif
+               ! =========================================
+               !  "Thole" functions (exp)
+               !  B.T. Thole, Chem. Phys. 59 p341 (1981)
+               ! ========================================
               else if ( thole_function_type .eq. 'expon1' ) then
                 ! linear = ewald ?
                 Athole =  ( ialpha * jalpha ) ** onesixth
@@ -2591,6 +2622,10 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
                 T2%ab_thole (2,1) = T2%ab_thole (1,2)
                 T2%ab_thole (3,1) = T2%ab_thole (1,3)
                 T2%ab_thole (3,2) = T2%ab_thole (2,3)
+               ! =========================================
+               !  "Thole" functions (exp)
+               !  B.T. Thole, Chem. Phys. 59 p341 (1981)
+               ! ========================================
               else if ( thole_function_type .eq. 'expon2' ) then
                 ! expon2 = ewald 
                 Athole =  ( ialpha * jalpha ) ** onesixth
@@ -2613,6 +2648,10 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
                 T2%ab_thole (2,1) = T2%ab_thole (1,2)
                 T2%ab_thole (3,1) = T2%ab_thole (1,3)
                 T2%ab_thole (3,2) = T2%ab_thole (2,3)
+               ! =========================================
+               !  "Thole" functions (gauss)
+               !  B.T. Thole, Chem. Phys. 59 p341 (1981)
+               ! ========================================
               else if ( thole_function_type .eq. 'gauss' ) then
                 ! gauss = no ewald
                 ra = d / thole_param(ita,jta)
@@ -2621,8 +2660,6 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
                 erfra = errf ( ra ) 
                 F2thole = F2 * ( erfra - expthole * ( 1.0_dp + twothird * ra ) ) 
                 F1thole = F1 * ( erfra - expthole )
-                !F2thole = ( erfra - expthole * ( 1.0_dp + twothird * ra ) ) 
-                !F1thole = ( erfra - expthole )
                 T2%ab_thole = 0.0_dp
                 do j = 1 , 3
                   do k = 1 , 3
@@ -2643,70 +2680,6 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
           else
             T2%ab_thole = T2%ab 
           endif
-
-          ! damping
-!          if ( ldamp ) then
-!            T2%ab_damp = 0.0_dp
-!            do j = 1 , 3
-!              do k = 1 , 3 
-!                if ( j .gt. k ) cycle
-!                                  T2%ab_damp (j,k) = ( 3.0_dp * rij(j) * rij(k) * F2d ) * dm5
-!                  if ( j .eq. k ) T2%ab_damp (j,j) = T2%ab_damp (j,j) - F1d * dm3
-!               enddo
-!            enddo
-!            T2%ab_damp (2,1) = T2%ab_damp (1,2)
-!            T2%ab_damp (3,1) = T2%ab_damp (1,3)
-!            T2%ab_damp (3,2) = T2%ab_damp (2,3)
-!            T2%ab_damp2 = 0.0_dp
-!            do j = 1 , 3
-!              do k = 1 , 3 
-!                if ( j .gt. k ) cycle
-!                  T2%ab_damp2 (j,k) = ( 3.0_dp * rij(j) * rij(k) * F2d2 ) * dm5
-!                  if ( j .eq. k ) T2%ab_damp2 (j,j) = T2%ab_damp2 (j,j) - F1d2 * dm3
-!               enddo
-!            enddo
-!            T2%ab_damp2 (2,1) = T2%ab_damp2 (1,2)
-!            T2%ab_damp2 (3,1) = T2%ab_damp2 (1,3)
-!            T2%ab_damp2 (3,2) = T2%ab_damp2 (2,3)
-!          endif
-
-          ! =========================================
-          !   multipole interaction tensor rank = 3  
-          ! =========================================
-!          T3%abc = 0.0_dp
-!          do i = 1 , 3
-!            do j = 1 , 3
-!              do k = 1 , 3
-!                if ( j .gt. k ) cycle 
-!                if ( i .gt. j ) cycle 
-!                T3%abc (i,j,k) = - rij(i) * rij(j) * rij(k) * F3 * dm7 * 15.0_dp
-!                if ( i .eq. j .and. j.eq.k ) then
-!                  T3%abc (i,j,k) = T3%abc (i,j,k) +    rij(i) * F2 * dm5 * 9.0_dp
-!                else
-!                  if ( i.eq.j ) T3%abc (i,j,k) = T3%abc (i,j,k) + rij(k) * F2 * dm5 * 3.0_dp
-!                  if ( i.eq.k ) T3%abc (i,j,k) = T3%abc (i,j,k) + rij(j) * F2 * dm5 * 3.0_dp 
-!                  if ( j.eq.k ) T3%abc (i,j,k) = T3%abc (i,j,k) + rij(i) * F2 * dm5 * 3.0_dp
-!                endif
-!              enddo
-!            enddo
-!          enddo
-!          T3%abc(1,3,2) = T3%abc(1,2,3)
-!          T3%abc(3,1,2) = T3%abc(1,2,3)
-!          T3%abc(3,2,1) = T3%abc(1,2,3)
-!          T3%abc(2,3,1) = T3%abc(1,2,3)
-!          T3%abc(2,1,3) = T3%abc(1,2,3)
-!          T3%abc(1,2,1) = T3%abc(1,1,2)
-!          T3%abc(2,1,1) = T3%abc(1,1,2)
-!          T3%abc(1,3,1) = T3%abc(1,1,3)
-!          T3%abc(3,1,1) = T3%abc(1,1,3)
-!          T3%abc(2,2,1) = T3%abc(1,2,2)
-!          T3%abc(2,1,2) = T3%abc(1,2,2)
-!          T3%abc(3,3,1) = T3%abc(1,3,3) 
-!          T3%abc(3,1,3) = T3%abc(1,3,3) 
-!          T3%abc(2,3,2) = T3%abc(2,2,3)
-!          T3%abc(3,2,2) = T3%abc(2,2,3)
-!          T3%abc(3,3,2) = T3%abc(2,3,3) 
-!          T3%abc(3,2,3) = T3%abc(2,3,3) 
 
           ! =========================================
           !   multipole interaction tensor rank = 3  
@@ -2729,26 +2702,26 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
           !   multipole interaction tensor rank = 4  
           !   nb of components = 81 => reduced = 15
           ! =========================================
-          !T4%abcd = 0.0_dp
-          !F4_dm9 = dm9 * F4 * 105.0_dp
-          !do i = 1 , 3
-          !  do j = 1 , 3
-          !    do k = 1 , 3
-          !      do l = 1 , 3
-          !        T4%abcd  (i,j,k,l) = rij(i) * rij(j) * rij(k) * rij(l) * F4_dm9
-          !        if ( k.eq.l ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(i)*rij(j) * F3_dm7
-          !        if ( j.eq.l ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(i)*rij(k) * F3_dm7
-          !        if ( j.eq.k ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(i)*rij(l) * F3_dm7
-          !        if ( i.eq.l ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(j)*rij(k) * F3_dm7
-          !        if ( i.eq.k ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(j)*rij(l) * F3_dm7
-          !        if ( i.eq.j ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(k)*rij(l) * F3_dm7
-          !        if ( i .eq. j .and. k .eq. l ) T4%abcd  (i,j,k,l) = T4%abcd  (i,j,k,l) + F2_dm5
-          !        if ( i .eq. k .and. j .eq. l ) T4%abcd  (i,j,k,l) = T4%abcd  (i,j,k,l) + F2_dm5
-          !        if ( i .eq. l .and. j .eq. k ) T4%abcd  (i,j,k,l) = T4%abcd  (i,j,k,l) + F2_dm5
-          !      enddo
-          !    enddo
-          !  enddo
-          !enddo
+          T4%abcd = 0.0_dp
+          F4_dm9 = dm9 * F4 * 105.0_dp
+          do i = 1 , 3
+            do j = 1 , 3
+              do k = 1 , 3
+                do l = 1 , 3
+                  T4%abcd  (i,j,k,l) = rij(i) * rij(j) * rij(k) * rij(l) * F4_dm9
+                  if ( k.eq.l ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(i)*rij(j) * F3_dm7
+                  if ( j.eq.l ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(i)*rij(k) * F3_dm7
+                  if ( j.eq.k ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(i)*rij(l) * F3_dm7
+                  if ( i.eq.l ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(j)*rij(k) * F3_dm7
+                  if ( i.eq.k ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(j)*rij(l) * F3_dm7
+                  if ( i.eq.j ) T4%abcd (i,j,k,l) = T4%abcd  (i,j,k,l) - rij(k)*rij(l) * F3_dm7
+                  if ( i .eq. j .and. k .eq. l ) T4%abcd  (i,j,k,l) = T4%abcd  (i,j,k,l) + F2_dm5
+                  if ( i .eq. k .and. j .eq. l ) T4%abcd  (i,j,k,l) = T4%abcd  (i,j,k,l) + F2_dm5
+                  if ( i .eq. l .and. j .eq. k ) T4%abcd  (i,j,k,l) = T4%abcd  (i,j,k,l) + F2_dm5
+                enddo
+              enddo
+            enddo
+          enddo
         
           ! =========================================
           !   multipole interaction tensor rank = 5  
@@ -2799,7 +2772,7 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
         ! les termes faisant intervenir les tenseurs d'interactions : T0,T2,T4...
         ! sont symétriques par changement de direction de l'interaction rij => rji
         ! alors que T1,T3,T5 ... ne le sont pas.
-        ! en pratique les sommes sur i ou j change de signe pour T1,T3,T5
+        ! en pratique : les sommes sur i ou j change de signe pour T1,T3,T5
 
         ! ===========================================================
         !                  charge-charge interaction
@@ -2949,6 +2922,44 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
             enddo
           enddo
         endif dquad
+
+        ! ===========================================================
+        !                  quadrupole-quadrupole interaction
+        ! ===========================================================
+        quadquad : if ( quadrupole_quadrupole ) then
+
+          ! energy
+          do i = 1, 3
+            do j = 1, 3
+              do k = 1, 3
+                do l = 1, 3
+                  u_dir = u_dir + thetai(i,j) * T4%abcd(i,j,k,l) * thetaj(k,l) / 9.0_dp
+                enddo
+              enddo
+            enddo
+          enddo
+
+          ! electric field
+          if ( do_efield ) then
+            do k = 1 , 3
+              do j = 1 , 3
+                ef_dir ( ia , :  ) = ef_dir ( ia , : ) - T3%abc(:,k,j) * thetaj(k,j)
+                ef_dir ( ja , :  ) = ef_dir ( ja , : ) + T3%abc(:,k,j) * thetai(k,j)
+              enddo
+            enddo
+          endif
+
+          ! electric field gradient 
+          if ( do_efg ) then
+            do k = 1 , 3
+              do j = 1 , 3
+                efg_dir ( ia , : , : ) = efg_dir ( ia , : , :  ) + T4%abcd (:,:,k,j) * thetaj(k,j)
+                efg_dir ( ja , : , : ) = efg_dir ( ja , : , :  ) - T4%abcd (:,:,k,j) * thetai(k,j)
+              enddo
+            enddo
+          endif
+
+        endif quadquad
 
 
         ! forces
@@ -3117,7 +3128,7 @@ SUBROUTINE multipole_ES_rec ( u_rec , ef_rec, efg_rec , fx_rec , fy_rec , fz_rec
 #endif
       rhonk_R = 0.0_dp
       rhonk_I = 0.0_dp
-      do ia = 1, natm
+      atom1 : do ia = 1, natm
         qi  = qia ( ia )
         rxi = rx  ( ia )
         ryi = ry  ( ia )
@@ -3147,7 +3158,8 @@ SUBROUTINE multipole_ES_rec ( u_rec , ef_rec, efg_rec , fx_rec , fy_rec , fz_rec
         K_dot_Q = K_dot_Q / 3.0_dp
         rhonk_R    = rhonk_R - K_dot_Q * ckr(ia)
         rhonk_I    = rhonk_I - K_dot_Q * skr(ia)  ! rhon_R + i rhon_I
-      enddo
+      enddo atom1
+
 #ifdef MPI
       ttt2 = MPI_WTIME(ierr)
       t12 = t12 + (ttt2-ttt1)
@@ -3166,13 +3178,20 @@ SUBROUTINE multipole_ES_rec ( u_rec , ef_rec, efg_rec , fx_rec , fy_rec , fz_rec
 #ifdef MPI
     ttt1 = MPI_WTIME(ierr)
 #endif
-    str    = (rhonk_R*rhonk_R + rhonk_I*rhonk_I) * Ak  
-    !write(1000000,'(a,i,4e16.8)') 'qqqq',ik,rhonk_R,rhonk_I,str,Ak
 
+
+    ! ===================================================
     ! potential energy 
+    ! ===================================================
+    str    = (rhonk_R*rhonk_R + rhonk_I*rhonk_I) * Ak  
     u_rec   = u_rec   + str
 
-    do ia = 1 , natm
+
+#ifdef debug    
+    write(1000000,'(a,i,4e16.8)') 'qqqq',ik,rhonk_R,rhonk_I,str,Ak
+#endif    
+
+    atom2 : do ia = 1 , natm
 !      if ( use_ckrskr ) then
 !      if ( .FALSE. ) then
 !        ckria = km_coul%ckr(ia,ik)  
@@ -3225,9 +3244,23 @@ SUBROUTINE multipole_ES_rec ( u_rec , ef_rec, efg_rec , fx_rec , fy_rec , fz_rec
         fx_rec ( ia ) = fx_rec ( ia ) + kx * k_dot_mu
         fy_rec ( ia ) = fy_rec ( ia ) + ky * k_dot_mu
         fz_rec ( ia ) = fz_rec ( ia ) + kz * k_dot_mu
+        if ( .not. lquad ) cycle
+        thetaixx = theta ( ia , 1 , 1 )
+        thetaiyy = theta ( ia , 2 , 2 )
+        thetaizz = theta ( ia , 3 , 3 )
+        thetaixy = theta ( ia , 1 , 2 )
+        thetaixz = theta ( ia , 1 , 3 )
+        thetaiyz = theta ( ia , 2 , 3 )
+        K_dot_Q =           thetaixx * kx * kx + thetaixy * kx * ky + thetaixz * kx * kz
+        K_dot_Q = K_dot_Q + thetaixy * kx * ky + thetaiyy * ky * ky + thetaiyz * ky * kz
+        K_dot_Q = K_dot_Q + thetaixz * kz * kx + thetaiyz * ky * kz + thetaizz * kz * kz
+        K_dot_Q = K_dot_Q * recarg
+        fx_rec ( ia ) = fx_rec ( ia ) + kx * K_dot_Q
+        fy_rec ( ia ) = fy_rec ( ia ) + ky * K_dot_Q
+        fz_rec ( ia ) = fz_rec ( ia ) + kz * K_dot_Q
       endif
 
-    enddo
+    enddo atom2
 
     if ( do_stress ) then
      ! stress tensor symmetric !
@@ -3242,6 +3275,9 @@ SUBROUTINE multipole_ES_rec ( u_rec , ef_rec, efg_rec , fx_rec , fy_rec , fz_rec
      tau_rec(3,2) = tau_rec(3,2) -            kcoe * kz * ky   * str
      tau_rec(3,3) = tau_rec(3,3) + ( 1.0_dp - kcoe * kz * kz ) * str
 ! =================================================================================================================================
+! Some differences inn stress tensor result for PIM were found ... seems to come from the reciprocal part
+! the code show a further contribution ... but the implementation is quite different and is correct for all the other quantities
+! checked so far with charges and dipoles. 
 ! CP2K
 ! ! The second one can be written in the following way
 !          f0 = 2.0_dp * gauss
@@ -4058,10 +4094,10 @@ SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , theta_ind , didpim )
 
           CALL induced_moment_inner ( f_ind , dmu_ind , dtheta_ind )         
           mu_ind = mu_ind + dmu_ind
-          print*,'here 1',dmu_ind(1,3)
+          !print*,'here 1',dmu_ind(1,3)
     else
 
-            print*,'here 2',algo_ext_dipole
+          !print*,'here 2',algo_ext_dipole
       if ( algo_ext_dipole .eq. 'poly' ) CALL extrapolate_dipole_poly ( mu_ind ) 
       if ( algo_ext_dipole .eq. 'aspc' ) CALL extrapolate_dipole_aspc ( mu_ind , Efield , key=1 )  ! predictor
 

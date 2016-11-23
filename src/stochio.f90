@@ -469,6 +469,7 @@ SUBROUTINE stochio_default_tag
   cao     = 0._dp
   p2o5    = 0._dp
   al2o3   = 0._dp
+  moo3    = 0._dp
   geo2    = 0._dp
   def     = 'pct'
   density = 0.0d0
