@@ -26,4 +26,6 @@ ex11 : Generating 5 random configuration of SiO2 with
        run for each of them.
        (NVE ~ 2 ps Rigid Ions and Polarizable Ions models)
  
+ex12 : PIM MD 102  atoms SiO2 (against cp2k)
 
+ex13 : mdff_gui.py 
