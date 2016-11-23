@@ -1,7 +1,8 @@
 MDFF est accompagné d'un nombre important de script 
 facilitant la génération des fichiers d'inputs.
 
-averoszi
+todo : add some summary here
+
 cartoff
 fftocar
 fftoconf
@@ -13,10 +14,10 @@ histoff
 live-gnuplot
 mdff.x
 outoff
-poszi
+poszi  
+averoszi
 random_struct.p
 random_struct+stochio
-README
 read_quench_table.py
 read_statis
 xdatcartoff
