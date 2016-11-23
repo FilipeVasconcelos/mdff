@@ -47,6 +47,9 @@ log.*
 *.toc
 *.eps
 
+run/
+test/
+
 doc/mdff.log
 doc/missfont.log
 examples/ex1/dl_poly/
