@@ -93,13 +93,13 @@ if [ -s exact ]; then
 	
 	awk -v kel=$nox '{   { if ($1=="#elem") {lr=NR} }
                                { for (k=1;k<=kel+1;k++) { 
-                                                           if ((NR==lr+k)&&(lr!=0)) { printf("%4s",$1) } 
+                                                           if ((NR==lr+k)&&(lr!=0)) { printf("%6s",$1) } 
                                                         }
                                }
                            }' log.$tgt > atype 
 	awk -v kel=$nox '{   { if ($1=="#elem") {lr=NR} }
                                { for (k=1;k<=kel+1;k++) { 
-                                                           if ((NR==lr+k)&&(lr!=0)) { printf("%4s",$2) } 
+                                                           if ((NR==lr+k)&&(lr!=0)) { printf("%6s",$2) } 
                                                         }
                                }
                            }' log.$tgt > itype 

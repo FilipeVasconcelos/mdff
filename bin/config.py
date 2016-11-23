@@ -484,11 +484,11 @@ class Config(Lattice):
 	for i in range(3):	
 	    print >> f , float_format*len(self.direct[i]) % tuple(self.direct[i])
         print >> f , self.ntype
-	print >> f , '%4s'*self.ntype %  tuple(self.types)
-	print >> f , '%4i'*self.ntype %  tuple(self.natmpertype)
+	print >> f , '%5s'*self.ntype %  tuple(self.types)
+	print >> f , '%5i'*self.ntype %  tuple(self.natmpertype)
         print >> f, self.coord_format
 	for ia in range(self.natm):
-	        form = "%4s"+3*float_format
+	        form = "%5s"+3*float_format
         	print >> f , form % ( self.ions[ia].type, self.ions[ia].r[0] , self.ions[ia].r[1], self.ions[ia].r[2] )
 	f.close()
 				
@@ -502,12 +502,12 @@ class Config(Lattice):
         for i in range(3):
             print >> f , float_format*len(self.direct[i]) % tuple(self.direct[i])
 	print >> f , self.ntype
-        print >> f , '%4s'*self.ntype %  tuple(self.types)
-        print >> f , '%4i'*self.ntype %  tuple(self.natmpertype)
+        print >> f , '%5s'*self.ntype %  tuple(self.types)
+        print >> f , '%5i'*self.ntype %  tuple(self.natmpertype)
         print >> f, self.coord_format
 
         for ia in range(self.natm):
-	    form = "%4s"+3*float_format
+	    form = "%5s"+3*float_format
             print >> f , form % ( self.ions[ia].type , self.ions[ia].r[0] , self.ions[ia].r[1], self.ions[ia].r[2] )
 
 

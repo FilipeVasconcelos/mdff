@@ -39,6 +39,7 @@ DOSFF*
 DOSKFF*
 EIGFF*
 VECTFF*
+log.*
 
 #pictures/pdf/latex output
 *.aux

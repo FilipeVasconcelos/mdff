@@ -1,23 +1,29 @@
 #!/usr/bin/python
 # -*- coding: iso-8859-1 -*-
+# 
 import Tkinter as tk
 import ttk 
 import tkFileDialog
 import tkMessageBox
+import tkFont
 import sys
 import os
+import signal
 import platform
-from create_control_file import get_control_file, namelist_all, all_values_allowed
-from subprocess import call
-from poszi import read_OSZIFF,averaging,format_filename,plot_quant2,plot_quant
-from config import Config
-from config import Ion
+import subprocess
 from multilistbox import MultiListbox
 import matplotlib
 import random
 matplotlib.use('TkAgg')
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
+from distutils.spawn import find_executable
+
+# local libs
+from create_control_file import get_control_file, namelist_all, all_values_allowed, integrator_allowed,default_values
+from poszi import read_OSZIFF,averaging,format_filename,plot_quant2,plot_quant,units
+from config import Config
+from config import Ion
 
 class MApp(tk.Frame):
 
@@ -32,21 +38,31 @@ class MApp(tk.Frame):
         self.pack()
         self.global_path='/home/filipe/dev/github/mdff'
         self.doc_path=self.global_path+'/doc'
-        self.exe_path='mdff.x'
-        self.control_path='./control.F'
-        self.posff_path='./POSFF'
-        self.stdout_path='./log'
-        
+        self.exe_path=tk.StringVar(None)
+        self.exe_path.set(find_executable('mdff.x'))
+        self.control_path=tk.StringVar(None)
+        self.control_path.set('./control.F')
+        self.posff_path=tk.StringVar(None)
+        self.posff_path.set('./POSFF')
+        self.stdout_path=tk.StringVar(None)
+        self.stdout_path.set('./log')
+
+        self.running=True
+    
         self._create_panel_files()
+        self._create_panel_run()
         self._create_menu()
         # shortscut
         self.parent.bind_all("<Control-w>", self._quit)
         self.parent.bind_all("<Control-s>", self._save)
-        self.parent.bind_all("<Control-x>", self._start_exe)
+        self.parent.bind_all("<Control-x>", self.start_exe)
+        self.parent.bind_all("<Control-k>", self._kill_exe)
 
 
+        self.run_frame = None
         self.plot_frame = None
         self.config_frame = None
+        self.control_md_frame = None
 
     #----------------------------------------------------------------------
     def _create_menu(self):
@@ -80,7 +96,7 @@ class MApp(tk.Frame):
         self.menubar.add_cascade(label="Run", menu=menuExe)
 
         menuAnalysis = tk.Menu(self,tearoff=0) 
-        menuAnalysis.add_command(label="Thermodynamic plots", command=self._run_poszi)
+        menuAnalysis.add_command(label="Thermodynamic plots", command=self._run_stat)
         menuAnalysis.add_command(label="Radial Distribution Function", command=self._select_posff_file)
         self.menubar.add_cascade(label="Analysis", menu=menuAnalysis)
 
@@ -98,7 +114,33 @@ class MApp(tk.Frame):
     #----------------------------------------------------------------------
     def _create_panel_run(self):
         self.run_frame = tk.Frame(self.parent, name='run_frame')
-        self.run_frame.pack(side=tk.LEFT,fill=tk.Y)
+        self.run_frame.pack(side=tk.TOP,fill=tk.X)
+
+        lbl=tk.LabelFrame(self.run_frame,text="Input general information ", container=False,width=1000)
+#        lbl.grid(row=0, column=0,sticky=tk.W+tk.E,padx=5,pady=10)
+        lbl.pack(side=tk.TOP,fill=tk.X,padx=10,pady=10)
+        # control file 
+        lc = tk.Label(lbl, text="current control file : " ,justify = tk.LEFT)
+        lc.grid(row=0,column=0,sticky=tk.W,padx=5)
+        mc=tk.Message(lbl, textvariable=self.control_path , justify=tk.LEFT,width=1000)
+        mc.grid(row=0,column=1,sticky=tk.W,pady=1,padx=5)
+        # POSFF file 
+        lp = tk.Label(lbl, text="current config file : ",justify = tk.LEFT)
+        lp.grid(row=1,column=0,sticky=tk.W,padx=5)
+        mp=tk.Message(lbl, textvariable=self.posff_path , justify=tk.LEFT,width=1000)
+        mp.grid(row=1,column=1,sticky=tk.W,pady=1,padx=5)
+        # stdout file 
+        ls = tk.Label(lbl, text="standard output (std): ",justify = tk.LEFT)
+        ls.grid(row=2,column=0,sticky=tk.W,padx=5)
+        ms=tk.Message(lbl, textvariable=self.stdout_path , justify=tk.LEFT,width=1000)
+        ms.grid(row=2,column=1,sticky=tk.W,pady=1,padx=5)
+        # exe file 
+        lx = tk.Label(lbl, text="executable path : ",justify = tk.LEFT)
+        lx.grid(row=3,column=0,sticky=tk.W,padx=5)
+        mx=tk.Message(lbl, textvariable=self.exe_path , justify=tk.LEFT,width=1000)
+        mx.grid(row=3,column=1,sticky=tk.W,pady=1,padx=5)
+
+
 
     #----------------------------------------------------------------------
     def _create_panel_files(self):
@@ -137,7 +179,7 @@ class MApp(tk.Frame):
         self.frame_control.pack(side=tk.LEFT,fill=tk.Y)
         self.nb.add(self.frame_control, text='control.F', underline=0)
 
-        self.txt_control = tk.Text(self.frame_control,width=100,height=44)#,background="gray50") 
+        self.txt_control = tk.Text(self.frame_control,width=100,height=44,undo=True)#,background="gray50") 
         vscroll = ttk.Scrollbar(self.frame_control, orient=tk.VERTICAL, command=self.txt_control.yview)
         self.txt_control['yscroll'] = vscroll.set
         self.txt_control.grid(row=0, column=0,sticky=tk.N+tk.S)
@@ -151,13 +193,22 @@ class MApp(tk.Frame):
         self.txt_control.bind("<Any-KeyRelease>", self.highlight_control)
         self.txt_control.bind("<Any-ButtonRelease>", self.highlight_control)
 
-
+        file = open(self.control_path.get(), 'rb')
+        if file != None:
+            content = file.read()
+            self.txt_control.delete('1.0','end')
+            self.txt_control.insert('1.0',content)
+            file.close()
+        self.txt_control.update()
 
     #----------------------------------------------------------------------
     def highlight_control(self, event=None):
 
+        '''
+            put some colors on control panel
+        '''
 
-
+        #tags highlight 
         counts = []
         self.txt_control.tag_remove("tag", "1.0", "end")
         keys = ["controltag","mdtag","fieldtag","stochiotag","end"]
@@ -174,6 +225,7 @@ class MApp(tk.Frame):
                 self.txt_control.mark_set("matchEnd", "%s+%sc" % (index, counts[-1].get()))
                 self.txt_control.tag_add("tag", "matchStart", "matchEnd")
 
+        #values (numbers, boolean)
         counts = []
         self.txt_control.tag_remove("int", "1.0", "end")
         keys = ["1","2",'3','4','5','6','7','8','9','0','d0','_dp','.true.','.false.'] + all_values_allowed
@@ -190,6 +242,7 @@ class MApp(tk.Frame):
                 self.txt_control.mark_set("matchEnd", "%s+%sc" % (index, counts[-1].get()))
                 self.txt_control.tag_add("int", "matchStart", "matchEnd")
 
+        # parameters name 
         counts = []
         self.txt_control.tag_remove("tag2", "1.0", "end")
         keys = namelist_all
@@ -206,6 +259,7 @@ class MApp(tk.Frame):
                 self.txt_control.mark_set("matchEnd", "%s+%sc" % (index, counts[-1].get()))
                 self.txt_control.tag_add("tag2", "matchStart", "matchEnd")
 
+        #comments
         self.txt_control.tag_remove("comment", "1.0", tk.END)
 
         counts=tk.IntVar()
@@ -234,12 +288,19 @@ class MApp(tk.Frame):
         xscroll.grid(row=1,column=0,sticky=tk.W+tk.E,pady=5)
         yscroll.grid(row=0,column=2,sticky=tk.N+tk.S,padx=5)
 
+        file = open(self.posff_path.get(), 'rb')
+        if file != None:
+            content = file.read()
+            self.txt_posff.delete('1.0','end')
+            self.txt_posff.insert('1.0',content)
+            file.close()
+
 
     #----------------------------------------------------------------------
     def _create_control_file(self,calc):
         filename='control_'+calc+'.F'
         if calc in ["full",'empty','stochio'] :
-            get_control_file(calc)
+            get_control_file(calc,default_values,None,default_values,None,default_values,None)
             file = open(filename, 'rb')
             if file != None:
                 content = file.read()
@@ -247,18 +308,226 @@ class MApp(tk.Frame):
                 self.txt_control.insert('1.0',content)
                 file.close()
         elif calc == "md":
+            self.md_values = default_values.copy()
+            self.field_values = default_values.copy()
+            self.control_values = default_values.copy()
+            # remove possible frame in the same region
+            if self.plot_frame is not None :
+                self.plot_frame.destroy()
+            if self.config_frame is not None :    
+                self.config_frame .destroy()
+
             self.control_md_frame = tk.Frame(self.parent, name='control_md_frame')
             self.control_md_frame.pack(side=tk.LEFT,fill=tk.BOTH)
-            mainlabel = tk.Label(self.control_md_frame, text="Construct control.F for calc='md'")
-            mainlabel.grid(row=0,column=0,sticky=tk.W+tk.E,pady=5,padx=10)
+#            mainlabel = tk.Label(self.control_md_frame, text="Construct control.F for calc='md' \n(mind only few parameters can be access from this GUI)")
+#            mainlabel.grid(row=0,column=0,sticky=tk.W+tk.E,pady=5,padx=10)
+       
+
+            # integrator
+            lintegrator = tk.Label(self.control_md_frame, text="integrator")
+            lintegrator.grid(row=1,column=0,sticky=tk.W+tk.E,pady=5,padx=5)
+            self.cv_integrator={'NVE':tk.IntVar(),'NVT':tk.IntVar(),'NPT':tk.IntVar()}
+            self.cv_integrator['NVE'].set(0)
+            self.cv_integrator['NVT'].set(0)
+            self.cv_integrator['NPT'].set(0)
+
+            self.cb_integrator_nve = tk.Checkbutton(self.control_md_frame, text='NVE', variable=self.cv_integrator['NVE'],  onvalue = 1, offvalue = 0 , command=self._cb_integrator_nve)
+            self.cb_integrator_nve.grid(row=1,column=1,sticky=tk.W+tk.E,pady=5,padx=5)
+
+            self.cb_integrator_nvt = tk.Checkbutton(self.control_md_frame, text='NVT', variable=self.cv_integrator['NVT'],  onvalue = 1, offvalue = 0 , command=self._cb_integrator_nvt)
+            self.cb_integrator_nvt.grid(row=1,column=2,sticky=tk.W+tk.E,pady=5,padx=5)
+
+            self.cb_integrator_npt = tk.Checkbutton(self.control_md_frame, text='NPT', variable=self.cv_integrator['NPT'],  onvalue = 1, offvalue = 0 , command=self._cb_integrator_npt)
+            self.cb_integrator_npt.grid(row=1,column=3,sticky=tk.W+tk.E,pady=5,padx=5)
+
+
+            #potential
+            lpot = tk.Label(self.control_md_frame, text="potential")
+            lpot.grid(row=2,column=0,sticky=tk.W+tk.E,pady=5,padx=5)
+            self.cv_pot={'LJ':tk.IntVar(),'Morse':tk.IntVar(),'RI':tk.IntVar(),'BMHFTD':tk.IntVar(),'PIM':tk.IntVar()}
+            self.cv_pot['LJ'].set(0)
+            self.cv_pot['Morse'].set(0)
+            self.cv_pot['RI'].set(0)
+            self.cv_pot['BMHFTD'].set(0)
+            self.cv_pot['PIM'].set(0)
+    
+            self.cb_pot_lj = tk.Checkbutton(self.control_md_frame, text='Lennard-Jones', variable=self.cv_pot['LJ'],  onvalue = 1, offvalue = 0 , command=self._cb_pot_lj)
+            self.cb_pot_lj.grid(row=2,column=1,sticky=tk.W+tk.E,pady=5,padx=5)
+
+            self.cb_pot_morse = tk.Checkbutton(self.control_md_frame, text='Morse', variable=self.cv_pot['Morse'],  onvalue = 1, offvalue = 0 , command=self._cb_pot_morse)
+            self.cb_pot_morse.grid(row=2,column=2,sticky=tk.W+tk.E,pady=5,padx=5)
+
+            self.cb_pot_ri = tk.Checkbutton(self.control_md_frame, text='Rigid Ion', variable=self.cv_pot['RI'],  onvalue = 1, offvalue = 0 , command=self._cb_pot_ri)
+            self.cb_pot_ri.grid(row=2,column=3,sticky=tk.W+tk.E,pady=5,padx=5)
+
+
+            self.cb_pot_bmhftd = tk.Checkbutton(self.control_md_frame, text='BMHFTD', variable=self.cv_pot['BMHFTD'],  onvalue = 1, offvalue = 0 , command=self._cb_pot_bmhftd)
+            self.cb_pot_bmhftd.grid(row=2,column=4,sticky=tk.W+tk.E,pady=5,padx=5)
+
+            self.cb_pot_pim = tk.Checkbutton(self.control_md_frame, text='PIM', variable=self.cv_pot['PIM'],  onvalue = 1, offvalue = 0 , command=self._cb_pot_pim)
+            self.cb_pot_pim.grid(row=2,column=5,sticky=tk.W+tk.E,pady=5,padx=5)
+
+            gene=tk.Button(self.control_md_frame, text="Generate control file", command = lambda:self._gene_md(calc))
+            gene.grid(row=9,column=0,columnspan=5,sticky=tk.W+tk.E,pady=5)
+
         
         self.nb.select(0) # show control tab
+    #----------------------------------------------------------------------
+    def _gene_md(self,calc):
+        filename='control_'+calc+'.F'
+        kintegration=None
+        kcontrol=None
+        kpotential=None
+
+        if self.cv_integrator['NVE'].get() == 1 :
+            kintegration='NVE'
+        if self.cv_integrator['NVT'].get() == 1 :
+            kintegration='NVT'
+        if self.cv_integrator['NPT'].get() == 1 :
+            kintegration='NPT'
+        if self.cv_pot['LJ'].get() == 1 :
+            kpotential = 'LJ'
+            kcontrol='LJ'
+        if self.cv_pot['Morse'].get() == 1 :
+            kpotential = 'Morse'
+            kcontrol='Morse'
+        if self.cv_pot['PIM'].get() == 1 :
+            kpotential = 'PIM'
+            kcontrol='PIM'
+        if self.cv_pot['RI'].get() == 1 :
+            kpotential = 'RI'
+            kcontrol='RI'
+        if self.cv_pot['BMHFTD'].get() == 1 :
+            kpotential = 'BMHFTD'
+            kcontrol='BMHFTD'
+        get_control_file(calc,self.control_values,kcontrol,self.md_values,kintegration,self.field_values,kpotential)
+        file = open(filename, 'rb')
+        if file != None:
+            content = file.read()
+            self.txt_control.delete('1.0','end')
+            self.txt_control.insert('1.0',content)
+            file.close()
+        self.nb.select(0) # show control tab
+
+    #----------------------------------------------------------------------
+    def _cb_pot_lj(self,event=None):
+        if self.cv_pot['LJ'].get() == 0:
+            self.cb_pot_morse.configure(state="normal")
+            self.cb_pot_ri.configure(state="normal")
+            self.cb_pot_pim.configure(state="normal")
+            self.cb_pot_bmhftd.configure(state="normal")
+        else:
+            self.cb_pot_morse.configure(state=tk.DISABLED)
+            self.cb_pot_ri.configure(state=tk.DISABLED)
+            self.cb_pot_pim.configure(state=tk.DISABLED)
+            self.cb_pot_bmhftd.configure(state=tk.DISABLED)
+            self.control_values['lnmlj'] = ".true."
+            self.control_values['lvnlist'] = ".true."
+            self.control_values['lreduced'] = ".true."
+
+
+    #----------------------------------------------------------------------
+    def _cb_pot_ri(self,event=None):
+        if self.cv_pot['RI'].get() == 0:
+            self.cb_pot_morse.configure(state="normal")
+            self.cb_pot_lj.configure(state="normal")
+            self.cb_pot_pim.configure(state="normal")
+            self.cb_pot_bmhftd.configure(state="normal")
+        else:
+            self.cb_pot_morse.configure(state=tk.DISABLED)
+            self.cb_pot_lj.configure(state=tk.DISABLED)
+            self.cb_pot_pim.configure(state=tk.DISABLED)
+            self.cb_pot_bmhftd.configure(state=tk.DISABLED)
+            self.field_values['lautoES'] = ".true."
+            self.control_values['lcoulomb'] = ".true."
+            self.control_values['lbmhftd'] = ".true."
+            self.control_values['lbmhft'] = ".true."
+            self.control_values['lreduced'] = ".true."
+
+
+    #----------------------------------------------------------------------
+    def _cb_pot_morse(self,event=None):
+        if self.cv_pot['Morse'].get() == 0:
+            self.cb_pot_lj.configure(state="normal")
+            self.cb_pot_ri.configure(state="normal")
+            self.cb_pot_pim.configure(state="normal")
+            self.cb_pot_bmhftd.configure(state="normal")
+        else:
+            self.cb_pot_lj.configure(state=tk.DISABLED)
+            self.cb_pot_ri.configure(state=tk.DISABLED)
+            self.cb_pot_pim.configure(state=tk.DISABLED)
+            self.cb_pot_bmhftd.configure(state=tk.DISABLED)
+            self.control_values['lmorse'] = ".true."
+            self.control_values['lvnlist'] = ".true."
+            self.control_values['lreduced'] = ".true."
+
+    #----------------------------------------------------------------------
+    def _cb_pot_pim(self,event=None):
+        if self.cv_pot['PIM'].get() == 0:
+            self.cb_pot_morse.configure(state="normal")
+            self.cb_pot_ri.configure(state="normal")
+            self.cb_pot_lj.configure(state="normal")
+            self.cb_pot_bmhftd.configure(state="normal")
+        else:
+            self.cb_pot_morse.configure(state=tk.DISABLED)
+            self.cb_pot_ri.configure(state=tk.DISABLED)
+            self.cb_pot_lj.configure(state=tk.DISABLED)
+            self.cb_pot_bmhftd.configure(state=tk.DISABLED)
+            self.field_values['lautoES'] = ".true."
+            self.control_values['lcoulomb'] = ".true."
+            self.control_values['lbmhftd'] = ".true."
+            self.control_values['lbmhft'] = ".true."
+            self.control_values['lreduced'] = ".true."
+
+    #----------------------------------------------------------------------
+    def _cb_pot_bmhftd(self,event=None):
+        if self.cv_pot['BMHFTD'].get() == 0:
+            self.cb_pot_morse.configure(state="normal")
+            self.cb_pot_ri.configure(state="normal")
+            self.cb_pot_pim.configure(state="normal")
+            self.cb_pot_lj.configure(state="normal")
+        else:
+            self.cb_pot_morse.configure(state=tk.DISABLED)
+            self.cb_pot_ri.configure(state=tk.DISABLED)
+            self.cb_pot_pim.configure(state=tk.DISABLED)
+            self.cb_pot_lj.configure(state=tk.DISABLED)
+
+    #----------------------------------------------------------------------
+    def _cb_integrator_nve(self,event=None):
+        if self.cv_integrator['NVE'].get() == 0:
+            self.cb_integrator_nvt.configure(state="normal")
+            self.cb_integrator_npt.configure(state="normal")
+        else:
+            self.cb_integrator_nvt.configure(state=tk.DISABLED)
+            self.cb_integrator_npt.configure(state=tk.DISABLED)
+            self.md_values['integrator'] = "'nve-vv'"
+    #----------------------------------------------------------------------
+    def _cb_integrator_nvt(self,event=None):
+        if self.cv_integrator['NVT'].get() == 0:
+            self.cb_integrator_nve.configure(state="normal")
+            self.cb_integrator_npt.configure(state="normal")
+        else:
+            self.cb_integrator_nve.configure(state=tk.DISABLED)
+            self.cb_integrator_npt.configure(state=tk.DISABLED)
+            self.md_values['integrator'] = "'nvt-nhcn'"
+    #----------------------------------------------------------------------
+    def _cb_integrator_npt(self,event=None):
+        if self.cv_integrator['NPT'].get() == 0:
+            self.cb_integrator_nve.configure(state="normal")
+            self.cb_integrator_nvt.configure(state="normal")
+        else:
+            self.cb_integrator_nve.configure(state=tk.DISABLED)
+            self.cb_integrator_nvt.configure(state=tk.DISABLED)
+            self.md_values['integrator'] = "'npt-nhcnp'"
+
 
     #----------------------------------------------------------------------
     def _create_posff_file(self):
         # remove possible frame in the same region
         if self.plot_frame is not None :
             self.plot_frame.destroy()
+        if self.control_md_frame is not None :    
+            self.control_md_frame.destroy()
 
         self.config_frame = tk.Frame(self.parent, name='config_frame')
         self.config_frame.pack(side=tk.LEFT,fill=tk.BOTH)
@@ -556,9 +825,10 @@ class MApp(tk.Frame):
         cmd = { 'Linux'  :'xpdf '}
 
         try:
-            call([cmd[sys_pltfrm] + pdf_file_path], shell=True)
+            subprocess.call([cmd[sys_pltfrm] + pdf_file_path], shell=True)
         except OSError as err:
             sys.exit('Error opening pdf:\n\t{}'.format(err))
+
 
     #----------------------------------------------------------------------
     def _save_as(self):
@@ -580,34 +850,40 @@ class MApp(tk.Frame):
 
     #----------------------------------------------------------------------
     def _select_control_file(self):
-        self.control_path = tkFileDialog.askopenfilename(title="Select MDff control file",filetypes=[('control files','.F'),('all files','.*')])
-        file = open(self.control_path, 'rb')
+        self.control_path.set(tkFileDialog.askopenfilename(title="Select MDff control file",filetypes=[('control files','.F'),('all files','.*')]))
+        file = open(self.control_path.get(), 'rb')
         if file != None:
             content = file.read()
             self.txt_control.delete('1.0','end')
             self.txt_control.insert('1.0',content)
             file.close()
         self.txt_control.update()
+        self.nb.select(0) # show control tab
 
     #----------------------------------------------------------------------
     def _select_posff_file(self):
-        self.posff_path = tkFileDialog.askopenfilename(title="Select MDff POSFF file",filetypes=[('POSFF files','POSFF* CONTFF*'),('all files','*')])
-        file = open(self.posff_path, 'rb')
+        self.posff_path.set(tkFileDialog.askopenfilename(title="Select MDff POSFF file",filetypes=[('POSFF files','POSFF* CONTFF*'),('all files','*')]))
+        file = open(self.posff_path.get(), 'rb')
         if file != None:
             content = file.read()
             self.txt_posff.delete('1.0','end')
             self.txt_posff.insert('1.0',content)
             file.close()
+        self.nb.select(1) # show posff tab
     #----------------------------------------------------------------------
     def _select_exe(self):
-        self.exe_path = tkFileDialog.askopenfilename(title="Select MDff executable",filetypes=[('exe files','.x'),('all files','.*')])
+        self.exe_path.set(tkFileDialog.askopenfilename(title="Select MDff executable",filetypes=[('exe files','.x'),('all files','.*')]))
+    #----------------------------------------------------------------------
+    def start_exe(self,event):
+        self._start_exe()
     #----------------------------------------------------------------------
     def _start_exe(self):
 
+        os.system("cp "+self.posff_path.get()+" POSFF")
         self.nb.select(2) # show log tab
-        proc = subprocess.Popen('mpirun '+self.exe_path+' '+self.control_path, stdout=subprocess.PIPE, shell=True)
+        self.proc = subprocess.Popen('mpirun '+self.exe_path.get()+' '+self.control_path.get(), stdout=subprocess.PIPE ,shell=True, preexec_fn=os.setsid)
         while True:
-            line = proc.stdout.readline()
+            line = self.proc.stdout.readline()
             if line != '':
                 l = line.rstrip()
                 self.txt_stdout.insert(tk.END, l+"\n")
@@ -616,21 +892,28 @@ class MApp(tk.Frame):
 
             else:
                 break
+        
+
+    #----------------------------------------------------------------------
+    def _kill_exe(self,event):
+
+        os.killpg(os.getpgid(self.proc.pid), signal.SIGTERM)
+
     #----------------------------------------------------------------------
     def _quit(self,event):
         sys.exit(0)
     #----------------------------------------------------------------------
     def _save(self,event):
         if self.nb.tab(self.nb.select(), "text") == "control.F" :
-            if os.path.isfile(self.control_path) :
-                file_ = open(self.control_path,'w')
+            if os.path.isfile(self.control_path.get()) :
+                file_ = open(self.control_path.get(),'w')
                 text2save=str(self.txt_control.get(0.0,tk.END))
                 file_.write(text2save)
                 file_.close
             else:
                 self._save_as()
         elif self.nb.tab(self.nb.select(), "text") == "POSFF":
-            if os.path.isfile(self.posff_path) :
+            if os.path.isfile(self.posff_path.get()) :
                 file_ = open(self.posff_path,'w')
                 text2save=str(self.txt_posff.get(0.0,tk.END))
                 file_.write(text2save)
@@ -638,59 +921,78 @@ class MApp(tk.Frame):
             else:
                 self._save_as()
         elif self.nb.tab(self.nb.select(), "text") == "log":
-            if os.path.isfile(self.stdout_path) :
-                file_ = open(self.stdout_path,'w')
+            if os.path.isfile(self.stdout_path.get()) :
+                file_ = open(self.stdout_path.get(),'w')
                 text2save=str(self.txt_stdout.get(0.0,tk.END))
                 file_.write(text2save)
                 file_.close
             else:
                 self._save_as()
     #----------------------------------------------------------------------
+    def _run_stat(self):
+        self.tstat = tk.Toplevel()
+        self.tstat.title("How many points ?")
+        lstat = tk.Label(self.tstat,text="#points ? (all)")
+        lstat.grid(row=0,column=0)
+        self.last_points=tk.StringVar(None)
+        estat = tk.Entry(self.tstat,textvariable=self.last_points)
+        estat.grid(row=1,column=0)
+        #estat.bind("<Return>",self._kill_window())
+        self.tstat.wait_window()
+        self._run_poszi()
+
+    #----------------------------------------------------------------------
+    def _kill_window(self):
+        print "inside _kill_window"
+        self.tstat.quit()
+
+    #----------------------------------------------------------------------
     def _run_poszi(self):
+
         filename='OSZIFF'
         if not os.path.isfile('OSZIFF') :
             tkMessageBox.showinfo("File missing", "OSZIFF file is missing for analysis")
             return
-        last_points=None
         if format_filename(filename):
             self.name_quant,self.alldata = read_OSZIFF(filename)
         else:
             raise ValueError('Format of input file doesnt match OSZIFF')
-    
-        if last_points == None :
-            last_points = len(self.alldata[0])
+     
+        if self.last_points.get() == 'all' or self.last_points.get() == '' :
+            lp = len(self.alldata[0])
         else:
-            last_points = int( last_points )
+            lp = int( self.last_points.get() )
+
+        print lp,self.last_points.get()
     
-        print len(self.alldata[0])," points in input file"
-        print "averaging on last",last_points,"points"
-    
-        self.average=averaging(self.name_quant,self.alldata,last_points)
+        self.average,self.ainfo=averaging(self.name_quant,self.alldata,lp)
 
         self._create_plot() 
+        self._average_info()
     
     #----------------------------------------------------------------------
-    def _new_plot(self):
+    def _new_plot(self,lp):
 
         self.f=Figure()
         self.a = self.f.add_subplot(111)
         q=[2,12]
         title='Total Energy MD'
-        t = self.alldata[1]
-        s = self.alldata[q[0]]
+        t = self.alldata[1][-lp:]
+        s = self.alldata[q[0]][-lp:]
         x1= [self.average[q[0]]]*len(t)
         self.a.plot(t, s,'b')
         self.a.plot(t, x1, '--' , color='b')
-        s = self.alldata[q[1]]
+        s = self.alldata[q[1]][-lp:]
         x1= [self.average[q[1]]]*len(t)
         self.a.plot(t, s , 'g')
         self.a.plot(t, x1, '--', color='g')
-        self.a.set_xlabel('time (ps)')
-        self.a.set_ylabel(self.name_quant[q[0]])
+        self.a.set_xlabel(self.name_quant[1]+units[self.name_quant[1]])
+        self.a.set_ylabel(self.name_quant[q[0]]+units[self.name_quant[q[0]]])
         self.a.set_title(title)
 
     #----------------------------------------------------------------------
-    def _update_plot(self,delta):
+    def _update_plot(self,delta,lp):
+        self.a.clear()
         self.k+=delta
         if self.k > 3 :
             self.k = 3
@@ -703,29 +1005,35 @@ class MApp(tk.Frame):
         qs=[2,4,7,11]
         q=qs[self.k]
         title=titles[self.k]
-        t = self.alldata[1]
-        s = self.alldata[q]
+        t = self.alldata[1][-lp:]
+        s = self.alldata[q][-lp:]
         x1= [self.average[q]]*len(t)
         self.a.plot(t, s,'b')
         self.a.plot(t, x1, '--' , color='b')
         if self.k == 0 :
-            s = self.alldata[12]
+            s = self.alldata[12][-lp:]
             x1= [self.average[12]]*len(t)
             self.a.plot(t, s , 'g')
-        self.a.set_xlabel('time (ps)')
-        self.a.set_ylabel(self.name_quant[q])
+        self.a.set_xlabel(self.name_quant[1]+units[self.name_quant[1]])
+        self.a.set_ylabel(self.name_quant[q]+units[self.name_quant[q]])
         self.a.set_title(title)
         self.canvas.draw()
-        self.a.clear()
 
     #----------------------------------------------------------------------
     def _create_plot(self):
         if self.config_frame is not None :
             self.config_frame.destroy()
+        if self.control_md_frame is not None :    
+            self.control_md_frame.destroy()
         self.plot_frame = tk.Frame(self.parent, name='plot_frame')
         self.plot_frame.pack(side=tk.LEFT,fill=tk.Y)
 
-        self._new_plot()
+
+        if self.last_points.get() == 'all' or self.last_points.get() == '' :
+            lp = len(self.alldata[0])
+        else:
+            lp = int( self.last_points.get() )
+        self._new_plot(lp)
         self.canvas = FigureCanvasTkAgg(self.f, self.plot_frame)
         self.canvas.draw()
         self.canvas.show()
@@ -733,13 +1041,32 @@ class MApp(tk.Frame):
 
         toolbar = NavigationToolbar2TkAgg(self.canvas, self.plot_frame)
         toolbar.update()
-        self.canvas._tkcanvas.pack(side=tk.BOTTOM,fill=tk.X)
+        self.canvas._tkcanvas.pack(side=tk.TOP,fill=tk.X)
 
         self.k=0
-        previous_button = tk.Button(self.plot_frame, text="Previous Plot", command = lambda : self._update_plot(-1))
-        next_button = tk.Button(self.plot_frame, text="Next Plot", command = lambda : self._update_plot(1))
-        previous_button.pack(side=tk.BOTTOM)
-        next_button.pack(side=tk.BOTTOM)
+        previous_button = tk.Button(self.plot_frame, text="Previous Plot", command = lambda : self._update_plot(-1,lp),width=10)
+        next_button = tk.Button(self.plot_frame, text="Next Plot", command = lambda : self._update_plot(1,lp),width=10)
+        previous_button.pack(side=tk.LEFT)
+        next_button.pack(side=tk.LEFT)
+    #----------------------------------------------------------------------
+    def _average_info(self):
+        ainfo = tk.Toplevel()
+        ainfo.title("Run statistics")
+        ainfo.geometry('%dx%d+%d+%d' % (700, 320, 0, 0) )
+        ainfo.update()
+        ainfo_message='\n'
+        ainfo_message=str(len(self.alldata[0]))+" points in input file\n"
+        ainfo_message+="averaging on last "+str(self.last_points.get())+" points\n"
+        ainfo_message+='\n'
+        for l in self.ainfo:
+            ll='{0:<14} {1:<10} {2:15.8e} {3:^10} {4:15.8e} \n'.format("<"+l[0]+">","=",l[1],"std.",l[2])
+            ll.ljust(70)
+            ainfo_message+=ll
+        font = tkFont.Font(family="Courier", size=11,weight='bold')
+        msg = tk.Message(ainfo, text=ainfo_message , anchor='center',width=1000,font=font)
+        msg.pack(expand=True, fill='x',padx=10,pady=20)
+        msg.bind("<Configure>", lambda e: msg.configure(width=e.width-10))
+
     #----------------------------------------------------------------------
     def _nothing(self):
         pass
