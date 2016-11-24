@@ -21,7 +21,7 @@
 !#define debug
 !#define debug_ES
 !#define debug_ES_field_forces
-#define debug_ES_energy
+!#define debug_ES_energy
 !#define debug_ES_stress
 !#define debug_ES_efg
 !#define debug_ES_dir
