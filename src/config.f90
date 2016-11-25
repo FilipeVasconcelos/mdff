@@ -258,8 +258,6 @@ END SUBROUTINE write_CONTFF
 ! ******************************************************************************
 SUBROUTINE config_alloc
 
-  USE control,  ONLY :  calc , lvnlist
-
   implicit none
 
   allocate( rx  ( natm ) , ry ( natm )  , rz ( natm ) )
@@ -330,7 +328,7 @@ END SUBROUTINE config_alloc
 ! ******************************************************************************
 SUBROUTINE config_dealloc
 
-  USE control, ONLY : lvnlist , calc
+  USE control, ONLY : calc
 
   implicit none 
        

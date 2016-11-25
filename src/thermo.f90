@@ -116,8 +116,8 @@ SUBROUTINE calc_thermo
 
   USE constants,                ONLY :  boltz_unit , press_unit
   USE control,                  ONLY :  lreducedN , lcsvr
-  USE config,                   ONLY :  natm , rho , simu_cell 
-  USE md,                       ONLY :  integrator, press, itime
+  USE config,                   ONLY :  natm ,  simu_cell 
+  USE md,                       ONLY :  integrator, press!, itime
   USE io,                       ONLY :  ioprint
 
   implicit none
@@ -332,10 +332,9 @@ END SUBROUTINE general_accumulator
 SUBROUTINE write_thermo ( step , kunit , key )
 
   USE constants,        ONLY :  time_unit
-  USE control,  ONLY :  lcsvr
-  USE config,   ONLY :  simu_cell 
-  USE io,       ONLY :  ionode
-  USE md,       ONLY :  nve_ensemble , nvt_ensemble , npt_ensemble , npe_ensemble , dt , integrator, xi, vxi, xib, vxib, xe, ve, nhc_n
+  USE config,           ONLY :  simu_cell 
+  USE io,               ONLY :  ionode
+  USE md,               ONLY :  dt
 
   implicit none
 
@@ -408,7 +407,6 @@ END SUBROUTINE write_thermo
 
 SUBROUTINE write_average_thermo ( kunit )
 
-  USE md,       ONLY :  dt
   USE io,       ONLY :  ionode
 
   implicit none

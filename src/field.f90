@@ -49,7 +49,7 @@ MODULE field
   USE config,                           ONLY :  ntypemax 
   USE kspace,                           ONLY :  kmesh 
   USE rspace,                           ONLY :  rmesh
-  USE io,                               ONLY :  ionode
+  USE io,                               ONLY :  ionode, stdin, stdout, ioprintnode
   USE tensors_rk,                       ONLY :  interaction_dd
   USE mpimdff
 
@@ -297,7 +297,6 @@ SUBROUTINE field_check_tag
 
   USE control,                  ONLY :  lbmhftd , lbmhft , lcoulomb
   USE config,                   ONLY :  ntype , natm , dipia
-  USE io,                       ONLY :  ionode , stdout
   USE tt_damp,                  ONLY :  maximum_of_TT_expansion , get_TT_damp
 
   implicit none
@@ -479,7 +478,6 @@ END SUBROUTINE field_check_tag
 SUBROUTINE field_init
 
   USE control,                  ONLY :  calc , lnmlj , lcoulomb , lmorse , longrange, non_bonded
-  USE io,                       ONLY :  ionode, stdin, stdout 
 
   implicit none
 
@@ -611,7 +609,6 @@ SUBROUTINE field_print_info ( kunit , quiet )
 
   USE config,           ONLY :  natm , ntype , atype , atypei , natmi , simu_cell , rho 
   USE control,          ONLY :  calc , cutshortrange , lnmlj , lmorse , lbmhft , lbmhftd , lcoulomb , longrange , lreducedN , cutlongrange
-  USE io,               ONLY :  ionode 
   USE constants,        ONLY :  pi , pisq, g_to_am
 
   implicit none
@@ -969,7 +966,6 @@ SUBROUTINE ewald_param
   USE constants,                ONLY :  pi , pisq
   USE config,                   ONLY :  simu_cell 
   USE control,                  ONLY :  cutlongrange
-  USE io,                       ONLY :  stdout
 
   implicit none
 
@@ -1023,7 +1019,6 @@ SUBROUTINE initialize_param_non_bonded
   USE constants,                ONLY :  tpi , press_unit
   USE config,                   ONLY :  ntypemax , natm , natmi , rho , atype , itype  , ntype , simu_cell
   USE control,                  ONLY :  skindiff , cutshortrange , calc
-  USE io,                       ONLY :  ionode, stdout
 
   implicit none
 
@@ -1219,7 +1214,7 @@ SUBROUTINE engforce_driver
 
   USE config,                   ONLY :  natm , ntype, system , simu_cell, atypei ,natmi, atype, itype 
   USE control,                  ONLY :  lnmlj , lcoulomb , lbmhft , lbmhftd, lmorse , lharm , longrange, non_bonded, iefgall_format
-  USE io,                       ONLY :  ionode , stdout , kunit_DIPFF, kunit_EFGALL , kunit_EFALL
+  USE io,                       ONLY :  kunit_DIPFF, kunit_EFGALL , kunit_EFALL
 
   implicit none
 
@@ -1306,11 +1301,10 @@ END SUBROUTINE engforce_driver
 SUBROUTINE engforce_nmlj_pbc 
 
   USE constants,                ONLY :  press_unit
-  USE config,                   ONLY :  natm , rx , ry , rz , fx , fy , fz, vx, vy , vz , tau_nonb ,  &
+  USE config,                   ONLY :  natm , rx , ry , rz , fx , fy , fz, tau_nonb ,  &
                                         atype , itype , verlet_vdw , ntype , simu_cell , atom_dec
   USE control,                  ONLY :  lvnlist 
   USE thermodynamic,            ONLY :  u_lj , vir_lj , write_thermo
-  USE io,                       ONLY :  stdout
   USE time,                     ONLY :  forcetimetot 
   USE cell,                     ONLY :  kardir , dirkar
 
@@ -1850,9 +1844,7 @@ END SUBROUTINE finalize_coulomb
 ! ******************************************************************************
 SUBROUTINE induced_moment_inner ( f_ind_ext , mu_ind , theta_ind )
 
-  USE constants,        ONLY : coul_unit
   USE config,           ONLY : natm , itype , atypei, ntype , poldipia, invpoldipia, atype 
-  USE io,               ONLY : stdout, ioprintnode
 
   implicit none
 
@@ -1866,7 +1858,7 @@ SUBROUTINE induced_moment_inner ( f_ind_ext , mu_ind , theta_ind )
   real(kind=dp) :: efg_dummy(3,3,natm)
   real(kind=dp) :: alphaES_save
   real(kind=dp) :: rmsd_inner, rmsd_ref 
-  integer :: alpha , beta, npol
+  integer :: alpha , beta
   integer :: ia , it , ja  
   integer :: iscf_inner 
   logical :: task_ind(3)
@@ -1979,9 +1971,7 @@ END SUBROUTINE induced_moment_inner
 ! ******************************************************************************
 SUBROUTINE induced_moment ( Efield , mu_ind )
 
-  USE constants,        ONLY : coul_unit
   USE config,           ONLY : natm , itype , atypei, ntype , poldipia, atype 
-  USE io,               ONLY : stdout
 
   implicit none
 
@@ -2037,7 +2027,6 @@ SUBROUTINE multipole_ES ( ef , efg , mu , theta , task , damp_ind , &
   USE constants,        ONLY :  tpi , piroot, coul_unit, press_unit
   USE config,           ONLY :  natm, qia, rx ,ry ,rz, simu_cell, fx, fy, fz, tau_coul, atype 
   USE thermodynamic,    ONLY :  u_coul, u_pol, pvirial_coul
-  USE io,               ONLY :  stdout
   USE time,             ONLY :  fcoultimetot1 , fcoultimetot2
   USE tensors_rk,       ONLY :  interaction_dd
   USE dumb
@@ -2066,7 +2055,7 @@ SUBROUTINE multipole_ES ( ef , efg , mu , theta , task , damp_ind , &
   real(kind=dp) :: tau_rec( 3 , 3 )
   real(kind=dp) :: qtot ( 3 ) , qsq , mutot ( 3 ) , musq , qmu_sum ( 3 ) , thetasq
   real(kind=dp) :: tpi_V, tpi_3V , fpi_3V , alpha2 , selfa , selfa2, selfa3
-  real(kind=dp) :: ttt1, ttt2 , ttt3, ttt4
+  real(kind=dp) :: ttt1, ttt2 
   real(kind=dp) :: u_self_1 , u_self_2, u_self_3
 
 #ifdef debug_ES
@@ -2299,7 +2288,6 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
   USE config,                   ONLY :  natm, ntype,simu_cell, qia, rx ,ry ,rz ,itype , atom_dec, verlet_coul , atype, poldipia, ipolar
   USE constants,                ONLY :  piroot
   USE cell,                     ONLY :  kardir , dirkar
-  USE io,                       ONLY :  stdout, ionode, ioprintnode, ioprint
   USE tensors_rk,               ONLY :  tensor_rank0, tensor_rank1, tensor_rank2, tensor_rank3 , tensor_rank4 , tensor_rank5
   USE dumb
  
@@ -2354,7 +2342,7 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
   TYPE ( tensor_rank2 ) :: T2
   TYPE ( tensor_rank3 ) :: T3
   TYPE ( tensor_rank4 ) :: T4
-  TYPE ( tensor_rank5 ) :: T5
+!  TYPE ( tensor_rank5 ) :: T5
 
   charge_charge         = task(1)
   charge_dipole         = task(2)
@@ -2728,7 +2716,7 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
           !   nb of components = 243 => reduced = ?
           ! =========================================
           !T5%abcde = 0.0_dp
-          !F5_dm11 = dm11 * F5 * 945.0_dp
+          F5_dm11 = dm11 * F5 * 945.0_dp
           !do i = 1 , 3
           !  do j = 1 , 3
           !    do k = 1 , 3
@@ -3055,7 +3043,7 @@ SUBROUTINE multipole_ES_rec ( u_rec , ef_rec, efg_rec , fx_rec , fy_rec , fz_rec
   USE constants,                ONLY :  imag, tpi
   USE config,                   ONLY :  natm, rx ,ry, rz, qia, simu_cell
   USE kspace,                   ONLY :  charge_density_k_q , charge_density_k_mu , struc_fact
-  USE time,                     ONLY :  fcoultimetot2_2
+!  USE time,                     ONLY :  fcoultimetot2_2
   USE dumb
 
   implicit none
@@ -3079,10 +3067,10 @@ SUBROUTINE multipole_ES_rec ( u_rec , ef_rec, efg_rec , fx_rec , fy_rec , fz_rec
   real(kind=dp)     :: kx   , ky   , kz , kk, Ak
   real(kind=dp)     :: rxi  , ryi  , rzi
   real(kind=dp)     :: fxij , fyij , fzij
-  real(kind=dp)     :: str, str_frc, k_dot_r ,  k_dot_mu , K_dot_Q , recarg, kcoe , rhonk_R , rhonk_I, recarg2
-  real(kind=dp)     :: alpha2, tpi_V , fpi_V , f0
-  real(kind=dp)     :: rhonk_R_st_x , rhonk_R_st_y , rhonk_R_st_z 
-  real(kind=dp)     :: rhonk_I_st_x , rhonk_I_st_y , rhonk_I_st_z 
+  real(kind=dp)     :: str, k_dot_r ,  k_dot_mu , K_dot_Q , recarg, kcoe , rhonk_R , rhonk_I, recarg2
+  real(kind=dp)     :: alpha2, tpi_V , fpi_V 
+!  real(kind=dp)     :: rhonk_R_st_x , rhonk_R_st_y , rhonk_R_st_z 
+!  real(kind=dp)     :: rhonk_I_st_x , rhonk_I_st_y , rhonk_I_st_z 
   real(kind=dp)     ,dimension (:), allocatable :: ckr , skr, tmp 
   real(kind=dp)     :: ckria , skria
   real(kind=dp)     :: tau_rec_tmp(3,3) 
@@ -3381,11 +3369,10 @@ END SUBROUTINE multipole_ES_rec
 SUBROUTINE engforce_bmhftd_pbc
 
   USE constants,                ONLY :  press_unit
-  USE config,                   ONLY :  natm , rx , ry , rz , fx , fy , fz, vx, vy , vz , tau_nonb ,  &
+  USE config,                   ONLY :  natm , rx , ry , rz , fx , fy , fz, tau_nonb ,  &
                                         atype , itype , verlet_vdw , ntype , simu_cell , atom_dec
   USE control,                  ONLY :  lvnlist , lbmhftd
   USE thermodynamic,            ONLY :  u_bmhft , vir_bmhft , write_thermo
-  USE io,                       ONLY :  stdout
   USE time,                     ONLY :  forcetimetot 
   USE cell,                     ONLY :  kardir , dirkar
 
@@ -3549,7 +3536,6 @@ SUBROUTINE engforce_morse_pbc
   USE control,                  ONLY :  lvnlist  
   USE thermodynamic,            ONLY :  u_morse , vir_morse
   USE time,                     ONLY :  forcetimetot
-  USE io,                       ONLY :  stdout , ionode
   USE cell,                     ONLY :  kardir , dirkar
 
   implicit none
@@ -3708,13 +3694,14 @@ END SUBROUTINE engforce_morse_pbc
 ! ******************************************************************************
 SUBROUTINE moment_from_pola_scf ( mu_ind , theta_ind , didpim ) 
 
-  USE io,               ONLY :  ionode , stdout , ioprintnode
   USE constants,        ONLY :  coul_unit
   USE config,           ONLY :  natm , atype , fx , fy , fz , ntype , dipia , quadia , qia , ntypemax, poldipia , invpoldipia , itype 
   USE control,          ONLY :  longrange , calc
   USE thermodynamic,    ONLY :  u_pol, u_coul
   USE time,             ONLY :  time_moment_from_pola
+#ifdef debug_print_dipff_scf  
   USE md,               ONLY :  itime
+#endif
 
   implicit none
 
@@ -3723,14 +3710,14 @@ SUBROUTINE moment_from_pola_scf ( mu_ind , theta_ind , didpim )
   real(kind=dp) , intent (out) :: theta_ind ( : , : , : ) 
 
   ! local
-  integer :: ia , iscf , it , npol, alpha, beta, t 
+  integer :: ia , iscf , it , alpha, beta
   logical :: linduced , didpim
-  real(kind=dp) :: tttt , tttt2 , alphaES_save
+  real(kind=dp) :: tttt ,alphaES_save
   real(kind=dp) :: u_coul_stat , rmsd , u_coul_pol, u_coul_ind
   real(kind=dp) :: Efield( 3 , natm ) , Efield_stat ( 3 , natm ) , Efield_ind ( 3 , natm ), EfieldG_stat ( 3 , 3 , natm ) , EfieldG_ind ( 3 , 3 , natm )
-  real(kind=dp) :: qia_tmp ( natm )  , qch_tmp ( ntypemax ) , conv_tol_ind_ , rmsd_gmin
+  real(kind=dp) :: qia_tmp ( natm )  , qch_tmp ( ntypemax ) 
   logical       :: task_static (3), task_ind(3), ldip
-  real(kind=dp) , dimension (:,:) , allocatable :: f_ind , dmu_ind, f_ind_prev , gmin , mu_prev, dmin, zerovec, g_ind
+  real(kind=dp) , dimension (:,:) , allocatable :: f_ind , mu_prev
 #ifdef debug_print_dipff_scf
   integer :: kkkk
 #endif 
@@ -3744,7 +3731,7 @@ SUBROUTINE moment_from_pola_scf ( mu_ind , theta_ind , didpim )
 #endif
 
 
-  tttt2=0.0_dp
+  tttt=0.0_dp
 #ifdef MPI
   statime
 #endif
@@ -3968,13 +3955,14 @@ END SUBROUTINE moment_from_pola_scf
 ! ******************************************************************************
 SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , theta_ind , didpim )
 
-  USE io,               ONLY :  ionode , stdout , ioprintnode
   USE constants,        ONLY :  coul_unit
   USE config,           ONLY :  natm , atype , fx , fy , fz , ntype , dipia , quadia , qia , ntypemax, poldipia , invpoldipia , itype 
   USE control,          ONLY :  longrange , calc
   USE thermodynamic,    ONLY :  u_pol, u_coul
   USE time,             ONLY :  time_moment_from_pola
+#ifdef debug_print_dipff_scf  
   USE md,               ONLY :  itime
+#endif
 
   implicit none
 
@@ -3983,15 +3971,18 @@ SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , theta_ind , didpim )
   real(kind=dp) , intent (out) :: theta_ind ( :, : , : ) 
 
   ! local
-  integer :: ia , iscf , it , npol, alpha, beta, t , kkkk
+  integer :: ia , iscf , it , alpha, beta
   logical :: linduced , didpim
   real(kind=dp) :: alphaES_save
   real(kind=dp) :: u_coul_stat , rmsd , u_coul_pol, u_coul_ind
   real(kind=dp) :: Efield( 3 , natm ) , Efield_stat ( 3 , natm ) , Efield_ind ( 3 , natm ), EfieldG_stat ( 3 , 3 , natm ) , EfieldG_ind ( 3 , 3 , natm ) , Efield_ind_dir ( 3 , natm )
-  real(kind=dp) :: qia_tmp ( natm )  , qch_tmp ( ntypemax ) , conv_tol_ind_ , rmsd_gmin
+  real(kind=dp) :: qia_tmp ( natm )  , qch_tmp ( ntypemax ) 
   logical       :: task_static (3), task_ind(3), ldip
   real(kind=dp) , dimension (:,:) , allocatable :: f_ind , dmu_ind, zerovec
   real(kind=dp) , dimension (:,:,:) , allocatable :: dtheta_ind 
+#ifdef debug_print_dipff_scf
+  integer :: kkkk
+#endif
 
 #ifdef MPI
   dectime
@@ -4250,13 +4241,14 @@ END SUBROUTINE moment_from_pola_scf_kO_v1
 ! ******************************************************************************
 SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , theta_ind , didpim ) 
 
-  USE io,               ONLY :  ionode , stdout , ioprintnode
   USE constants,        ONLY :  coul_unit
   USE config,           ONLY :  natm , atype , fx , fy , fz , ntype , dipia , quadia , qia , ntypemax, poldipia , invpoldipia , itype 
   USE control,          ONLY :  longrange , calc
   USE thermodynamic,    ONLY :  u_pol, u_coul
   USE time,             ONLY :  time_moment_from_pola
+#ifdef debug_print_dipff_scf  
   USE md,               ONLY :  itime
+#endif
 
   implicit none
 
@@ -4265,15 +4257,18 @@ SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , theta_ind , didpim )
   real(kind=dp) , intent (out) :: theta_ind ( : , : , : ) 
 
   ! local
-  integer :: ia , iscf , it , npol, alpha, beta, t , kkkk
+  integer :: ia , iscf , it , alpha, beta
   logical :: linduced , didpim
-  real(kind=dp) :: tttt , tttt2 , alphaES_save
+  real(kind=dp) :: tttt , alphaES_save
   real(kind=dp) :: u_coul_stat , rmsd , u_coul_pol, u_coul_ind
   real(kind=dp) :: Efield( 3 , natm ) , Efield_stat ( 3 , natm ) , Efield_ind ( 3 , natm ), EfieldG_stat ( 3 , 3 , natm ) , EfieldG_ind ( 3 , 3 , natm ) , tmp ( 3 ,natm )
-  real(kind=dp) :: qia_tmp ( natm )  , qch_tmp ( ntypemax ) , conv_tol_ind_ , rmsd_gmin
+  real(kind=dp) :: qia_tmp ( natm )  , qch_tmp ( ntypemax ) 
   logical       :: task_static (3), task_ind(3), ldip 
   real(kind=dp) , dimension (:,:) , allocatable :: f_ind , dmu_ind, f_ind_prev , gmin , mu_prev, dmin, zerovec, g_ind
   real(kind=dp) , dimension (:,:,:) , allocatable :: dtheta_ind
+#ifdef debug_print_dipff_scf
+  integer :: kkkk
+#endif
 #ifdef MPI
   dectime
 #endif
@@ -4282,7 +4277,7 @@ SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , theta_ind , didpim )
   kkkk=100000*itime+100000
 #endif
 
-  tttt2=0.0_dp
+  tttt=0.0_dp
 #ifdef MPI
   statime
 #endif
@@ -4557,13 +4552,14 @@ END SUBROUTINE moment_from_pola_scf_kO_v2
 ! ******************************************************************************
 SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , theta_ind , didpim ) 
 
-  USE io,               ONLY :  ionode , stdout , ioprintnode
   USE constants,        ONLY :  coul_unit
   USE config,           ONLY :  natm , atype , fx , fy , fz , ntype , dipia , quadia , qia , ntypemax, poldipia , invpoldipia , itype 
   USE control,          ONLY :  longrange , calc
   USE thermodynamic,    ONLY :  u_pol, u_coul
   USE time,             ONLY :  time_moment_from_pola
+#ifdef debug_print_dipff_scf  
   USE md,               ONLY :  itime
+#endif
 
   implicit none
 
@@ -4572,14 +4568,17 @@ SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , theta_ind , didpim )
   real(kind=dp) , intent (out) :: theta_ind ( : , : , : ) 
 
   ! local
-  integer :: ia , iscf , it , npol, alpha, beta, t , kkkk
+  integer :: ia , iscf , it , alpha, beta
   logical :: linduced , didpim
-  real(kind=dp) :: tttt , tttt2 , alphaES_save
+  real(kind=dp) :: tttt , alphaES_save
   real(kind=dp) :: u_coul_stat , rmsd , u_coul_pol, u_coul_ind
   real(kind=dp) :: Efield( 3 , natm ) , Efield_stat ( 3 , natm ) , Efield_ind ( 3 , natm ), EfieldG_stat ( 3 , 3 , natm ) , EfieldG_ind ( 3 , 3 , natm )
-  real(kind=dp) :: qia_tmp ( natm )  , qch_tmp ( ntypemax ) , conv_tol_ind_ , rmsd_gmin
+  real(kind=dp) :: qia_tmp ( natm )  , qch_tmp ( ntypemax ) 
   logical       :: task_static (3), task_ind(3), ldip , lfirst_inner
   real(kind=dp) , dimension (:,:) , allocatable :: f_ind , dmu_ind, f_ind_prev , gmin , mu_prev, dmin, zerovec, g_ind
+#ifdef debug_print_dipff_scf
+  integer :: kkkk
+#endif
 #ifdef MPI
   dectime
 #endif
@@ -4588,7 +4587,7 @@ SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , theta_ind , didpim )
   kkkk=100000*itime+100000
 #endif
 
-  tttt2=0.0_dp
+  tttt=0.0_dp
 #ifdef MPI
   statime
 #endif
@@ -4881,13 +4880,14 @@ END SUBROUTINE moment_from_pola_scf_kO_v3
 ! ******************************************************************************
 SUBROUTINE moment_from_pola_scf_kO_v4 ( mu_ind , theta_ind , didpim ) 
 
-  USE io,               ONLY :  ionode , stdout , ioprintnode
   USE constants,        ONLY :  coul_unit
   USE config,           ONLY :  natm , atype , fx , fy , fz , ntype , dipia , quadia , qia , ntypemax, poldipia , invpoldipia , itype 
   USE control,          ONLY :  longrange , calc
   USE thermodynamic,    ONLY :  u_pol, u_coul
   USE time,             ONLY :  time_moment_from_pola
+#ifdef debug_print_dipff_scf  
   USE md,               ONLY :  itime
+#endif
 
   implicit none
 
@@ -4896,12 +4896,12 @@ SUBROUTINE moment_from_pola_scf_kO_v4 ( mu_ind , theta_ind , didpim )
   real(kind=dp) , intent (out) :: theta_ind ( : , : , : ) 
 
   ! local
-  integer :: ia , iscf , it , npol, alpha, beta, t 
+  integer :: ia , iscf , it , alpha, beta
   logical :: linduced , didpim
-  real(kind=dp) :: tttt , tttt2 , alphaES_save
+  real(kind=dp) :: tttt , alphaES_save
   real(kind=dp) :: u_coul_stat , rmsd , u_coul_pol, u_coul_ind
   real(kind=dp) :: Efield( 3 , natm ) , Efield_stat ( 3 , natm ) , Efield_ind ( 3 , natm ), EfieldG_stat ( 3 , 3 , natm ) , EfieldG_ind ( 3 , 3 , natm )
-  real(kind=dp) :: qia_tmp ( natm )  , qch_tmp ( ntypemax ) , conv_tol_ind_ , rmsd_gmin
+  real(kind=dp) :: qia_tmp ( natm )  , qch_tmp ( ntypemax ) 
   logical       :: task_static (3), task_ind(3), ldip
   real(kind=dp) , dimension (:,:) , allocatable :: F_ind , dmu
   real(kind=dp) , dimension (:,:,:) , allocatable :: F_h , mu_h  
@@ -4918,7 +4918,7 @@ SUBROUTINE moment_from_pola_scf_kO_v4 ( mu_ind , theta_ind , didpim )
 #endif
 
 
-  tttt2=0.0_dp
+  tttt=0.0_dp
 #ifdef MPI
   statime
 #endif
@@ -5201,7 +5201,7 @@ SUBROUTINE moment_from_WFc ( mu )
   USE constants,                ONLY :  Debye_unit
   USE config,                   ONLY :  verlet_list , natm , ntype , itype , atype , simu_cell , rx , ry , rz 
   USE cell,                     ONLY :  kardir , dirkar 
-  USE io,                       ONLY :  ionode , kunit_DIPWFC , stdout 
+  USE io,                       ONLY :  kunit_DIPWFC
 
   implicit none
 
@@ -5387,7 +5387,7 @@ END SUBROUTINE moment_from_WFc
 SUBROUTINE get_dipole_moments ( mu , theta , didpim )
 
   USE config,           ONLY : natm , ntype , dipia , quadia , dipia_wfc, fx,fy,fz, atype 
-  USE io,               ONLY : ionode , stdout, kunit_DIPFF
+  USE io,               ONLY : kunit_DIPFF
 
   implicit none
 
@@ -5561,7 +5561,6 @@ SUBROUTINE extrapolate_dipole_poly ( mu_ind )
 
   USE config,           ONLY :  natm
   USE md,               ONLY :  itime 
-  USE io,               ONLY :  stdout, ioprintnode
 
   implicit none
 
@@ -5651,7 +5650,6 @@ SUBROUTINE extrapolate_dipole_aspc ( mu_ind , Efield , key )
 
   USE config,           ONLY :  atype, natm, invpoldipia
   USE md,               ONLY :  itime 
-  USE io,               ONLY :  stdout, ioprintnode
 
   implicit none
   ! global  
@@ -5659,7 +5657,7 @@ SUBROUTINE extrapolate_dipole_aspc ( mu_ind , Efield , key )
   real(kind=dp) , intent (in) :: Efield (:,:) 
   integer :: key 
   ! local
-  integer :: ia, k,t ,ext_ord, alpha, beta
+  integer :: ia, k ,ext_ord, alpha, beta
   real(kind=dp)               :: mu_p ( 3 , natm ) 
   real(kind=dp)               :: mu_p_save (3 , natm ) 
   ! ASPC coefficient
@@ -5812,7 +5810,7 @@ END SUBROUTINE
 ! ******************************************************************************
 SUBROUTINE write_DIPFF 
 
-  USE io,                       ONLY :  ionode ,kunit_DIPFF, stdout
+  USE io,                       ONLY :  kunit_DIPFF
   USE cell,                     ONLY :  kardir , periodicbc , dirkar
   USE control,                  ONLY :  lstatic
   USE config,                   ONLY :  system , natm , ntype , atype , simu_cell, atypei, natmi
@@ -5856,7 +5854,7 @@ END SUBROUTINE write_DIPFF
 ! ******************************************************************************
 SUBROUTINE write_QUADFF 
 
-  USE io,                       ONLY :  ionode ,kunit_QUADFF, stdout
+  USE io,                       ONLY :  kunit_QUADFF
   USE cell,                     ONLY :  kardir , periodicbc , dirkar
   USE control,                  ONLY :  lstatic
   USE config,                   ONLY :  system , natm , ntype , atype , simu_cell, atypei, natmi
@@ -5897,7 +5895,6 @@ END SUBROUTINE write_QUADFF
 SUBROUTINE find_min ( g0 , g1 , d1 , gmin , dmin )
 
   USE config,           ONLY :  natm , itype
-  USE io,               ONLY :  stdout
 
   implicit none
   ! global 
@@ -6071,7 +6068,7 @@ END FUNCTION
 ! ******************************************************************************
 SUBROUTINE write_EFGALL
 
-  USE io,                       ONLY :  kunit_EFGALL, ionode
+  USE io,                       ONLY :  kunit_EFGALL
   USE cell,                     ONLY :  kardir , periodicbc , dirkar
   USE control,                  ONLY :  lstatic, iefgall_format
   USE config,                   ONLY :  system , natm , ntype , atype , itype , simu_cell, atypei, natmi
@@ -6133,7 +6130,7 @@ END SUBROUTINE write_EFGALL
 ! ******************************************************************************
 SUBROUTINE write_EFALL
 
-  USE io,                       ONLY :  kunit_EFALL, ionode
+  USE io,                       ONLY :  kunit_EFALL
   USE cell,                     ONLY :  kardir , periodicbc , dirkar
   USE control,                  ONLY :  lstatic
   USE config,                   ONLY :  system , natm , ntype , atype , itype , simu_cell, atypei, natmi
