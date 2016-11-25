@@ -18,6 +18,7 @@
 *.mod
 *.F90
 fort.*
+*_genmod.f90
 
 # Compiled Static libraries
 *.lai
