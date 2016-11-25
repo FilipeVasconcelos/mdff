@@ -29,7 +29,8 @@
 ! ******************************************************************************
 MODULE rspace
 
-  USE constants,                ONLY :  dp
+  USE io,               ONLY :  ionode, stdout 
+  USE constants,        ONLY :  dp
 
   implicit none      
 
@@ -63,7 +64,6 @@ CONTAINS
 ! ******************************************************************************
 SUBROUTINE direct_sum_init ( rm )
 
-  USE io,       ONLY : ionode , stdout 
 
   implicit none
  
@@ -119,8 +119,6 @@ END SUBROUTINE direct_sum_init
 ! ******************************************************************************
 
 SUBROUTINE reorder_rpt ( rm )
-
-  USE io,  ONLY :  stdout 
 
   implicit none
 

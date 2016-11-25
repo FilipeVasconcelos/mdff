@@ -38,6 +38,7 @@
 ! ******************************************************************************
 MODULE opt
 
+  USE io,                       ONLY :  stdin , stdout , ionode, ioprint, ioprintnode
   USE constants,                ONLY :  dp
   USE mpimdff
 
@@ -70,8 +71,6 @@ CONTAINS
 !
 ! ******************************************************************************
 SUBROUTINE opt_init
-
-  USE io,                  ONLY :  stdin , stdout , ionode
 
   implicit none
  
@@ -154,8 +153,6 @@ END SUBROUTINE opt_default_tag
 ! ******************************************************************************
 SUBROUTINE opt_check_tag
 
-  USE io,                  ONLY :  ionode , stdout
-
   implicit none
 
   ! local
@@ -184,8 +181,6 @@ END SUBROUTINE opt_check_tag
 !
 ! ******************************************************************************
 SUBROUTINE opt_print_info(kunit) 
-
-  USE io,                  ONLY :  ionode 
 
   implicit none
  
@@ -254,7 +249,7 @@ SUBROUTINE opt_main
                                 atype  , rho , config_alloc , simu_cell , &
                                 atypei , itype, natmi , qia , dipia , ipolar, coord_format_allowed , atom_dec, read_traj , read_traj_header , verlet_coul , verlet_vdw, write_CONTFF
   USE control,          ONLY :  myrank , numprocs , lcoulomb , iscff_format , itraj_format , trajff_data,cutlongrange,cutshortrange , lvnlist
-  USE io,               ONLY :  ionode , ioprint, ioprintnode, stdout , kunit_TRAJFF , kunit_ISTHFF , kunit_ISCFF
+  USE io,               ONLY :  kunit_TRAJFF , kunit_ISTHFF , kunit_ISCFF
   USE thermodynamic,    ONLY :  u_tot , pressure_tot , calc_thermo
   USE constants,        ONLY :  dzero
   USE cell,             ONLY :  lattice , dirkar
@@ -460,7 +455,6 @@ END SUBROUTINE opt_main
 SUBROUTINE sastry ( iter , Eis , phigrad , neng )
 
   USE config,                   ONLY :  natm , rx , ry , rz , fx , fy , fz , write_trajff_xyz
-  USE io,                       ONLY :  ionode , stdout , ioprint, ioprintnode
   USE thermodynamic,            ONLY :  u_tot      
   USE field,                    ONLY :  engforce_driver 
 
@@ -982,7 +976,6 @@ SUBROUTINE lbfgs_driver ( icall, Eis , phigrad )
   USE config,                   ONLY :  natm, rx, ry, rz , fx , fy , fz 
   USE thermodynamic,            ONLY :  u_tot , u_lj_r , calc_thermo
   USE field,                    ONLY :  engforce_driver
-  USE io,                       ONLY :  ionode , stdout, ioprintnode, ioprint
 
   implicit none
 
@@ -1212,7 +1205,6 @@ SUBROUTINE m1qn3_driver ( icall, Eis , phigrad )
 
   USE control,                  ONLY :  myrank , numprocs
   USE config,                   ONLY :  natm , rx , ry , rz, fx ,fy ,fz , write_CONTFF
-  USE io,                       ONLY :  stdout, ionode, ioprintnode, ioprint
   USE thermodynamic,            ONLY :  u_tot , u_lj_r , calc_thermo
   USE field,                    ONLY :  engforce_driver
 

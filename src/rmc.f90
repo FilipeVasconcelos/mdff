@@ -30,7 +30,8 @@
 ! ******************************************************************************
 MODULE rmc 
 
-  USE constants,                ONLY :  dp
+  USE io,               ONLY :  ionode, stdout, stdin, stderr
+  USE constants,        ONLY :  dp
   USE mpimdff
 
   implicit none
@@ -71,7 +72,6 @@ SUBROUTINE rmc_init
 
   USE config,                   ONLY :  simu_cell
   USE control,                  ONLY :  calc
-  USE io,                       ONLY :  stdin , stdout , ionode
 
   implicit none
 
@@ -169,7 +169,6 @@ END SUBROUTINE
 SUBROUTINE rmc_print_info(kunit)
 
   USE control,                  ONLY :  calc
-  USE io,                       ONLY :  ionode 
 
   implicit none
  
@@ -196,7 +195,7 @@ END SUBROUTINE rmc_print_info
 SUBROUTINE rmc_main
 
   USE constants,                ONLY : pi , dzero
-  USE io,                       ONLY : ionode , stdout, stderr , kunit_RMCFF, kunit_GRTFF, &
+  USE io,                       ONLY : kunit_RMCFF, kunit_GRTFF, &
                                        kunit_POSFF , kunit_RMCLOG, kunit_TRAJFF , kunit_DTIBUFF , kunit_DTETAFF , kunit_DTVZZFF
   USE config,                   ONLY : natm, ntype , simu_cell, natmi, atypei, atype, allowedmove, rx, ry , rz, &
                                        config_alloc, coord_format_allowed, write_CONTFF, system , &
@@ -819,7 +818,6 @@ SUBROUTINE eval_chisq_var_distance ( chisq_var )
   USE config,           ONLY :  natm, ntype , itype , natmi , rx , ry , rz, simu_cell, rx, ry, rz 
   USE cell,             ONLY :  kardir, dirkar
   USE time,             ONLY :  chisqvartimetot , chisqvartime2 , chisqvartime3 , chisqvartime4 , chisqvartime5 
-  USE io,          ONLY :  stdout
 
   implicit none
 
@@ -1120,7 +1118,6 @@ SUBROUTINE eval_chisq_var_distance_simple_update ( random_particule , chisq_var 
   USE config,           ONLY :  natm, ntype , itype , natmi , rx , ry , rz, simu_cell, rx, ry, rz 
   USE cell,             ONLY :  kardir, dirkar
   USE time,             ONLY :  chisqvartimetotu, chisqvartime2u , chisqvartime3u , chisqvartime4u
-  USE io,               ONLY :  stdout
 
   implicit none
 
@@ -1492,7 +1489,6 @@ SUBROUTINE rmc_gr ( grr_calc )
   USE radial_distrib,           ONLY :  nbins , npairs , gr_main , gr , resg , cutgr
   USE config,                   ONLY :  natm, natmi , ntype , simu_cell
   USE time,                     ONLY :  rmcgrtimetot_comm
-  USE io,                       ONLY :  stderr
 
   implicit none
  
@@ -1565,7 +1561,6 @@ SUBROUTINE rmc_efg ( dibU_calc , dibeta_calc , dibvzz_calc )
   USE efg,                      ONLY :  PANU , PANeta, PANvzz , resu , reseta , resvzz , umin , vzzmin , &
                                         read_dtibuff , read_dtvzzff , read_dtetaff , dibUtot , dibetatot , dibvzztot , &
                                         mu , efg_alloc , efg_mesh_alloc , multipole_efg_es , efg_ia , nmr_convention
-  USE io,                       ONLY :  ionode , stderr
 
   implicit none
 

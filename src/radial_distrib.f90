@@ -28,7 +28,8 @@
 ! ******************************************************************************
 MODULE radial_distrib 
 
-  USE constants,                ONLY :  dp
+  USE io,               ONLY :  ionode, stdout, stdin, stderr
+  USE constants,        ONLY :  dp
   USE mpimdff
 
   implicit none
@@ -53,7 +54,6 @@ SUBROUTINE gr_init
 
   USE config,                   ONLY :  simu_cell
   USE control,                  ONLY :  calc
-  USE io,                  ONLY :  stdin , stdout , ionode
 
   implicit none
 
@@ -180,7 +180,6 @@ END SUBROUTINE gr_default_tag
 SUBROUTINE gr_print_info(kunit)
 
   USe control,                  ONLY :  calc
-  USE io,                  ONLY :  ionode 
 
   implicit none
  
@@ -215,7 +214,7 @@ SUBROUTINE grcalc
   USE config,                   ONLY :  system , natm , ntype , rx , ry , rz , atype , &
                                         rho , config_alloc , simu_cell , atypei , itype, natmi, &
                                         coord_format_allowed , atom_dec , read_traj , read_traj_header
-  USE io,                       ONLY :  ionode , stdout , stderr , kunit_TRAJFF , kunit_GRTFF , kunit_NRTFF
+  USE io,                       ONLY :  kunit_TRAJFF , kunit_GRTFF , kunit_NRTFF
   USE constants,                ONLY :  pi 
   USE cell,                     ONLY :  lattice , dirkar , periodicbc, kardir
   USE time,                     ONLY :  grtimetot_comm
@@ -427,7 +426,6 @@ SUBROUTINE gr_main
 
   USE control,                  ONLY :  myrank
   USE config,                   ONLY :  natm , natmi , rx , ry , rz , atype , simu_cell , ntype , itype, atom_dec
-  USE io,                       ONLY :  ionode , stdout  , stderr
   USE time,                     ONLY :  grtimetot
   USE cell,                     ONLY :  kardir , dirkar
 

@@ -25,6 +25,7 @@
 ! ******************************************************************************
 MODULE block
 
+  USE io,                       ONLY :  ionode , stdout      
   USE constants,                ONLY :  dp 
 
   implicit none
@@ -51,8 +52,8 @@ CONTAINS
 ! ******************************************************************************
 SUBROUTINE block_
 
-  USE md,                       ONLY :  npas , nequil
-  USE io,                  ONLY :  ionode , stdout , kunit_EQUILFF
+  USE md,                  ONLY :  npas , nequil
+  USE io,                  ONLY :  kunit_EQUILFF
 
   implicit none
 

@@ -29,8 +29,8 @@
 MODULE stochio
 
   USE constants,        ONLY :  dp, g_to_am
+  USE io,               ONLY :  ionode, stdin, stdout
   USE oxyde
-  USE io
 
   implicit none
   
@@ -66,8 +66,6 @@ MODULE stochio
 CONTAINS
 
 SUBROUTINE stochio_main
-
-  USE io,       ONLY :  stdout
 
   implicit none
 
@@ -382,7 +380,6 @@ END SUBROUTINE stochio_oxydes_calc
 SUBROUTINE stochio_init
 
   USE control,          ONLY :  calc
-  USE io,               ONLY :  stdin, stdout
 
   implicit none
 

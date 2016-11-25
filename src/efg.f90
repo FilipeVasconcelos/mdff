@@ -45,6 +45,7 @@
 MODULE efg 
  
   USE constants,                ONLY :  dp 
+  USE io,                       ONLY :  ionode , stdin , stdout , stderr, io_open, io_close, ioprint, ioprintnode
   USE kspace,                   ONLY :  kmesh  
   USE rspace,                   ONLY :  rmesh
   USE config,                   ONLY :  ntypemax
@@ -106,7 +107,6 @@ CONTAINS
 ! ******************************************************************************
 SUBROUTINE efg_init
 
-  USE io,                       ONLY :  ionode , stdin , stdout , stderr 
   USE control,                  ONLY :  calc
  
   implicit none
@@ -262,7 +262,6 @@ END SUBROUTINE efg_check_tag
 ! ******************************************************************************
 SUBROUTINE efg_print_info(kunit)
 
-  USE io,                  ONLY :  ionode 
   USE control,                  ONLY :  calc , longrange , cutlongrange, iefgall_format
   USE config,                   ONLY :  ntype , atypei , natmi , simu_cell , atype
   USE constants,                ONLY :  tpi ,dzero , done
@@ -329,8 +328,8 @@ END SUBROUTINE efg_print_info
 ! ******************************************************************************
 SUBROUTINE efgcalc 
 
-  USE io,                       ONLY :  ionode , ioprint, ioprintnode , stdout , stderr , kunit_EFGALL , kunit_TRAJFF , &
-                                        kunit_NMRFF , kunit_DTETAFF , kunit_DTVZZFF , kunit_DTIBUFF , kunit_DTIBSFF , io_open , io_close
+  USE io,                       ONLY :  kunit_EFGALL , kunit_TRAJFF , &
+                                        kunit_NMRFF , kunit_DTETAFF , kunit_DTVZZFF , kunit_DTIBUFF , kunit_DTIBSFF
   USE constants,                ONLY :  fpi , coul_unit
   USE config,                   ONLY :  system , natm , ntype , atype , rx , ry , rz , itype , & 
                                         atypei , natmi, rho , simu_cell , config_alloc , qia, &
@@ -644,7 +643,6 @@ SUBROUTINE efg_DS ( rm )
                                         rx , ry , rz , ntype , qia , simu_cell , atom_dec
   USE cell,                     ONLY :  kardir , dirkar
   USE time,                     ONLY :  efgtimetot1 , efgtimetot3
-  USE io,                  ONLY :  stdout
 
   implicit none
 
@@ -850,7 +848,6 @@ SUBROUTINE efg_ES ( km , alphaES )
 !  USE kspace,                   ONLY :  struc_fact
   USE cell,                     ONLY :  kardir , dirkar 
   USE time,                     ONLY :  rhoktimetot , efgtimetot1 , efgtimetot2 , efgtimetot3
-  USE io,                       ONLY :  stdout
 
   implicit none
 
@@ -1113,7 +1110,6 @@ SUBROUTINE multipole_efg_DS ( rm , mu )
   USE config,                   ONLY :  natm , atype , natmi , ntype , qia , &
                                         rx , ry , rz , fx , fy , fz , tau_coul , simu_cell ,itype , atom_dec
   USE control,                  ONLY :  cutlongrange , myrank
-  USE io,                       ONLY :  stdout , ionode 
   USE field,                    ONLY :  qch
   USE cell,                     ONLY :  kardir , dirkar
   USE time,                     ONLY :  efgtimetot1 , efgtimetot3
@@ -1319,7 +1315,6 @@ SUBROUTINE multipole_efg_ES ( km , alphaES , mu )
                                         rx , ry , rz , fx , fy , fz ,  &
                                         qia , simu_cell , itype , atom_dec
   USE constants,                ONLY :  imag , pi , piroot , tpi , fpi
-  USE io,                       ONLY :  ionode , stdout 
   USE field,                    ONLY :  qch
   !USE kspace,                   ONLY :  charge_density_k        
   USE cell,                     ONLY :  kardir , dirkar
@@ -1684,7 +1679,6 @@ END SUBROUTINE multipole_efg_ES
 ! ******************************************************************************
 SUBROUTINE efg_write_output ( kunit_eta , kunit_vzz , kunit_u  , kunit_s  )
 
-  USE io,                  ONLY :  ionode 
   USE config,                   ONLY :  natm, natmi, ntype 
   USE constants,                ONLY :  dzero
   USE field,                    ONLY :  lwfc
@@ -1836,7 +1830,7 @@ SUBROUTINE efg_acf
 
   USE control,                  ONLY :  iefgall_format
   USE config,                   ONLY :  system , natm , ntype , itype , atype , atypei, natmi , simu_cell , rho , config_alloc
-  USE io,                       ONLY :  ionode , stdout , stderr , kunit_EFGALL , kunit_EFGACFFF , kunit_NMRACFFF , kunit_UIACFFF
+  USE io,                       ONLY :  kunit_EFGALL , kunit_EFGACFFF , kunit_NMRACFFF , kunit_UIACFFF
   USE cell,                     ONLY :  lattice
 
   implicit none
@@ -2166,7 +2160,6 @@ SUBROUTINE efg_stat ( kunit_input , kunit_nmroutput )
   USE control,                  ONLY :  iefgall_format
   USE config,                   ONLY :  system , natm , natmi , ntype , itype , &
                                         atype , atypei , simu_cell , rho, config_alloc , quadia_nuc
-  USE io,                       ONLY :  ionode , stdout , stderr 
   USE field,                    ONLY :  lwfc , field_init        
   USE constants,                ONLY :  CQ_UNIT
   USE cell,                     ONLY :  lattice
@@ -2651,8 +2644,6 @@ END SUBROUTINE efg_stat
 ! 
 ! ******************************************************************************
 SUBROUTINE nmr_convention( EIG , nmr , ia )
-
-  USE io,                  ONLY :  stdout , stderr , ionode
 
   implicit none
 

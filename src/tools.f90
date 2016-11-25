@@ -39,7 +39,6 @@
 SUBROUTINE estimate_alpha(alpha,epsw,rcut)
   
   USE constants,                ONLY :  dp
-  USE config,                   ONLY :  simu_cell 
 
   implicit none
 
@@ -89,7 +88,7 @@ SUBROUTINE accur_ES_frenkel_smit ( epsw , alpha , rc , nc )
 
   USE constants,                ONLY :  dp , pi
   USE config,                   ONLY :  simu_cell 
-  USE io,                  ONLY :  stderr
+  USE io,                       ONLY :  stderr
 
   implicit none
 
@@ -273,9 +272,8 @@ END SUBROUTINE distance_tab
 ! ******************************************************************************
 SUBROUTINE vnlist_pbc  
 
-  USE md,                       ONLY :  itime
   USE constants,                ONLY :  dp
-  USE config,                   ONLY :  natm , natmi , rx , ry , rz , itype, ntype , simu_cell , vnlmax , atom_dec, verlet_vdw , verlet_coul
+  USE config,                   ONLY :  natm , rx , ry , rz , itype, ntype , simu_cell , vnlmax , atom_dec, verlet_vdw , verlet_coul
   USE control,                  ONLY :  skindiff 
   USE cell,                     ONLY :  kardir , dirkar
   USE io,                       ONLY :  ionode , stdout , stderr
@@ -379,7 +377,7 @@ END SUBROUTINE vnlist_pbc
 SUBROUTINE vnlist_nopbc ( vlist )
 
   USE constants, ONLY : dp
-  USE config,    ONLY :  natm , natmi , rx , ry , rz , itype , verlet_list , ntype , atom_dec
+  USE config,    ONLY :  natm ,  rx , ry , rz , itype , verlet_list , ntype , atom_dec
   USE control,   ONLY :  skindiff
 
   implicit none
@@ -586,9 +584,9 @@ END SUBROUTINE print_tensor_n
 ! ******************************************************************************
 SUBROUTINE print_tensor( tens , key )
 
-  USE constants, ONLY : dp
-  USE config,   ONLY :  natm
-  USE io,  ONLY :  ionode , stdout
+  USE constants,        ONLY :  dp
+  USE config,           ONLY :  natm
+  USE io,               ONLY :  ionode , stdout
 
   implicit none
 
@@ -623,7 +621,7 @@ SUBROUTINE print_tensor_nxn ( tens , key , n )
 
   USE constants,                ONLY :  dp
   USE config,                   ONLY :  natm
-  USE io,                  ONLY :  ionode , stdout
+  USE io,                       ONLY :  ionode , stdout
 
   implicit none
 

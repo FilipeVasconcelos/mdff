@@ -26,22 +26,24 @@
 
 MODULE restart
 
+  USE io,  ONLY :  ionode, stdout
 
 CONTAINS
 
 SUBROUTINE restart_init ( MDFF ) 
 
+  USE io,       ONLY :  kunit_RESTART
   USE cell
   USE control
   USE config
   USE field
   USE md
- 
-  USE io,  ONLY :  stdout, kunit_RESTART
 
   implicit none
+
   ! global
   character(len=80)  :: MDFF
+
   ! local 
   integer :: i
   logical           :: allowed
@@ -259,13 +261,12 @@ END SUBROUTINE restart_init
 
 SUBROUTINE write_RESTART
 
+  USE io,  ONLY :  kunit_RESTART
   USE cell
   USE control
   USE config
   USE field
   USE md
- 
-  USE io,  ONLY :  kunit_RESTART
 
   implicit none
 
@@ -423,7 +424,6 @@ END SUBROUTINE write_RESTART
 
 SUBROUTINE print_RESTART_info ( kunit ) 
 
-  USE io,  ONLY :  ionode
   implicit none
 
   ! local 

@@ -28,7 +28,8 @@
 ! ******************************************************************************
 MODULE time
 
-  USE constants, ONLY : dp
+  USE io,               ONLY :  ionode          
+  USE constants,        ONLY : dp
 
   implicit none
   
@@ -133,7 +134,6 @@ END SUBROUTINE time_init
 ! ******************************************************************************
 SUBROUTINE print_time_info ( kunit )  
 
-  USE io,       ONLY :  ionode 
   USE control,  ONLY :  longrange , calc
   USE dumb
 

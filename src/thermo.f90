@@ -26,6 +26,7 @@
 ! ******************************************************************************
 MODULE thermodynamic
 
+  USE io,                       ONLY :  ionode , ioprint 
   USE constants,                ONLY :  dp
   USE block,                    ONLY :  accu
   USE md,                       ONLY :  nve_ensemble , nvt_ensemble , npt_ensemble , npe_ensemble
@@ -118,7 +119,6 @@ SUBROUTINE calc_thermo
   USE control,                  ONLY :  lreducedN , lcsvr
   USE config,                   ONLY :  natm ,  simu_cell 
   USE md,                       ONLY :  integrator, press!, itime
-  USE io,                       ONLY :  ioprint
 
   implicit none
   real(kind=dp) :: omega, pv
@@ -333,7 +333,6 @@ SUBROUTINE write_thermo ( step , kunit , key )
 
   USE constants,        ONLY :  time_unit
   USE config,           ONLY :  simu_cell 
-  USE io,               ONLY :  ionode
   USE md,               ONLY :  dt
 
   implicit none
@@ -406,8 +405,6 @@ END SUBROUTINE write_thermo
 ! ******************************************************************************
 
 SUBROUTINE write_average_thermo ( kunit )
-
-  USE io,       ONLY :  ionode
 
   implicit none
 

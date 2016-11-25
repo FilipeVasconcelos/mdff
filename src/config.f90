@@ -33,6 +33,7 @@
 MODULE config
 
   USE constants,                ONLY :  dp 
+  USE io,                       ONLY :  ionode, stdout
   USE cell,                     ONLY :  celltype
   USE mpimdff,                  ONLY :  decomposition
 
@@ -109,7 +110,6 @@ CONTAINS
 SUBROUTINE config_init 
 
   USE control,  ONLY :  calc , cutshortrange , cutlongrange
-  USE io,       ONLY :  stdin, stdout 
 
   implicit none
 
@@ -141,8 +141,6 @@ END SUBROUTINE config_init
 !
 ! ******************************************************************************
 SUBROUTINE config_print_info(kunit)
-
-  USE io,  ONLY :  ionode 
 
   implicit none
 
@@ -207,7 +205,7 @@ END SUBROUTINE config_print_info
 ! ******************************************************************************
 SUBROUTINE write_CONTFF
 
-  USE io,                       ONLY :  kunit_CONTFF, ionode
+  USE io,                       ONLY :  kunit_CONTFF
   USE cell,                     ONLY :  kardir , periodicbc , dirkar
 
   implicit none
@@ -543,7 +541,7 @@ END SUBROUTINE ions_displacement
 SUBROUTINE write_trajff_xyz
 
   USE control,                  ONLY :  itraj_format , trajff_data
-  USE io,                       ONLY :  ionode , kunit_TRAJFF , stdout
+  USE io,                       ONLY :  kunit_TRAJFF
   USE cell,                     ONLY :  periodicbc , kardir , dirkar
 
   implicit none
@@ -631,8 +629,6 @@ END SUBROUTINE write_trajff_xyz
 
 SUBROUTINE read_traj_header ( kunit , iformat ) 
 
-  USE io,          ONLY :  ionode , stdout
-
   implicit none
 
   integer, intent(in) :: kunit , iformat 
@@ -696,7 +692,6 @@ END SUBROUTINE read_traj_header
 
 SUBROUTINE read_traj ( kunit , iformat , csave ) 
 
-  USE io,          ONLY :  ionode , stdout
   USE cell,             ONLY :  dirkar
 
   implicit none

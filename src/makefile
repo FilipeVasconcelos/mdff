@@ -71,7 +71,7 @@ endif
 #FCFLAGS = -O3 -ip -static -xHost  -align all
 #FCFLAGS = -O3 -xHost -align all
 #FCFLAGS = -O3 -ip -xW
-FCFLAGS = -O0 -check all -warn all -debug 
+FCFLAGS = -O0 -check all  
 #FCFLAGS = -O0 -check all
 #FCFLAGS = -O0 
 #ifeq ($(HOST),debian-charrue)

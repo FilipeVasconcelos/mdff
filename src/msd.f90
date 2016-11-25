@@ -34,8 +34,10 @@
 ! ******************************************************************************
 MODULE msd
 
-  USE constants,  ONLY : dp
+  USE io,               ONLY :  stdin, stdout, ionode, ioprintnode
+  USE constants,        ONLY :  dp
   USE mpimdff 
+
   implicit none
 
   character(len=60), SAVE                         :: msdalgo           !< algorithm for sampling msd
@@ -74,7 +76,6 @@ CONTAINS
 SUBROUTINE msd_init
 
   USE control,          ONLY :  lmsd
-  USE io,               ONLY :  stdin, stdout, ionode
 
   implicit none
 
@@ -147,7 +148,6 @@ END SUBROUTINE msd_default_tag
 SUBROUTINE msd_check_tag
 
   USE constants,        ONLY :  time_unit 
-  USE io,               ONLY :  ionode, stdout
 
   implicit none
 
@@ -183,8 +183,6 @@ END SUBROUTINE msd_check_tag
 !
 ! ******************************************************************************
 SUBROUTINE msd_print_info(kunit)
-
-  USE io,  ONLY :  ionode 
 
   implicit none
   
@@ -299,7 +297,6 @@ SUBROUTINE msd_onthefly_frenkel ( nmsd )
   USE config,           ONLY :  natm , vx , vy , vz , itype
   USE md,               ONLY :  npropr
   USE time,             ONLY :  msdtimetot
-  USE io,               ONLY :  stdout , ionode , ioprintnode     
 
   implicit none
 
@@ -481,7 +478,6 @@ SUBROUTINE msd_onthefly_multiwindow ( nmsd )
   USE constants,        ONLY : time_unit
   USE config,           ONLY : natm , rx, ry ,rz , itype
   USE md,               ONLY :  npropr
-  USE io,               ONLY : stdout, ioprintnode
 
   implicit none
 
@@ -637,9 +633,9 @@ END SUBROUTINE msd_onthefly_multiwindow
 ! ******************************************************************************
 SUBROUTINE msd_write_output 
 
+  USE io,               ONLY :  kunit_MSDFF 
   USE config,           ONLY :  ntype, natm
   USE constants,        ONLY :  time_unit
-  USE io,               ONLY :  ionode , kunit_MSDFF , stdout
   USE md,               ONLY :  npropr
 
   implicit none

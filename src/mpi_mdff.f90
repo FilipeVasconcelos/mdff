@@ -1,6 +1,8 @@
 ! mpi related module for mdff
 MODULE mpimdff
 
+  USE io,                  ONLY :  ionode , stdout
+
 #ifdef MPI
   INCLUDE "mpif.h"
 #endif
@@ -34,8 +36,6 @@ CONTAINS
 !
 ! ******************************************************************************
 SUBROUTINE do_split ( n , mrank , np , dec , lab )
-
-  USE io,                  ONLY :  ionode , stdout
 
   implicit none
 

@@ -26,6 +26,7 @@
 ! ******************************************************************************
 MODULE md
 
+  USE io,                       ONLY :  ionode ,stdin, stdout
   USE constants,                ONLY :  dp
 
   implicit none
@@ -99,7 +100,6 @@ CONTAINS
 SUBROUTINE md_init
 
   USE control,  ONLY :  calc
-  USE io,       ONLY :  ionode ,stdin, stdout
 
   implicit none
 
@@ -219,7 +219,6 @@ SUBROUTINE md_check_tag
 
   USE constants,        ONLY :  boltz_unit , time_unit, press_unit
   USE control,          ONLY :  lstatic, lmsd, lvacf
-  USE io,               ONLY :  ionode , stdout
 
   implicit none
 
@@ -382,7 +381,6 @@ SUBROUTINE md_print_info(kunit)
 
   USE constants,        ONLY :  boltz_unit , time_unit, press_unit
   USE control,          ONLY :  ltraj , lstatic , lvnlist , lreducedN , lreduced , lcsvr , itraj_start , itraj_period , itraj_format  
-  USE io,               ONLY :  ionode 
 
   implicit none
   

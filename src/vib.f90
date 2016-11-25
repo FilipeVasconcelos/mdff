@@ -33,7 +33,8 @@
 ! ******************************************************************************
 MODULE vib
 
-  USE constants,                ONLY : dp
+  USE io,                       ONLY :  stdin , stdout , stderr , ionode
+  USE constants,                ONLY :  dp
   USE mpimdff
 
   implicit none
@@ -70,7 +71,6 @@ CONTAINS
 ! ******************************************************************************
 SUBROUTINE vib_init
 
-  USE io,                  ONLY :  stdin , stdout , stderr , ionode
 
   implicit none
 
@@ -160,8 +160,6 @@ END SUBROUTINE vib_default_tag
 ! ******************************************************************************
 SUBROUTINE vib_check_tag
 
-  USE io,                  ONLY :  stderr , ionode
-
   implicit none
 
   if ( ncell .eq. 0 ) then
@@ -183,7 +181,6 @@ SUBROUTINE vib_print_info(kunit)
 
   USE control,                  ONLY :  calc 
   USE config,                   ONLY :  natm , ntype, rho
-  USE io,                       ONLY :  ionode
 
   implicit none
 
@@ -238,7 +235,7 @@ SUBROUTINE vib_main
                                         atype , atypei , itype , simu_cell , & 
                                         rho , ntype, config_alloc , coord_format_allowed , atom_dec , read_traj_header , read_traj
   USE control,                  ONLY :  calc , iscff_format , iscff_data
-  USE io,                       ONLY :  ionode , stdout , stderr , kunit_ISCFF , kunit_EIGFF , kunit_VECTFF , & 
+  USE io,                       ONLY :  kunit_ISCFF , kunit_EIGFF , kunit_VECTFF , & 
                                         kunit_DOSFF , kunit_MODFF, kunit_DOSKFF , kunit_IBZKPTFF
   USE thermodynamic,            ONLY :  u_tot , pressure_tot , calc_thermo
   USE cell,                     ONLY :  lattice , dirkar
@@ -602,7 +599,6 @@ END SUBROUTINE vib_main
 SUBROUTINE hessian ( hess )
 
   USE config,           ONLY :  natm , rx , ry , rz , itype , ntype , simu_cell 
-  USE io,               ONLY :  ionode , stdout , stderr
   USE field,            ONLY :  rcutsq , sigsq , epsp , fc , uc , plj , qlj
   USE cell,             ONLY :  kardir , dirkar
   USE time,             ONLY :  hessiantimetot
@@ -1078,7 +1074,7 @@ END SUBROUTINE hessian
 SUBROUTINE fvibcalc
 
   USE config,   ONLY :  natm
-  USE io,  ONLY :  ionode , stdout , kunit_ISTHFF , kunit_EIGFF , kunit_VIBFF
+  USE io,       ONLY :  kunit_ISTHFF , kunit_EIGFF , kunit_VIBFF
 
   implicit none
 
@@ -1218,7 +1214,6 @@ SUBROUTINE generate_modes ( deig , hess , kunit )
 
   USE constants,                ONLY :  dzero
   USE config,                   ONLY :  system , natm , ntype , rx , ry , rz , atype , atypei , natmi , simu_cell
-  USE io,                  ONLY :  ionode , stdout
 
   implicit none
 
@@ -1344,7 +1339,7 @@ SUBROUTINE band ( hess )
   USE config,           ONLY :  natm , rx , ry , rz , itype , simu_cell , ntype
   USE control,          ONLY :  calc
   USE constants,        ONLY :  tpi , pi
-  USE io,          ONLY :  ionode , stdout , stderr , kunit_DOSKFF
+  USE io,               ONLY :  kunit_DOSKFF
   USE field,            ONLY :  rcutsq , sigsq , epsp , fc , uc 
   USE kspace,           ONLY :  kpath , get_kpath
   USE cell,             ONLY :  dirkar , kardir
@@ -1520,7 +1515,7 @@ SUBROUTINE doskpt ( hess , eigenk , km )
   USE config,           ONLY :  natm , rx , ry , rz , itype , simu_cell , ntype
   USE control,          ONLY :  calc
   USE constants,        ONLY :  tpi , pi
-  USE io,          ONLY :  ionode , stdout , stderr , kunit_IBZKPTFF , kunit_DKFF
+  USE io,               ONLY :  kunit_IBZKPTFF , kunit_DKFF
   USE field,            ONLY :  rcutsq , sigsq , epsp , fc , uc 
   USE cell,             ONLY :  kardir , dirkar
   USE time,             ONLY :  doskpttimetot
@@ -1735,7 +1730,7 @@ END SUBROUTINE doskpt
 SUBROUTINE write_IBZKPTFF ( km ) 
 
   USE constants,        ONLY :  pi
-  USE io  ,             ONLY :  ionode, kunit_IBZKPTFF
+  USE io  ,             ONLY :  kunit_IBZKPTFF
   USE kspace,           ONLY :  kmesh
 
   implicit none
