@@ -229,7 +229,7 @@ SUBROUTINE md_run
     io_node WRITE ( stdout , '(a)' )    "coulombic stress tensor"
     CALL print_tensor_n ( tau_coul  ) 
   endif
-  io_node WRITE ( stdout , '(a)' )    "total stress tensor"
+  io_node WRITE ( stdout , '(a)' )    "  total stress tensor"
   CALL print_tensor_n ( tau_coul+tau_nonb  )
 
   ! =========================
@@ -390,7 +390,7 @@ MAIN:  do itime = itime0 , itime1
 #endif
   if ( ioprintnode ) then
     blankline(stdout)
-    WRITE ( stdout , '(a)' )    'total stress tensor'
+    WRITE ( stdout , '(a)' )    '  total stress tensor'
     CALL print_tensor_n (tau_coul+tau_nonb) 
   endif
        
@@ -512,7 +512,7 @@ MAIN:  do itime = itime0 , itime1
         CALL print_tensor_n ( tau_coul  ) 
       endif
     endif
-    io_node WRITE ( stdout , '(a)' )    "total stress tensor"
+    io_node WRITE ( stdout , '(a)' )    "  total stress tensor"
     CALL print_tensor_n ( tau_coul+tau_nonb  ) 
     if ( ionode .and. lvnlist .and. updatevnl .ne. 0 ) WRITE ( stdout , '(a,i10,e17.8)' ) 'verlet list update frequency',updatevnl,REAL(npas,kind=dp)/REAL(updatevnl,kind=dp)
 

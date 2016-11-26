@@ -1,43 +1,53 @@
 #!/bin/bash
 
-EXEDLPOLY=DLPOLY.X
 EXEMDFF=mdff.x
 
-#dlpoly=true
 mdff=true
-ensemble=nve
-
-#if $dlpoly; then
-#	echo "running DL_POLY test (ex7)"
-#	rm -rf dlpoly
-#	mkdir -p dlpoly
-#	cd dlpoly
-#		cp ../config/CONFIG .
-#		cp ../config/FIELD .
-#		cp ../config/CONTROL .
-#		$EXEDLPOLY
-#		tail -n +4 RDFDAT > RDFDAT.$ensemble
-#	cd ..
-#fi
 
 if $mdff; then
-	echo "running mdff test (ex7)"
+	echo "running mdff test (ex14)"
 	rm -rf mdff 
 	mkdir -p mdff
 	cd mdff
 		cp ../config/control_* .
-		cp ../config/POSFF .
-		$EXEMDFF control_md.F > stdout_md.$ensemble
-		$EXEMDFF control_gr.F > stdout_gr.$ensemble
-		mv GRTFF GRTFF.$ensemble
+		echo "NVE velocities rescaled lennard-jones"
+		cp ../config/POSFF.Ar POSFF 
+		$EXEMDFF control_md_full_run_lj.F > stdout_md_full_run_lj
+		echo "full run finish"
+		mv OSZIFF OSZIFF.full_lj
+		$EXEMDFF control_md_splited_run1_lj.F > stdout_md_splited_run1_lj
+		echo "split 1 finish"
+		mv OSZIFF OSZIFF.run1_lj
+		$EXEMDFF control_md_splited_run2_lj.F > stdout_md_splited_run2_lj
+		echo "split 2 finish"
+		mv OSZIFF OSZIFF.run2_lj
+		echo "NVE velocities rescaled PIM"
+		cp ../config/POSFF.SiO2 POSFF
+		$EXEMDFF control_md_full_run_pim.F > stdout_md_full_run_pim
+		echo "full run finish"
+		mv OSZIFF OSZIFF.full_pim
+		$EXEMDFF control_md_splited_run1_pim.F > stdout_md_splited_run1_pim
+		echo "split 1 finish"
+		mv OSZIFF OSZIFF.run1_pim
+		$EXEMDFF control_md_splited_run2_pim.F > stdout_md_splited_run2_pim
+		echo "split 2 finish"
+		mv OSZIFF OSZIFF.run2_pim
+		for c in full_lj run1_lj run2_lj full_pim run1_pim run2_pim
+		do
+			poszi -n -i OSZIFF.$c
+			mv etot_l etot_l.$c
+			mv temp_l temp_l.$c
+		done
 	cd ..
 fi
 
-cat > plot.gr << eof
+cat > plot.e << eof
 #!/usr/bin/gnuplot -persist
 reset
-p 'dlpoly/RDFDAT.$ensemble' w l ,'mdff/GRTFF.$ensemble' w l
+set xlabel "# step"
+set ylabel "E_pot (eV)"
+p 'mdff/etot_l.full' u 3:15 w l  lc 3 title "FULL run",'mdff/etot_l.run1' u 3:15  w p lc 1 title "RUN 1",'mdff/etot_l.run2' u 3:15 w p lc 2  title "RUN 2" 
 eof
-chmod u+x plot.gr
-./plot.gr
+chmod u+x plot.e
+./plot.e
 
