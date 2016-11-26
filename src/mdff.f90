@@ -344,7 +344,7 @@ PROGRAM main_MDFF
       if ( lwrite_quad ) CALL write_QUADFF 
       if ( lwrite_ef )   CALL write_EFALL 
       if ( lwrite_efg )  CALL write_EFGALL 
-      !CALL write_RESTART
+      CALL write_RESTART
     endif
 
     if ( calc .eq. 'stochio' ) then

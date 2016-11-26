@@ -59,7 +59,7 @@ SUBROUTINE md_run
                                         non_bonded, numprocs, myrank , itraj_period , itraj_start , itraj_format, iefgall_format , iefall_format , idipall_format , lmsd, lvacf
   USE io,                       ONLY :  ionode , stdout, kunit_OSZIFF, kunit_TRAJFF,  kunit_EFGALL , kunit_EFALL , kunit_EQUILFF, ioprint , ioprintnode, kunit_DIPFF
   USE md,                       ONLY :  npas , lleapequi , nequil , nequil_period , nprint, &
-                                        fprint, spas , dt,  temp , updatevnl , integrator , itime, xi ,vxi, nhc_n, npropr,npropr_start
+                                        fprint, spas , dt,  temp , updatevnl , integrator , itime, itime0, itime1, xi ,vxi, nhc_n, npropr,npropr_start
 
   USE thermodynamic,            ONLY :  e_tot, u_lj_r, h_tot, e_kin , temp_r , init_general_accumulator , write_thermo ,  write_average_thermo , calc_thermo
   USE time,                     ONLY :  mdsteptimetot
@@ -122,7 +122,7 @@ SUBROUTINE md_run
 
   separator(stdout)
 
-  io_node WRITE ( stdout , '(a)' )      'properties at t=0'
+  io_node WRITE ( stdout , '(a,i)' )      'properties at t=',itime0-1
  
   allocate( xtmp(natm), ytmp(natm), ztmp(natm) )
 
@@ -148,6 +148,9 @@ SUBROUTINE md_run
   OPEN (unit = kunit_EQUILFF,file = 'EQUILFF',STATUS = 'UNKNOWN')
 #endif
 
+#ifdef debug
+         CALL print_config_sample(itime0-2,0)
+#endif
   ! ===================================
   !  calc. kinetic temperature at t=0
   ! ===================================
@@ -169,8 +172,8 @@ SUBROUTINE md_run
     ! write thermodynamic information of config at t=0
     ! ==================================================
     CALL calc_thermo
-    CALL write_thermo( 0 , stdout , 'std' )
-    CALL write_thermo( 0 , kunit_OSZIFF , 'osz' )
+    CALL write_thermo( itime0-1 , stdout , 'std' )
+    CALL write_thermo( itime0-1 , kunit_OSZIFF , 'osz' )
 
   else
   ! ===========================================================================
@@ -195,15 +198,15 @@ SUBROUTINE md_run
     ! write thermodynamic information of the starting point
     ! =======================================================
     CALL calc_thermo
-    CALL write_thermo( 0 , stdout , 'std')
-    CALL write_thermo( 0 , kunit_OSZIFF , 'osz' )
+    CALL write_thermo( itime0-1 , stdout , 'std')
+    CALL write_thermo( itime0-1 , kunit_OSZIFF , 'osz' )
      rx = xtmp
      ry = ytmp
      rz = ztmp
   endif 
 
 #ifdef debug
-         CALL print_config_sample(0,0)
+         CALL print_config_sample(itime0-1,0)
 #endif
   ! =======================
   !  stress tensor at t=0
@@ -245,7 +248,7 @@ SUBROUTINE md_run
    statime
 #endif
 
-MAIN:  do itime = 1 , npas 
+MAIN:  do itime = itime0 , itime1
 
   ! ioprint condition
   if ( MOD ( itime , nprint ) .eq. 0.0_dp ) then
@@ -310,7 +313,7 @@ MAIN:  do itime = 1 , npas
          ! ================================
          if ( ( ANY ( integrator .eq. rescale_allowed ) ) .and.  &
                   ( ( itime .le. nequil .and. MOD ( itime , nequil_period ) .eq. 0 ) .and. &
-                    ( itime .ne. npas .and. itime .ne. 1 ) ) ) then
+                    ( itime .ne. itime0 .and. itime .ne. itime1 ) ) ) then
            io_printnode WRITE(stdout ,'(a)') ''
            io_printnode WRITE(stdout ,'(a)') ' velocities are rescaled'
            CALL rescale_velocities(0)
@@ -320,7 +323,7 @@ MAIN:  do itime = 1 , npas
          ! ================================
          if ( integrator .eq. 'npe-vv' .and.  &
                   ( ( itime .le. nequil.and.MOD ( itime , nequil_period ) .eq. 0 ) .and. &
-                    ( itime .ne. npas .and. itime .ne. 1 ) ) ) then
+                    ( itime .ne. itime0 .and. itime .ne. itime1 ) ) ) then
            CALL rescale_volume(0)
          endif
 
@@ -545,6 +548,10 @@ MAIN:  do itime = 1 , npas
 !    CALL multi_tau_write_output
 !    call dealloc 
 !#endif
+
+#ifdef debug
+         CALL print_config_sample(0,0)
+#endif
 
 #ifdef block
   CLOSE ( kunit_EQUILFF )

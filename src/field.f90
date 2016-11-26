@@ -607,7 +607,7 @@ END SUBROUTINE field_init
 ! ******************************************************************************
 SUBROUTINE field_print_info ( kunit , quiet )
 
-  USE config,           ONLY :  natm , ntype , atype , atypei , natmi , simu_cell , rho 
+  USE config,           ONLY :  natm , ntype , atype , atypei , natmi , simu_cell , rho, massia 
   USE control,          ONLY :  calc , cutshortrange , lnmlj , lmorse , lbmhft , lbmhftd , lcoulomb , longrange , lreducedN , cutlongrange
   USE constants,        ONLY :  pi , pisq, g_to_am
 
@@ -646,8 +646,8 @@ SUBROUTINE field_print_info ( kunit , quiet )
 
   if ( ionode ) then
     total_mass = 0.0_dp
-    do it = 1 , ntype
-      total_mass = total_mass + mass(it) * natmi(it)
+    do ia = 1 , natm 
+      total_mass = total_mass + massia(ia)
     enddo
     separator(kunit)    
     blankline(kunit)

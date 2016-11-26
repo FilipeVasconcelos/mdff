@@ -20,6 +20,7 @@
 
 ! ======= Hardware =======
 #include "symbol.h"
+#define debug 
 !#define GFORTRAN
 ! ======= Hardware =======
 
@@ -53,7 +54,7 @@ SUBROUTINE restart_init ( MDFF )
   CALL print_RESTART_info ( stdout )
  
   ! default values
-  itime = 1
+  itime = itime0
  
 
   OPEN(kunit_RESTART, FILE='RESTART', form ='unformatted')
@@ -74,7 +75,9 @@ SUBROUTINE restart_init ( MDFF )
   READ( kunit_RESTART   ) ltest          
   READ( kunit_RESTART   ) lmsd           
   READ( kunit_RESTART   ) lvacf          
-  READ( kunit_RESTART   ) lrestart       
+  !READ( kunit_RESTART   ) lrestart       
+  !print*,'lrestart in restart_init',lrestart
+  !READ( kunit_RESTART   ) full_restart       
   READ( kunit_RESTART   ) cutlongrange   
   READ( kunit_RESTART   ) cutshortrange  
   READ( kunit_RESTART   ) calc           
@@ -119,6 +122,12 @@ SUBROUTINE restart_init ( MDFF )
   READ( kunit_RESTART   ) rx,ry,rz
   READ( kunit_RESTART   ) vx,vy,vz 
   READ( kunit_RESTART   ) fx,fy,fz
+
+#ifdef debug
+   WRITE(stdout,'(a)') 'print config inside read RESTART'
+   CALL print_config_sample(0,0)
+#endif
+
   READ( kunit_RESTART   ) fxs,fys,fzs
   READ( kunit_RESTART   ) rxs,rys,rzs
   READ( kunit_RESTART   ) xs,ys,zs
@@ -167,8 +176,10 @@ SUBROUTINE restart_init ( MDFF )
   READ( kunit_RESTART   ) nhc_n
   READ( kunit_RESTART   ) nhc_yosh_order 
   READ( kunit_RESTART   ) nhc_mults
+  print*,'here b'
   CALL extended_coordinates_alloc
   READ( kunit_RESTART   ) vxi
+  print*,'here a'
   READ( kunit_RESTART   ) xi
   READ( kunit_RESTART   ) vxib
   READ( kunit_RESTART   ) xib
@@ -185,6 +196,10 @@ SUBROUTINE restart_init ( MDFF )
     write(*,'(a,<nhc_n>f)') 'restart read ',xi
 #endif
   endif
+  print*,'here'
+  print*,'here',vxi
+  itime0=itime
+  itime1=itime0+npas
   
   ! ===================
   !  print mdtag info
@@ -249,10 +264,10 @@ SUBROUTINE restart_init ( MDFF )
   CALL field_print_info(stdout,quiet=.false.)
 
   !allocate ( dipia_ind_t ( extrapolate_order+1, natm , 3 ) )
- 
+
   CLOSE(kunit_RESTART)
 
-  print*,'end of restart_init'
+  WRITE(stdout,'(a)') 'end of restart_init'
 
   return
 
@@ -288,7 +303,8 @@ SUBROUTINE write_RESTART
   WRITE( kunit_RESTART   ) ltest          
   WRITE( kunit_RESTART   ) lmsd           
   WRITE( kunit_RESTART   ) lvacf          
-  WRITE( kunit_RESTART   ) lrestart       
+!  WRITE( kunit_RESTART   ) lrestart       
+!  WRITE( kunit_RESTART   ) full_restart       
   WRITE( kunit_RESTART   ) cutlongrange   
   WRITE( kunit_RESTART   ) cutshortrange  
   WRITE( kunit_RESTART   ) calc           

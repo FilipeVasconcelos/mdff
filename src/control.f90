@@ -142,6 +142,7 @@ SUBROUTINE control_init ( MDFF )
                          lmsd           , &
                          lvacf          , &
                          lrestart       , &
+                         full_restart   , &
                          cutlongrange   , &
                          cutshortrange  , &
                          calc           , &

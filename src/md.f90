@@ -35,6 +35,8 @@ MODULE md
 
   integer :: npas                          !< number of time steps
   integer :: itime                         !< current time step
+  integer :: itime0                        !< starting time step
+  integer :: itime1                        !< finish time step
   integer :: nequil                        !< number of equilibration steps
   integer :: nequil_period                 !< equilibration period
   integer :: spas                          !< save configuration each spas step 
@@ -99,7 +101,7 @@ CONTAINS
 ! ******************************************************************************
 SUBROUTINE md_init
 
-  USE control,  ONLY :  calc
+  USE control,  ONLY :  calc, full_restart
 
   implicit none
 
@@ -157,6 +159,9 @@ SUBROUTINE md_init
   ! ======================
   CALL md_check_tag
 
+  print*,'before if'
+  if ( full_restart ) return
+  print*,'after before',full_restart
   CALL extended_coordinates_alloc
   ! ===================
   !  print mdtag info
@@ -179,7 +184,7 @@ SUBROUTINE md_default_tag
   ! =================
   !  default values
   ! =================
-  itime         = 0 
+  itime         = 1 
   lleapequi     = .false.
   integrator    = 'nve-vv'
   setvel        = 'MaxwBoltz'
@@ -322,6 +327,9 @@ SUBROUTINE md_check_tag
   tauTberendsen  = tauTberendsen  * time_unit
   tauPberendsen  = tauPberendsen  * time_unit
 
+  itime0=itime
+  itime1=(itime0-1)+npas
+
   return
 
 END SUBROUTINE md_check_tag
@@ -336,14 +344,21 @@ SUBROUTINE extended_coordinates_alloc
     vxi  = 0.0_dp
     xi   = 0.0_dp
     nhc_n= 2
-  endif
-  if ( integrator .eq. 'nvt-nhcn' .or. integrator .eq. 'npt-nhcnp' ) then
+  else if ( integrator .eq. 'nvt-nhcn' .or. integrator .eq. 'npt-nhcnp' ) then
     allocate ( vxi(nhc_n) , xi(nhc_n) )
     vxi = 0.0_dp
     xi  = 0.0_dp
     ve   = 0.0_dp
     xe   = 0.0_dp
     allocate ( vxib(nhc_n) , xib(nhc_n) )
+    vxib = 0.0_dp
+    xib  = 0.0_dp
+  else
+    !restart purpose if ensemble is NVT
+    allocate ( vxi(1) , xi(1) )
+    allocate ( vxib(1) , xib(1) )
+    vxi  = 0.0_dp
+    xi   = 0.0_dp
     vxib = 0.0_dp
     xib  = 0.0_dp
   endif
@@ -360,12 +375,14 @@ SUBROUTINE extended_coordinates_dealloc
   ! Deallocation of thermostat coordinates
   if ( integrator .eq. 'nvt-nhc2' ) then
     deallocate ( vxi , xi )
-  endif
-  if (  integrator .eq. 'nvt-nhcn' .or. integrator .eq. 'npt-nhcnp' ) then
+  else if (  integrator .eq. 'nvt-nhcn' .or. integrator .eq. 'npt-nhcnp' ) then
     deallocate ( vxi , xi )
     if ( integrator .eq. 'npt-nhcnp' ) then
       deallocate ( vxib , xib )
     endif
+  else
+    deallocate (vxi,xi)
+    deallocate (vxib,xib)
   endif
 
 
@@ -434,7 +451,7 @@ SUBROUTINE md_print_info(kunit)
               endif !nequil
         endif !integrator
       endif !static
-                                          WRITE ( kunit ,'(a,i12)')     'number of steps                       = ',npas
+                                          WRITE ( kunit ,'(a,i12)')     'number of steps                       = ',npas 
                                           WRITE ( kunit ,'(a,e12.5,a)') 'timestep                              = ',dt / time_unit         ,'  ps'
                                           WRITE ( kunit ,'(a,e12.5,a)') 'time range                            = ',dt * npas / time_unit  ,'  ps'
                                           WRITE ( kunit ,'(a,f12.5,a)') 'temperature                           = ',temp / boltz_unit      ,'   K'
@@ -455,6 +472,8 @@ SUBROUTINE md_print_info(kunit)
                                           WRITE ( kunit ,'(a,i12)')     'saved trajectory periodicity          = ',itraj_period
       if ( itraj_format .eq. 0 )          WRITE ( kunit ,'(a,I7)')      'trajectory format                     : BINARY'
       if ( itraj_format .ne. 0 )          WRITE ( kunit ,'(a,I7)')      'trajectory format                     : FORMATTED'
+                                          WRITE ( kunit ,'(a,I7)')      'starting from step                    :',itime0
+                                          WRITE ( kunit ,'(a,I7)')      '           to step                    :',itime1
       endif       
                                           blankline(kunit)    
   endif !ionode
