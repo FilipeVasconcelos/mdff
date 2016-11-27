@@ -36,7 +36,7 @@
 SUBROUTINE read_pos 
  
   USE constants,                ONLY :  dp 
-  USE control,                  ONLY :  calc , lrestart, restart_data
+  USE control,                  ONLY :  calc , restart_data
   USE config,                   ONLY :  rx , ry , rz , vx , vy , vz , fx , fy , fz , atype , atypei , itype , &
                                         natmi , natm , dipia , qia , ipolar , rho , system , ntype , config_alloc , &
                                         simu_cell , config_print_info , coord_format_allowed , write_CONTFF
@@ -110,16 +110,17 @@ SUBROUTINE read_pos
                                                vx ( ia ) , vy ( ia ) , vz ( ia ) , &
                                                fx ( ia ) , fy ( ia ) , fz ( ia ) , ia = 1 , natm )
   endif
-  if ( .not. lrestart ) then  
-    if ( ionode .and. (( restart_data == "rvn" ) .or. ( restart_data == "rvf" )) ) WRITE ( stdout ,'(A,20A3)' ) &
-    'WARNING in non restart mode velocities and forces are not considered even present in the input file POSFF'
-    vx=0.0_dp
-    vy=0.0_dp
-    vz=0.0_dp
-    fx=0.0_dp
-    fy=0.0_dp
-    fz=0.0_dp
-  endif
+  !27-11-16 a-t-on besoin de ca ?
+  !if ( .not. lrestart ) then  
+  !  if ( ionode .and. (( restart_data == "rvn" ) .or. ( restart_data == "rvf" )) ) WRITE ( stdout ,'(A,20A3)' ) &
+  !  'WARNING in non restart mode velocities and forces are not considered even present in the input file POSFF'
+  !  vx=0.0_dp
+  !  vy=0.0_dp
+  !  vz=0.0_dp
+  !  fx=0.0_dp
+  !  fy=0.0_dp
+  !  fz=0.0_dp
+  !endif
   ! ===============================
   ! init force_field 
   ! ===============================

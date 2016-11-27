@@ -660,7 +660,7 @@ SUBROUTINE field_print_info ( kunit , quiet )
     WRITE ( kunit ,'(a)')               'point charges: '
     lseparator(kunit) 
     do it = 1 , ntype 
-      WRITE ( kunit ,'(a,a,a,e10.3)')   'q_',atypei(it),'                  = ',qch(it)
+      WRITE ( kunit ,'(a,a,a,e10.3)')   'q_',atypei(it),'                   = ',qch(it)
     enddo
     WRITE ( kunit ,'(a,e10.3)')         'total charge            = ',  qtot
     WRITE ( kunit ,'(a,e10.3)')         'second moment of charge = ',  qtot2
@@ -1948,7 +1948,7 @@ SUBROUTINE induced_moment_inner ( f_ind_ext , mu_ind , theta_ind )
 
   enddo inner_loop 
 
-  io_printnode WRITE(stdout,'(a,i3,a,a110,e16.8)')  'inner loop converged in',iscf_inner-1,' steps ',' rmsd_inner = ',rmsd_inner
+  io_printnode WRITE(stdout,'(a,i3,a,e16.8)')  'inner loop converged in',iscf_inner-1,' steps    rmsd_inner = ',rmsd_inner
   ! restore alphaES
   alphaES = alphaES_save
 
@@ -2367,7 +2367,7 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
 #ifdef debug_ES_dir
     if ( ionode ) then
         write(stdout,'(a,e16.8)') 'debug multipole_ES_dir : cutsq',cutsq
-        write(stdout,'(a,3l)')    'debug multipole_ES_dir : task',task
+        write(stdout,'(a,6l)')    'debug multipole_ES_dir : task',task
    endif
 #endif
 
@@ -4819,7 +4819,7 @@ SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , theta_ind , didpim )
   enddo outer_loop ! end of SCF loop
 
   ! ===========================
-  !  charge/force info is recovered
+  !  field info is recovered
   ! ===========================
   alphaES = alphaES_save
   qch = qch_tmp
@@ -5410,6 +5410,7 @@ SUBROUTINE get_dipole_moments ( mu , theta , didpim )
   fx_save = fx ; fy_save = fy ; fz_save = fz
   dipia_ind = 0.0d0
 
+  WRITE(stdout,'(a,a)') 'get_dipole_moments subroutine',algo_moment_from_pola
   ! ======================================
   !     induced moment from polarisation 
   ! ======================================

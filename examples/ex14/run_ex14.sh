@@ -10,22 +10,22 @@ if $mdff; then
 	mkdir -p mdff
 	cd mdff
 		cp ../config/control_* .
-		echo "NVE velocities rescaled lennard-jones"
-		cp ../config/POSFF.Ar POSFF 
-		$EXEMDFF control_md_full_run_lj.F > stdout_md_full_run_lj
-		echo "full run finish"
-		mv OSZIFF OSZIFF.full_lj
-		$EXEMDFF control_md_splited_run1_lj.F > stdout_md_splited_run1_lj
-		echo "split 1 finish"
-		mv OSZIFF OSZIFF.run1_lj
-		$EXEMDFF control_md_splited_run2_lj.F > stdout_md_splited_run2_lj
-		echo "split 2 finish"
-		mv OSZIFF OSZIFF.run2_lj
+		#echo "NVE velocities rescaled lennard-jones"
+		#cp ../config/POSFF.Ar POSFF 
+		#$EXEMDFF control_md_full_run_lj.F > stdout_md_full_run_lj
+		#echo "full run finish"
+		#mv OSZIFF OSZIFF.full_lj
+		#$EXEMDFF control_md_splited_run1_lj.F > stdout_md_splited_run1_lj
+		#echo "split 1 finish"
+		#mv OSZIFF OSZIFF.run1_lj
+		#$EXEMDFF control_md_splited_run2_lj.F > stdout_md_splited_run2_lj
+		#echo "split 2 finish"
+		#mv OSZIFF OSZIFF.run2_lj
 		echo "NVE velocities rescaled PIM"
 		cp ../config/POSFF.SiO2 POSFF
-		$EXEMDFF control_md_full_run_pim.F > stdout_md_full_run_pim
-		echo "full run finish"
-		mv OSZIFF OSZIFF.full_pim
+		#$EXEMDFF control_md_full_run_pim.F > stdout_md_full_run_pim
+		#echo "full run finish"
+		#mv OSZIFF OSZIFF.full_pim
 		$EXEMDFF control_md_splited_run1_pim.F > stdout_md_splited_run1_pim
 		echo "split 1 finish"
 		mv OSZIFF OSZIFF.run1_pim

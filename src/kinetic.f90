@@ -31,7 +31,7 @@ SUBROUTINE init_velocities
   USE config,           ONLY :  vx , vy , vz , natm , ntype , ntypemax , atypei , center_of_mass
   USE md,               ONLY :  nequil , setvel , temp
   USE io,               ONLY :  ionode , stdout
-  USE control,          ONLY :  full_restart, lrestart
+  USE control,          ONLY :  full_restart
 
   implicit none
 
@@ -55,16 +55,7 @@ SUBROUTINE init_velocities
   ! ===============================================
   !  generate velocities from a given distribution
   ! ===============================================
-  ! very stupid bug found jeudi 27 mars 2014 
-  ! if nequil == 0 no velocity in NVT and NPT
-  !if ( (key .eq. 0 .or. .not. lrestart) .and. temp .ne. 0.0_dp .and. (nequil.ne.0) ) then
-  if ( (key .eq. 0 .or. .not. lrestart .or. .not. full_restart) .and. temp .ne. 0.0_dp ) then
-
-    print*,'key',key
-    print*,'lrestart',lrestart
-    print*,temp
-    print*,(key .eq. 0 .or. .not. lrestart)
-    print*,temp .ne. 0.0_dp
+  if ( (key .eq. 0 .or. .not. full_restart) .and. temp .ne. 0.0_dp ) then
 
     separator(stdout)    
     io_node blankline(stdout)    
@@ -86,9 +77,9 @@ SUBROUTINE init_velocities
     if ( setvel.ne.'Uniform' )   CALL rescale_velocities(1)
 
   ! ===========
-  !  lrestart
+  ! non null velocities in input from POSFF 
   ! ===========
-  elseif ( key .eq. 1 .and. lrestart ) then
+  elseif ( key .eq. 1 ) then
 
     ! =======================
     !  input temperature  

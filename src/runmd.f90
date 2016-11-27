@@ -19,7 +19,7 @@
 #include "symbol.h"
 
 ! ======= Hardware =======
-!#define debug
+#define debug
 !#define debug_para
 
 ! print the stress tensor at each time step for each contribution
@@ -213,20 +213,20 @@ SUBROUTINE md_run
   ! =======================
   if ( .not. lstatic ) then
     io_node blankline(stdout)
-    io_node WRITE ( stdout , '(a)' ) 'stress tensor of initial configuration' 
+    io_node WRITE ( stdout , '(a)' ) '  stress tensor of initial configuration' 
     io_node blankline(stdout)
   else
     io_node blankline(stdout)
-    io_node WRITE ( stdout , '(a)' ) 'stress tensor :' 
+    io_node WRITE ( stdout , '(a)' ) '  stress tensor :' 
     io_node blankline(stdout)
   endif    
 
   if ( non_bonded ) then 
-    io_node WRITE ( stdout , '(a)' )   "non_bonded stress tensor"
+    io_node WRITE ( stdout , '(a)' )   "  non_bonded stress tensor"
     CALL print_tensor_n ( tau_nonb ) 
   endif
   if ( lcoulomb )   then
-    io_node WRITE ( stdout , '(a)' )    "coulombic stress tensor"
+    io_node WRITE ( stdout , '(a)' )    "  coulombic stress tensor"
     CALL print_tensor_n ( tau_coul  ) 
   endif
   io_node WRITE ( stdout , '(a)' )    "  total stress tensor"
@@ -379,11 +379,11 @@ MAIN:  do itime = itime0 , itime1
   io_printnode blankline(stdout)
   if ( ioprintnode ) then
     if ( non_bonded ) then 
-      WRITE ( stdout , '(a)' )   "non_bonded stress tensor"
+      WRITE ( stdout , '(a)' )   "  non_bonded stress tensor"
       CALL print_tensor_n ( tau_nonb ) 
     endif
     if ( lcoulomb )   then
-      WRITE ( stdout , '(a)' )    "coulombic stress tensor"
+      WRITE ( stdout , '(a)' )    "  coulombic stress tensor"
       CALL print_tensor_n ( tau_coul  ) 
     endif
   endif
@@ -501,14 +501,14 @@ MAIN:  do itime = itime0 , itime1
     io_node WRITE ( stdout , '(a)' ) 'end of the main loop'
     io_node blankline(stdout)
     io_node blankline(stdout)
-    io_node WRITE ( stdout , '(a)' ) 'stress tensor of final configuration' 
+    io_node WRITE ( stdout , '(a)' ) '  stress tensor of final configuration' 
     if ( ionode ) then
       if ( non_bonded ) then 
-        WRITE ( stdout , '(a)' )   "non_bonded stress tensor"
+        WRITE ( stdout , '(a)' )   "  non_bonded stress tensor"
         CALL print_tensor_n ( tau_nonb ) 
       endif
       if ( lcoulomb )   then
-        WRITE ( stdout , '(a)' )    "coulombic stress tensor"
+        WRITE ( stdout , '(a)' )    "  coulombic stress tensor"
         CALL print_tensor_n ( tau_coul  ) 
       endif
     endif

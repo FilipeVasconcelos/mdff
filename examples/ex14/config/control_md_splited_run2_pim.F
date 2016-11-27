@@ -6,7 +6,7 @@
         lvnlist       = .true.
         lrestart      = .true.
         full_restart  = .true.
-        restart_data  = 'rvf' 
+        restart_data  = 'rnn' 
         lbmhftd       = .true.
         lcoulomb      = .true.
         ltraj         = .false. 
@@ -16,16 +16,16 @@
 
 &mdtag
         integrator    = 'nve-vv' 
-        npas          = 4000
+        npas          = 10 
         dt            = 0.0005
-        nprint        = 20
-        fprint        = 20
+        nprint        = 1
+        fprint        = 1
 
         !INCLUDE <thermostat>
         !INCLUDE <barostat>
         temp          = 2500.0
-        nequil        = 1800
-        nequil_period = 10
+        nequil        = 10
+        nequil_period = 1
 
 &end
 
@@ -34,7 +34,7 @@
         lautoES       = .true.
         epsw          = 1.e-5
         algo_moment_from_pola='scf_kO_v2'
-        omegakO       = 0.7 
+        omegakO       = 0.8 
         conv_tol_ind  = 1e-5
         algo_ext_dipole = 'aspc'
         extrapolate_order = 4

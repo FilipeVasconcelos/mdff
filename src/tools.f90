@@ -810,6 +810,7 @@ END SUBROUTINE
 SUBROUTINE print_config_sample ( time , rank )
 
   USE config,   ONLY :  natm , atype , itype , rx , vx , fx , qia , dipia , ipolar , massia
+  USE field,    ONLY :  mu_t
   USE mpimdff,  ONLY :  myrank
   USE io,       ONLY :  stdout
 
@@ -826,19 +827,19 @@ SUBROUTINE print_config_sample ( time , rank )
        WRITE ( stdout ,'(a)') 'debug :  SAMPLE OF THE CONFIGIURATION '
        WRITE ( stdout ,'(a5,i10)') 'time = ',time
        WRITE ( stdout ,'(a5,i10)') 'rank = ',rank
-       WRITE ( stdout ,'(a)') '     i    atype       itype      ipolar      q      mass    mu_x    mu_y    mu_z             rx                 vx                  fx'
+       WRITE ( stdout ,'(a)') '     i    atype       itype      ipolar      q      mass    d_x    d_y    d_z             rx              vx                  fx                 mu_x'
     if ( natm .ge. 32)   &
-       WRITE ( stdout ,'(i6,a10,2i10,4x,5f8.3,3f20.10)') &
+       WRITE ( stdout ,'(i6,a10,i10,l10,4x,5f8.3,4f20.10)') &
        ( ia , atype ( ia ) , itype ( ia ) , ipolar ( ia ) , qia ( ia ) , massia(ia), dipia ( 1 , ia ), dipia ( 2 , ia ) ,dipia ( 3 , ia ), &
-        rx ( ia ) , vx ( ia ) , fx ( ia ) , ia = 1 , 16 )
+        rx ( ia ) , vx ( ia ) , fx ( ia ) , mu_t( 1 , ia ), ia = 1 , 16 )
     if ( natm .ge. 32)   &
-       WRITE ( stdout ,'(i6,a10,2i10,4x,5f8.3,3f20.10)') &
+       WRITE ( stdout ,'(i6,a10,i10,l10,4x,5f8.3,4f20.10)') &
        ( ia , atype ( ia ) , itype ( ia ) , ipolar ( ia ) , qia ( ia ) , massia(ia), dipia ( 1, ia  ), dipia ( 2, ia ) ,dipia ( 3, ia  ), &
-        rx ( ia ) , vx ( ia ) , fx ( ia ) , ia = natm - 16  , natm )
+        rx ( ia ) , vx ( ia ) , fx ( ia ) , mu_t( 1 , ia ), ia = natm - 16  , natm )
     if ( natm .lt. 32)   &
-       WRITE ( stdout ,'(i6,a10,2i10,4x,5f8.3,3f20.10)') &
+       WRITE ( stdout ,'(i6,a10,i10,l10,4x,5f8.3,4f20.10)') &
        ( ia , atype ( ia ) , itype ( ia ) , ipolar ( ia ) , qia ( ia ) , massia(ia), dipia ( 1, ia ), dipia ( 2, ia ) ,dipia ( 3, ia  ), &
-        rx ( ia ) , vx ( ia ) , fx ( ia ) , ia = 1 , natm )
+        rx ( ia ) , vx ( ia ) , fx ( ia ) , mu_t( 1 , ia ),  ia = 1 , natm )
        blankline(stdout) 
        bigseparator_noionode(stdout) 
   endif

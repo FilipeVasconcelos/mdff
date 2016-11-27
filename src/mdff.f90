@@ -339,12 +339,12 @@ PROGRAM main_MDFF
     ! write final config pos and vel (always) only for md run
     ! ========================================================
     if ( calc .eq. 'md' ) then 
-      CALL write_CONTFF
-      if ( lwrite_dip )  CALL write_DIPFF 
-      if ( lwrite_quad ) CALL write_QUADFF 
-      if ( lwrite_ef )   CALL write_EFALL 
-      if ( lwrite_efg )  CALL write_EFGALL 
-      CALL write_RESTART
+                          CALL write_CONTFF
+      if ( lwrite_dip  )  CALL write_DIPFF 
+      if ( lwrite_quad )  CALL write_QUADFF 
+      if ( lwrite_ef   )  CALL write_EFALL 
+      if ( lwrite_efg  )  CALL write_EFGALL 
+      if ( lrestart    )  CALL write_RESTART
     endif
 
     if ( calc .eq. 'stochio' ) then

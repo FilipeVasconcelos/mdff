@@ -45,8 +45,8 @@ MODULE control
   logical,           SAVE :: ltraj            !< save trajectory                                    
   logical,           SAVE :: lstatic          !< no MD                                                
   logical,           SAVE :: lvnlist          !< verlet list if .true.                            
-  logical,           SAVE :: lrestart         !< restart or not if true strart from the velocities read in POSFF
-  logical,           SAVE :: full_restart     !< restart or not if true strart from the velocities read in POSFF
+  logical,           SAVE :: lrestart         !< write RESTART file 
+  logical,           SAVE :: full_restart     !< full restart from RESTART file
   logical,           SAVE :: lreduced         !< print reduced units ( see reduced_units subroutine in constants.f90 )
   logical,           SAVE :: lreducedN        !< print reduced thermo quantites by the number of atoms (natm)
   logical,           SAVE :: lnmlj            !< n-m lennard-jones potential
@@ -344,10 +344,10 @@ SUBROUTINE control_check_tag
   endif
 
   ! full restart
-  INQUIRE(FILE="RESTART", EXIST=restart_file_exists)
-  if ( lrestart .and. restart_file_exists ) then
-    full_restart = .true.
-  endif
+ ! INQUIRE(FILE="RESTART", EXIST=restart_file_exists)
+ ! if ( lrestart .and. restart_file_exists ) then
+ !   full_restart = .true.
+ ! endif
 
 
   return
@@ -448,9 +448,10 @@ SUBROUTINE control_print_info( kunit , MDFF )
      WRITE ( kunit ,'(a,l2)')    'lreduced    = ', lreduced 
      WRITE ( kunit ,'(a,l2)')    'lreducedN   = ', lreducedN 
      WRITE ( kunit ,'(a,l2)')    'lrestart    = ', lrestart 
+     WRITE ( kunit ,'(a,l2)')    'full_restart= ', full_restart 
      if ( full_restart ) then
        WRITE ( kunit ,'(a)')     'restarting from RESTART file (full restart) '
-     else if ( lrestart ) then
+     else 
        WRITE ( kunit ,'(a)')     'restart from positions and velocities only ( partial restart )' 
      endif
      

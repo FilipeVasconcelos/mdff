@@ -20,7 +20,7 @@
 
 ! ======= Hardware =======
 #include "symbol.h"
-#define debug 
+!#define debug 
 !#define GFORTRAN
 ! ======= Hardware =======
 
@@ -55,7 +55,6 @@ SUBROUTINE restart_init ( MDFF )
  
   ! default values
   itime = itime0
- 
 
   OPEN(kunit_RESTART, FILE='RESTART', form ='unformatted')
   ! reading RESTART (control parameters)
@@ -75,9 +74,7 @@ SUBROUTINE restart_init ( MDFF )
   READ( kunit_RESTART   ) ltest          
   READ( kunit_RESTART   ) lmsd           
   READ( kunit_RESTART   ) lvacf          
-  !READ( kunit_RESTART   ) lrestart       
-  !print*,'lrestart in restart_init',lrestart
-  !READ( kunit_RESTART   ) full_restart       
+  READ( kunit_RESTART   ) lrestart       
   READ( kunit_RESTART   ) cutlongrange   
   READ( kunit_RESTART   ) cutshortrange  
   READ( kunit_RESTART   ) calc           
@@ -123,10 +120,6 @@ SUBROUTINE restart_init ( MDFF )
   READ( kunit_RESTART   ) vx,vy,vz 
   READ( kunit_RESTART   ) fx,fy,fz
 
-#ifdef debug
-   WRITE(stdout,'(a)') 'print config inside read RESTART'
-   CALL print_config_sample(0,0)
-#endif
 
   READ( kunit_RESTART   ) fxs,fys,fzs
   READ( kunit_RESTART   ) rxs,rys,rzs
@@ -221,8 +214,17 @@ SUBROUTINE restart_init ( MDFF )
   READ( kunit_RESTART   ) sigmamor 
   READ( kunit_RESTART   ) epsmor 
   READ( kunit_RESTART   ) rhomor 
+  READ( kunit_RESTART   ) mass 
   READ( kunit_RESTART   ) doefield 
   READ( kunit_RESTART   ) doefg
+  READ( kunit_RESTART   ) qch           
+  READ( kunit_RESTART   ) quad_nuc      
+  READ( kunit_RESTART   ) dip           
+  READ( kunit_RESTART   ) quad          
+  READ( kunit_RESTART   ) poldip        
+  READ( kunit_RESTART   ) poldip_iso    
+  READ( kunit_RESTART   ) polquad       
+  READ( kunit_RESTART   ) polquad_iso   
   READ( kunit_RESTART   ) pol_damp_b 
   READ( kunit_RESTART   ) pol_damp_c 
   READ( kunit_RESTART   ) pol_damp_k
@@ -232,11 +234,16 @@ SUBROUTINE restart_init ( MDFF )
   READ( kunit_RESTART   ) max_scf_pol_iter
   READ( kunit_RESTART   ) algo_ext_dipole 
   READ( kunit_RESTART   ) thole_functions
+  READ( kunit_RESTART   ) thole_function_type
+  READ( kunit_RESTART   ) thole_param
+  READ( kunit_RESTART   ) omegakO 
   READ( kunit_RESTART   ) epsw
   READ( kunit_RESTART   ) lautoES 
-  READ( kunit_RESTART   ) lwfc
   READ( kunit_RESTART   ) lwrite_dip_wfc
   READ( kunit_RESTART   ) lwrite_dip
+  READ( kunit_RESTART   ) lwrite_quad
+  READ( kunit_RESTART   ) lwrite_ef
+  READ( kunit_RESTART   ) lwrite_efg
   READ( kunit_RESTART   ) ldip_wfc
   READ( kunit_RESTART   ) rcut_wfc
   READ( kunit_RESTART   ) ldip_polar 
@@ -247,6 +254,8 @@ SUBROUTINE restart_init ( MDFF )
   READ( kunit_RESTART   ) Cbmhftd 
   READ( kunit_RESTART   ) Dbmhftd 
   READ( kunit_RESTART   ) BDbmhftd 
+  READ( kunit_RESTART   ) task_coul
+  READ( kunit_RESTART   ) algo_moment_from_pola 
    
   ! ================================
   ! initialize constant parameters
@@ -257,6 +266,7 @@ SUBROUTINE restart_init ( MDFF )
   if ( lcoulomb ) then
     CALL initialize_coulomb
   endif
+  READ( kunit_RESTART   ) mu_t 
 
   ! ================================
   !  pint field info
@@ -266,6 +276,10 @@ SUBROUTINE restart_init ( MDFF )
   !allocate ( dipia_ind_t ( extrapolate_order+1, natm , 3 ) )
 
   CLOSE(kunit_RESTART)
+#ifdef debug
+   WRITE(stdout,'(a)') 'print config inside read RESTART'
+   CALL print_config_sample(0,0)
+#endif
 
   WRITE(stdout,'(a)') 'end of restart_init'
 
@@ -303,8 +317,7 @@ SUBROUTINE write_RESTART
   WRITE( kunit_RESTART   ) ltest          
   WRITE( kunit_RESTART   ) lmsd           
   WRITE( kunit_RESTART   ) lvacf          
-!  WRITE( kunit_RESTART   ) lrestart       
-!  WRITE( kunit_RESTART   ) full_restart       
+  WRITE( kunit_RESTART   ) lrestart       
   WRITE( kunit_RESTART   ) cutlongrange   
   WRITE( kunit_RESTART   ) cutshortrange  
   WRITE( kunit_RESTART   ) calc           
@@ -401,8 +414,17 @@ SUBROUTINE write_RESTART
   WRITE( kunit_RESTART   ) sigmamor 
   WRITE( kunit_RESTART   ) epsmor 
   WRITE( kunit_RESTART   ) rhomor 
+  WRITE( kunit_RESTART   ) mass 
   WRITE( kunit_RESTART   ) doefield 
   WRITE( kunit_RESTART   ) doefg
+  WRITE( kunit_RESTART   ) qch           
+  WRITE( kunit_RESTART   ) quad_nuc      
+  WRITE( kunit_RESTART   ) dip           
+  WRITE( kunit_RESTART   ) quad          
+  WRITE( kunit_RESTART   ) poldip        
+  WRITE( kunit_RESTART   ) poldip_iso    
+  WRITE( kunit_RESTART   ) polquad       
+  WRITE( kunit_RESTART   ) polquad_iso   
   WRITE( kunit_RESTART   ) pol_damp_b 
   WRITE( kunit_RESTART   ) pol_damp_c 
   WRITE( kunit_RESTART   ) pol_damp_k
@@ -412,11 +434,16 @@ SUBROUTINE write_RESTART
   WRITE( kunit_RESTART   ) max_scf_pol_iter
   WRITE( kunit_RESTART   ) algo_ext_dipole 
   WRITE( kunit_RESTART   ) thole_functions
+  WRITE( kunit_RESTART   ) thole_function_type
+  WRITE( kunit_RESTART   ) thole_param
+  WRITE( kunit_RESTART   ) omegakO 
   WRITE( kunit_RESTART   ) epsw
   WRITE( kunit_RESTART   ) lautoES 
-  WRITE( kunit_RESTART   ) lwfc
   WRITE( kunit_RESTART   ) lwrite_dip_wfc
   WRITE( kunit_RESTART   ) lwrite_dip
+  WRITE( kunit_RESTART   ) lwrite_quad
+  WRITE( kunit_RESTART   ) lwrite_ef
+  WRITE( kunit_RESTART   ) lwrite_efg
   WRITE( kunit_RESTART   ) ldip_wfc
   WRITE( kunit_RESTART   ) rcut_wfc
   WRITE( kunit_RESTART   ) ldip_polar 
@@ -427,7 +454,12 @@ SUBROUTINE write_RESTART
   WRITE( kunit_RESTART   ) Cbmhftd 
   WRITE( kunit_RESTART   ) Dbmhftd 
   WRITE( kunit_RESTART   ) BDbmhftd 
+  WRITE( kunit_RESTART   ) task_coul
+  WRITE( kunit_RESTART   ) algo_moment_from_pola 
+  WRITE( kunit_RESTART   ) mu_t 
   CLOSE(kunit_RESTART)
+
+
 
 !  if ( ionode ) then
 !    write(*,'(a,<nhc_n>f)') 'restart write ',vxi
@@ -457,7 +489,8 @@ SUBROUTINE print_RESTART_info ( kunit )
      separator(kunit)
      blankline(kunit)
      WRITE ( kunit ,'(a)')       "WARING : the full restart mode is only reading parameters in"
-     WRITE ( kunit ,'(a)')       "the local RESTART file. The control file is not used at all."
+     WRITE ( kunit ,'(a)')       "the local RESTART file. The control file is not used at all" 
+     WRITE ( kunit ,'(a)')       "(except full_restart tag;)"
      WRITE ( kunit ,'(a)')       "Be carefull !! "  
      WRITE ( kunit ,'(a)')       "Some of the most important parameters read from the RESTART "
      WRITE ( kunit ,'(a)')       "file are reminded below. But not all of them !!!"
