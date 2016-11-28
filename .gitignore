@@ -40,7 +40,17 @@ DOSFF*
 DOSKFF*
 EIGFF*
 VECTFF*
+EFGALL*
+EFALL*
+RESTART
+DT*FF
+NMRFF*
 log.*
+etot*
+temp*
+plot*
+out_aver*
+stdout*
 
 #pictures/pdf/latex output
 *.aux
@@ -62,6 +72,7 @@ examples/ex1/mdff/
 examples/ex1/plot
 examples/ex10/control_files/
 examples/ex11/md_runs/
+examples/ex4/POSFF
 examples/ex5/plot.band
 examples/ex5/plot.dos
 examples/ex5/stdout.vib
@@ -114,4 +125,5 @@ examples/ex9/config/pot_mdff/scr9
 examples/ex9/cp2k/
 examples/ex9/mdff/
 examples/ex11/random_structs/*
+examples/ex14/mdff/
 

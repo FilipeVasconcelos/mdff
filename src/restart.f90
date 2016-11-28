@@ -75,7 +75,7 @@ SUBROUTINE restart_init ( MDFF )
   READ( kunit_RESTART   ) ltest          
   READ( kunit_RESTART   ) lmsd           
   READ( kunit_RESTART   ) lvacf          
-  READ( kunit_RESTART   ) lrestart       
+  READ( kunit_RESTART   ) lwrite_restart       
   READ( kunit_RESTART   ) cutlongrange   
   READ( kunit_RESTART   ) cutshortrange  
   READ( kunit_RESTART   ) calc           
@@ -320,7 +320,7 @@ SUBROUTINE write_RESTART
   WRITE( kunit_RESTART   ) ltest          
   WRITE( kunit_RESTART   ) lmsd           
   WRITE( kunit_RESTART   ) lvacf          
-  WRITE( kunit_RESTART   ) lrestart       
+  WRITE( kunit_RESTART   ) lwrite_restart       
   WRITE( kunit_RESTART   ) cutlongrange   
   WRITE( kunit_RESTART   ) cutshortrange  
   WRITE( kunit_RESTART   ) calc           

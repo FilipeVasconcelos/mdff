@@ -45,7 +45,7 @@ MODULE control
   logical,           SAVE :: ltraj            !< save trajectory                                    
   logical,           SAVE :: lstatic          !< no MD                                                
   logical,           SAVE :: lvnlist          !< verlet list if .true.                            
-  logical,           SAVE :: lrestart         !< write RESTART file 
+  logical,           SAVE :: lwrite_restart   !< control RESTART file 
   logical,           SAVE :: full_restart     !< full restart from RESTART file
   logical,           SAVE :: lreduced         !< print reduced units ( see reduced_units subroutine in constants.f90 )
   logical,           SAVE :: lreducedN        !< print reduced thermo quantites by the number of atoms (natm)
@@ -141,7 +141,7 @@ SUBROUTINE control_init ( MDFF )
                          ltest          , &
                          lmsd           , &
                          lvacf          , &
-                         lrestart       , &
+                         lwrite_restart , &
                          full_restart   , &
                          cutlongrange   , &
                          cutshortrange  , &
@@ -221,7 +221,7 @@ SUBROUTINE control_default_tag
   ltest         = .false.
   lmsd          = .false.
   lvacf         = .false.
-  lrestart      = .false.
+  lwrite_restart= .false.
   full_restart  = .false.
   calc          = 'md'
   dgauss        = 'boxmuller_basic'
@@ -344,8 +344,9 @@ SUBROUTINE control_check_tag
   endif
 
   ! full restart
+  !to be removed nov 2016
  ! INQUIRE(FILE="RESTART", EXIST=restart_file_exists)
- ! if ( lrestart .and. restart_file_exists ) then
+ ! if ( lwrite_restart .and. restart_file_exists ) then
  !   full_restart = .true.
  ! endif
 
@@ -436,19 +437,19 @@ SUBROUTINE control_print_info( kunit , MDFF )
      blankline(kunit)
      WRITE ( kunit ,'(a)'  )     'CONTROL MODULE ... WELCOME'
      blankline(kunit)
-     WRITE ( kunit ,'(a,a)')     'calc        =  ', calc 
-     WRITE ( kunit ,'(a,l2)')    'lnmlj       = ', lnmlj 
-     WRITE ( kunit ,'(a,l2)')    'lbmhft      = ', lbmhft
-     WRITE ( kunit ,'(a,l2)')    'lbmhftd     = ', lbmhftd
-     WRITE ( kunit ,'(a,l2)')    'lmorse      = ', lmorse 
-     WRITE ( kunit ,'(a,l2)')    'lcoulomb    = ', lcoulomb
-     WRITE ( kunit ,'(a,l2)')    'lsurf       = ', lsurf
-     WRITE ( kunit ,'(a,l2)')    'lvnlist     = ', lvnlist
-     WRITE ( kunit ,'(a,l2)')    'lstatic     = ', lstatic
-     WRITE ( kunit ,'(a,l2)')    'lreduced    = ', lreduced 
-     WRITE ( kunit ,'(a,l2)')    'lreducedN   = ', lreducedN 
-     WRITE ( kunit ,'(a,l2)')    'lrestart    = ', lrestart 
-     WRITE ( kunit ,'(a,l2)')    'full_restart= ', full_restart 
+     WRITE ( kunit ,'(a,a)')     'calc           =  ', calc 
+     WRITE ( kunit ,'(a,l2)')    'lnmlj          = ', lnmlj 
+     WRITE ( kunit ,'(a,l2)')    'lbmhft         = ', lbmhft
+     WRITE ( kunit ,'(a,l2)')    'lbmhftd        = ', lbmhftd
+     WRITE ( kunit ,'(a,l2)')    'lmorse         = ', lmorse 
+     WRITE ( kunit ,'(a,l2)')    'lcoulomb       = ', lcoulomb
+     WRITE ( kunit ,'(a,l2)')    'lsurf          = ', lsurf
+     WRITE ( kunit ,'(a,l2)')    'lvnlist        = ', lvnlist
+     WRITE ( kunit ,'(a,l2)')    'lstatic        = ', lstatic
+     WRITE ( kunit ,'(a,l2)')    'lreduced       = ', lreduced 
+     WRITE ( kunit ,'(a,l2)')    'lreducedN      = ', lreducedN 
+     WRITE ( kunit ,'(a,l2)')    'lwrite_restart = ', lwrite_restart 
+     WRITE ( kunit ,'(a,l2)')    'full_restart   = ', full_restart 
      if ( full_restart ) then
        WRITE ( kunit ,'(a)')     'restarting from RESTART file (full restart) '
      else 

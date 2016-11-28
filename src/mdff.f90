@@ -329,22 +329,21 @@ PROGRAM main_MDFF
     ! ==============================================
     ! IF VOIS1 : 
     ! - first neighbour sphere analysis  
-    ! - ( in construction )
     ! ==============================================
     if ( calc.eq. 'vois1' ) then
       CALL vois1_init
       CALL vois1_driver
     endif
     ! ========================================================
-    ! write final config pos and vel (always) only for md run
+    ! write final config ( alays pos, vel and forces for md run )
     ! ========================================================
     if ( calc .eq. 'md' ) then 
-                          CALL write_CONTFF
-      if ( lwrite_dip  )  CALL write_DIPFF 
-      if ( lwrite_quad )  CALL write_QUADFF 
-      if ( lwrite_ef   )  CALL write_EFALL 
-      if ( lwrite_efg  )  CALL write_EFGALL 
-      if ( lrestart    )  CALL write_RESTART
+                             CALL write_CONTFF
+      if ( lwrite_dip     )  CALL write_DIPFF 
+      if ( lwrite_quad    )  CALL write_QUADFF 
+      if ( lwrite_ef      )  CALL write_EFALL 
+      if ( lwrite_efg     )  CALL write_EFGALL 
+      if ( lwrite_restart )  CALL write_RESTART
     endif
 
     if ( calc .eq. 'stochio' ) then

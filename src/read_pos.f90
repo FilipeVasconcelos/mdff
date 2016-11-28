@@ -111,7 +111,7 @@ SUBROUTINE read_pos
                                                fx ( ia ) , fy ( ia ) , fz ( ia ) , ia = 1 , natm )
   endif
   !27-11-16 a-t-on besoin de ca ?
-  !if ( .not. lrestart ) then  
+  !if ( .not. lwrite_restart ) then  
   !  if ( ionode .and. (( restart_data == "rvn" ) .or. ( restart_data == "rvf" )) ) WRITE ( stdout ,'(A,20A3)' ) &
   !  'WARNING in non restart mode velocities and forces are not considered even present in the input file POSFF'
   !  vx=0.0_dp
