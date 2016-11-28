@@ -159,9 +159,7 @@ SUBROUTINE md_init
   ! ======================
   CALL md_check_tag
 
-  print*,'before if'
   if ( full_restart ) return
-  print*,'after before',full_restart
   CALL extended_coordinates_alloc
   ! ===================
   !  print mdtag info
@@ -228,7 +226,6 @@ SUBROUTINE md_check_tag
   implicit none
 
   ! local
-  logical :: allowed
   integer :: i
 
   ! ===========
@@ -253,24 +250,11 @@ SUBROUTINE md_check_tag
   ! ====================
   !  check integrator
   ! ====================
-  do i = 1 , size (integrator_allowed)
-   if (trim (integrator) .eq. integrator_allowed(i) ) allowed = .true.
-  enddo
-  if (  .not. allowed ) then
-    if ( ionode )  WRITE ( stdout ,'(a)') 'ERROR mdtag: integrator should be ', integrator_allowed
-    STOP 
-  endif
-  allowed = .false.
+  CALL check_allowed_tags( size( integrator_allowed ), integrator_allowed, integrator, 'in mdtag', 'integrator' ) 
   ! ===============
   !  check setvel
   ! ===============
-  do i = 1 , size (setvel_allowed)
-   if (trim (setvel) .eq. setvel_allowed(i) ) allowed = .true.
-  enddo
-  if (  .not. allowed ) then
-    if ( ionode )  WRITE ( stdout ,'(a)') 'ERROR mdtag: setvel should be ', setvel_allowed
-    STOP
-  endif
+  CALL check_allowed_tags( size( setvel_allowed ), setvel_allowed, setvel, 'in mdtag', 'setvel' ) 
 
   ! ===================
   !  check timesca_thermo/baro 

@@ -151,22 +151,10 @@ SUBROUTINE msd_check_tag
 
   implicit none
 
-  ! local
-  logical :: allowed
-  integer :: i
-
-
   ! ======
   ! msdalgo
   ! ======
-  do i = 1 , size( msdalgo_allowed )
-   if ( trim(msdalgo) .eq. msdalgo_allowed(i))  allowed = .true.
-  enddo
-  if ( .not. allowed ) then
-      if ( ionode )  WRITE ( stdout , '(a)' ) 'ERROR msdtag: msdalgo should be ', msdalgo_allowed
-      STOP
-  endif
-  allowed = .false.
+  CALL check_allowed_tags( size( msdalgo_allowed ), msdalgo_allowed, msdalgo, 'in msdtag','msdalgo' )
 
 
   tcormax = tcormax * time_unit

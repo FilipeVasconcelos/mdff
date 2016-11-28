@@ -496,12 +496,12 @@ SUBROUTINE stochio_check_tag
   ! =================
   !  check def param
   ! =================
-  CALL check_allowed_tags( def_allowed, def, 'stochiotag','def' ) 
+  CALL check_allowed_tags( size( def_allowed ), def_allowed, def, 'in stochiotag','def' ) 
   
   ! =================
   !  check typedef 
   ! =================
-  CALL check_allowed_tags( typedef_allowed, typedef, 'stochiotag', 'typedef' ) 
+  CALL check_allowed_tags( size( typedef_allowed ), typedef_allowed, typedef, 'in stochiotag', 'typedef' ) 
 
   return
 

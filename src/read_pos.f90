@@ -48,7 +48,6 @@ SUBROUTINE read_pos
 
   ! local
   integer           :: it , ia , i
-  logical           :: allowed
   character(len=60) :: cpos
 
   separator(stdout) 
@@ -72,13 +71,8 @@ SUBROUTINE read_pos
   ! ======
   !  cpos
   ! ======
-  do i = 1 , size( coord_format_allowed )
-   if ( trim(cpos) .eq. coord_format_allowed(i))  allowed = .true.
-  enddo
-  if ( .not. allowed ) then
-    if ( ionode )  WRITE ( stdout , '(a)' ) 'ERROR in POSFF at line 9 should be ', coord_format_allowed
-    STOP
-  endif
+  CALL check_allowed_tags ( size( coord_format_allowed ), coord_format_allowed, cpos, 'in POSFF at line 9','' ) 
+
   if ( cpos .eq. 'Direct' .or. cpos .eq. 'D' ) then
     io_node WRITE ( stdout      ,'(A,20A3)' ) 'atomic positions in direct coordinates in POSFF'
   else if ( cpos .eq. 'Cartesian' .or. cpos .eq. 'C' ) then

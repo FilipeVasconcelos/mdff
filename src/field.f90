@@ -303,19 +303,12 @@ SUBROUTINE field_check_tag
 
   ! local
   integer :: i, it, it2
-  logical :: allowed , ldamp , ldip, lqua, lqch
+  logical :: ldamp , ldip, lqua, lqch
 
-  allowed = .false.
   ! ========
   !  ctrunc
   ! ========
-  do i = 1 , size ( ctrunc_allowed )
-    if ( trim ( ctrunc ) .eq. ctrunc_allowed ( i ) )  allowed = .true.
-  enddo
-  if ( .not. allowed ) then
-    if ( ionode )  WRITE ( stdout , '(a)' ) 'ERROR fieldtag: ctrunc should be ', ctrunc_allowed
-    STOP
-  endif
+  CALL check_allowed_tags ( size ( ctrunc_allowed ), ctrunc_allowed, ctrunc, 'in fieldtag','ctrunc' ) 
 
   if ( ctrunc .eq. 'notrunc'   ) trunc = 0
   if ( ctrunc .eq. 'linear'    ) trunc = 1
@@ -414,30 +407,15 @@ SUBROUTINE field_check_tag
   endif
 
 
-
-  allowed = .false.
   ! =======================
   !  algo_moment_from_pola 
   ! =======================
-  do i = 1 , size ( algo_moment_from_pola_allowed )
-    if ( trim ( algo_moment_from_pola ) .eq. algo_moment_from_pola_allowed ( i ) )  allowed = .true.
-  enddo
-  if ( .not. allowed ) then
-    if ( ionode )  WRITE ( stdout , '(a)' ) 'ERROR fieldtag: algo_moment_from_pola should be ',algo_moment_from_pola_allowed
-    STOP
-  endif
+  CALL check_allowed_tags( size( algo_moment_from_pola_allowed), algo_moment_from_pola_allowed, algo_moment_from_pola, 'in fieldtag','algo_moment_from_pola' ) 
 
-  allowed = .false.
   ! =======================
   !  thole_function_type 
   ! =======================
-  do i = 1 , size ( thole_function_type_allowed )
-    if ( trim ( thole_function_type ) .eq. thole_function_type_allowed ( i ) )  allowed = .true.
-  enddo
-  if ( .not. allowed ) then
-    if ( ionode )  WRITE ( stdout , '(a)' ) 'ERROR fieldtag: thole_function_type should be ',thole_function_type_allowed
-    STOP
-  endif
+  CALL check_allowed_tags( size(thole_function_type_allowed), thole_function_type_allowed, thole_function_type, 'in fieldtag','thole_function_type' ) 
    
   if ( thole_function_type .eq. 'expon1' ) thole_param = 0.572_dp
   if ( thole_function_type .eq. 'expon2' ) thole_param = 1.9088_dp

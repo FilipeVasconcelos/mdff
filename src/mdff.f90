@@ -244,6 +244,8 @@ PROGRAM main_MDFF
          ! =======================
            if ( lstatic ) then  
              npas = 0
+             itime0=1
+             itime1=0
              integrator = 'nve-vv' 
              CALL md_run 
          ! =======================

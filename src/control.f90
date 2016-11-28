@@ -253,40 +253,38 @@ END SUBROUTINE control_default_tag
 SUBROUTINE control_check_tag
 
   USE io,               ONLY :  stdout , ionode
-  USE constants,        ONLY : reduced_units 
+  USE constants,        ONLY :  reduced_units 
 
   implicit none
 
   ! local
   logical :: restart_file_exists
-  logical :: allowed
   integer :: i
-
 
   ! ======
   !  calc
   ! ======
-  CALL check_allowed_tags( calc_allowed, calc, 'controltag','calc' )
+  CALL check_allowed_tags( size( calc_allowed ) , calc_allowed, calc, 'in controltag','calc' )
   ! ===========
   !  longrange
   ! ===========
-  CALL check_allowed_tags( longrange_allowed, longrange, 'controltag','longrange' )
+  CALL check_allowed_tags( size ( longrange_allowed ) , longrange_allowed, longrange, 'in controltag','longrange' )
   ! =========
   !  dgauss
   ! =========
-  CALL check_allowed_tags( dgauss_allowed, dgauss, 'controltag','dgauss' )
+  CALL check_allowed_tags( size( dgauss_allowed ), dgauss_allowed , dgauss, 'in controltag','dgauss' )
   ! ===========
   ! trajff_data  
   ! ===========
-  CALL check_allowed_tags( data_allowed, trajff_data, 'controltag','trajff_data' )
+  CALL check_allowed_tags( size( data_allowed ), data_allowed, trajff_data, 'in controltag','trajff_data' )
   ! ===========
   ! iscff_data  
   ! ===========
-  CALL check_allowed_tags( data_allowed, iscff_data, 'controltag','iscff_data' )
+  CALL check_allowed_tags( size( data_allowed ) , data_allowed, iscff_data, 'in controltag','iscff_data' )
   ! ===========
   ! posff_data  
   ! ===========
-  CALL check_allowed_tags( data_allowed, posff_data, 'controltag','posff_data' )
+  CALL check_allowed_tags( size( data_allowed ), data_allowed , posff_data, 'in controltag','posff_data' )
 
   if ( lnmlj .or. lmorse .or. lbmhftd .or. lbmhft ) then
     non_bonded = .true.
@@ -309,7 +307,7 @@ SUBROUTINE control_check_tag
   if ( calc .ne. 'md' ) return 
 
   if ( .not. lnmlj .and. .not. lcoulomb .and. .not. lmorse .and. .not. lharm .and. .not. lbmhftd .and. .not. lbmhft ) then
-   if ( ionode )  WRITE ( stdout , '(a)' ) 'ERROR controltag: nmlj, harm , morse, bmhftd or coulomb or all of them . Anyway make a choice !! '
+   if ( ionode )  WRITE ( stdout , '(a)' ) 'ERROR controltag: nmlj, harm , morse, bmhftd or coulomb or all of them not defined. Make a choice !! '
    STOP
   endif
 

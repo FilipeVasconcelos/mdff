@@ -668,7 +668,7 @@ SUBROUTINE read_traj_header ( kunit , iformat )
   ! ===================
   !  coord_format test
   ! ===================
-  CALL check_allowed_tags ( coord_format_allowed , coord_format , ' in  TRAJFF at line 9' , 'coord_format' )
+  CALL check_allowed_tags ( size( coord_format_allowed ) , coord_format_allowed , coord_format , ' in  TRAJFF at line 9' , 'coord_format' )
 
   if ( ionode .and. &
        ( coord_format .eq. 'Direct' .or. coord_format .eq. 'D' ) ) &
@@ -759,7 +759,7 @@ SUBROUTINE read_traj ( kunit , iformat , csave )
   ! ===================
   !  coord_format test
   ! ===================
-  CALL check_allowed_tags ( coord_format_allowed , coord_format , ' in POSFF at line 9' , 'coord_format' )
+  CALL check_allowed_tags ( size ( coord_format_allowed ), coord_format_allowed, coord_format , ' in POSFF at line 9' , 'coord_format' )
 
   ! ======================================
   !         direct to cartesian

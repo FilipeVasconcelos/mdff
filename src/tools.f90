@@ -962,32 +962,38 @@ END SUBROUTINE dumb_guy
 !!  This subroutine check if a specific character tag is allowed
 !
 ! ******************************************************************************
-SUBROUTINE check_allowed_tags( allowed_values , tag , tagsection , tagname )
+SUBROUTINE check_allowed_tags( size_allowed , allowed_values , tag , tagsection , tagname )
 
-  USE io,       ONLY :  ionode, stdout
+  USE io,       ONLY :  ionode, stderr
 
   implicit none
 
   ! global
-  character(len=60) :: allowed_values(:)
-  character(len=60) :: tag
-  character(len=60) :: tagsection
-  character(len=60) :: tagname
+  integer           :: size_allowed
+!  character(len=60) :: allowed_values(size_allowed)
+!  character(len=60) :: tag
+!  character(len=60) :: tagsection
+!  character(len=60) :: tagname
+  character(*) :: allowed_values(size_allowed)
+  character(*) :: tag
+  character(*) :: tagsection
+  character(*) :: tagname
   !
   ! local
   integer :: i
   logical :: allowed
 
   allowed = .false.
-  do i = 1 , size ( allowed_values )
+  do i = 1 , size_allowed 
     if ( trim ( tag ) .eq. allowed_values ( i ) )  allowed = .true.
   enddo
   if ( .not. allowed ) then
-    if ( ionode )  WRITE ( stdout , '(a,a,a,a,a)' ) 'ERROR',tagsection,' :',tagname,' should be ',allowed_values
+    if ( ionode )  WRITE ( stderr , '(a,a,a,a,a,<size_allowed>a)' ) 'ERROR ',tagsection,': ',tagname,' should be :'
+    do i = 1 , size_allowed 
+      if ( ionode )  WRITE ( stderr ,'(a)') allowed_values(i)
+    enddo
     STOP
   endif
-
-
 
   return
 

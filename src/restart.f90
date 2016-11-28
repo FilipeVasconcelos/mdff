@@ -48,7 +48,6 @@ SUBROUTINE restart_init ( MDFF )
 
   ! local 
   integer :: i
-  logical           :: allowed
   character(len=60) :: cpos
   character(len=20) :: FMT 
 

@@ -155,17 +155,7 @@ SUBROUTINE opt_check_tag
 
   implicit none
 
-  ! local
-  logical :: allowed
-  integer :: i
-
-  do i = 1 , size ( optalgo_allowed )
-    if ( TRIM(optalgo) == optalgo_allowed(i) ) allowed = .TRUE.
-  enddo
-  if ( .not. allowed ) then
-    io_node WRITE ( stdout ,'(a,a)') 'ERROR optag: optalgo should be ',optalgo_allowed
-    STOP 
-  endif
+  CALL check_allowed_tags( size( optalgo_allowed ), optalgo_allowed, optalgo, 'in optag','optalgo' ) 
 
   nperiodopt = nconf/nmaxopt
   if ( nperiodopt .lt. 1) nperiodopt = 1

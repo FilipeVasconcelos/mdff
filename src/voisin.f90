@@ -143,7 +143,7 @@ SUBROUTINE vois1_check_tag
   implicit none
 
 
-  CALL check_allowed_tags( vois1algo_allowed , vois1algo , 'vois1tag' , 'vois1algo' ) 
+  CALL check_allowed_tags( size( vois1algo_allowed ), vois1algo_allowed , vois1algo , 'vois1tag' , 'vois1algo' ) 
 
   return
 
