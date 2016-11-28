@@ -16,7 +16,7 @@
 
 &mdtag
         integrator    = 'nve-vv' 
-        npas          = 400 
+        npas          = 500 
         dt            = 0.0005
         nprint        = 10
         fprint        = 1

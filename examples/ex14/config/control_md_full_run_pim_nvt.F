@@ -21,11 +21,16 @@
         nprint        = 10 
         fprint        = 1
 
-        !INCLUDE <thermostat>
+        integrator    = 'nvt-nhcn'
+        nhc_n         = 2
+        nhc_yosh_order= 1
+        nhc_mults     = 1
+        timesca_thermo= 2.0
+
         !INCLUDE <barostat>
         temp          = 2500.0
-        nequil        = 400 
-        nequil_period = 10
+       ! nequil        = 400 
+       ! nequil_period = 10
 
 &end
 

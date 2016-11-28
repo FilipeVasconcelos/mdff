@@ -5,7 +5,7 @@
         skindiff      = 1.0d0
         lvnlist       = .true.
         lrestart      = .false.
-        full_restart  = .false.
+        full_restart  = .true.
         restart_data  = 'rnn' 
         lbmhftd       = .true.
         lcoulomb      = .true.
@@ -16,16 +16,19 @@
 
 &mdtag
         integrator    = 'nve-vv' 
-        npas          = 1000 
+        npas          = 500 
         dt            = 0.0005
-        nprint        = 10 
+        nprint        = 10
         fprint        = 1
 
-        !INCLUDE <thermostat>
+        integrator    = 'nvt-nhcn'
+        nhc_n         = 2
+        nhc_yosh_order= 1
+        nhc_mults     = 1
+        timesca_thermo= 2.0
+
         !INCLUDE <barostat>
         temp          = 2500.0
-        nequil        = 400 
-        nequil_period = 10
 
 &end
 

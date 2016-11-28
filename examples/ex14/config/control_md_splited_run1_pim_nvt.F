@@ -4,7 +4,7 @@
         cutlongrange  = 5.0
         skindiff      = 1.0d0
         lvnlist       = .true.
-        lrestart      = .false.
+        lrestart      = .true.
         full_restart  = .false.
         restart_data  = 'rnn' 
         lbmhftd       = .true.
@@ -16,16 +16,18 @@
 
 &mdtag
         integrator    = 'nve-vv' 
-        npas          = 1000 
+        npas          = 500 
         dt            = 0.0005
-        nprint        = 10 
+        nprint        = 10
         fprint        = 1
 
-        !INCLUDE <thermostat>
+        integrator    = 'nvt-nhcn'
+        nhc_n         = 2
+        nhc_yosh_order= 1
+        nhc_mults     = 1
+        timesca_thermo= 2.0
         !INCLUDE <barostat>
         temp          = 2500.0
-        nequil        = 400 
-        nequil_period = 10
 
 &end
 
@@ -34,6 +36,7 @@
         lautoES       = .true.
         epsw          = 1.e-5
         algo_moment_from_pola='scf_kO_v2'
+        !algo_moment_from_pola='scf_kO_v4_2'
         omegakO       = 0.7 
         conv_tol_ind  = 1e-5
         algo_ext_dipole = 'aspc'

@@ -315,7 +315,7 @@ MAIN:  do itime = itime0 , itime1
                   ( ( itime .le. nequil .and. MOD ( itime , nequil_period ) .eq. 0 ) .and. &
                     ( itime .ne. itime0 .and. itime .ne. itime1 ) ) ) then
            io_printnode WRITE(stdout ,'(a)') ''
-           io_printnode WRITE(stdout ,'(a)') ' velocities are rescaled'
+           io_printnode WRITE(stdout ,'(a)') 'velocities are rescaled'
            CALL rescale_velocities(0)
          endif
          ! ================================
