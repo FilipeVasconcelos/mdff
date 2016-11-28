@@ -30,4 +30,4 @@ ex12 : PIM MD 102  atoms SiO2 (against cp2k)
 
 ex13 : mdff_gui.py 
 
-ex14: restart  (NVT   lennard jones argon)
+ex14: restart  (NVT,NVE lennard jones argon, PIM SiO2 )

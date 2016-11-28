@@ -2,8 +2,7 @@ MODULE oxyde
 
   USE constants,        ONLY :  dp 
 ! 
-! pour le moment il n'y a que 6 oxydes 
-! mais l'ajout de nouveaux oxydes ne devraient pas poser de probleme.
+! l'ajout de nouveaux oxydes ne devraient pas poser de probleme.
 ! à modifier (dans le cas d'ajout d'un ou plusieurs oxydes) :
 !        - le nombre d'oxyde = "noxyde"
 !        - creer une variable reel pour etre lu en entré : real(kind=dp) :: sio2 , na2o , b2o3 ...
