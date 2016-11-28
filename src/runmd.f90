@@ -19,7 +19,7 @@
 #include "symbol.h"
 
 ! ======= Hardware =======
-#define debug
+!#define debug
 !#define debug_para
 
 ! print the stress tensor at each time step for each contribution

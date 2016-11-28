@@ -1258,6 +1258,7 @@ SUBROUTINE engforce_driver
      ! wannier centers (if given in POSFF )
      ! induced         (if polar are set in control file)
      CALL get_dipole_moments ( mu , theta , didpim )
+     theta=0.0_dp
  
      ! ====================================
      ! get all the electrostatic quantities
@@ -1265,6 +1266,7 @@ SUBROUTINE engforce_driver
      CALL multipole_ES ( ef , efg , mu , theta , task_coul , damp_ind=.true. , &
                          do_efield=doefield , do_efg=doefg , do_forces=.true. , &
                          do_stress=.true. , do_rec=.true. , do_dir=.true. , do_strucfact =.false. , use_ckrskr = didpim )
+     theta=0.0_dp
      mu_t     = mu
      theta_t  = theta
      ef_t     = ef
@@ -1735,6 +1737,7 @@ SUBROUTINE initialize_coulomb
   allocate ( efg_t ( 3 , 3 , natm ) )
   allocate ( dipia_ind_t ( extrapolate_order+1, 3 , natm ) )
   allocate ( mu_t ( 3 , natm ) )
+  allocate ( theta_t ( 3 , 3 , natm ) )
   ef_t        = 0.0_dp
   efg_t       = 0.0_dp
   dipia_ind_t = 0.0_dp
@@ -1806,6 +1809,7 @@ SUBROUTINE finalize_coulomb
   deallocate ( efg_t )
   deallocate ( dipia_ind_t )
   deallocate ( mu_t )
+  deallocate ( theta_t )
 
   ! ============
   !  direct sum
@@ -2085,6 +2089,7 @@ SUBROUTINE multipole_ES ( ef , efg , mu , theta , task , damp_ind , &
   musq  = 0.0_dp
   qtot  = 0.0_dp
   qsq   = 0.0_dp
+  thetasq = 0.0_dp
   do ia = 1 , natm
     mutot ( 1 ) = mutot ( 1 ) + mu ( 1 , ia )
     mutot ( 2 ) = mutot ( 2 ) + mu ( 2 , ia )
@@ -2096,6 +2101,7 @@ SUBROUTINE multipole_ES ( ef , efg , mu , theta , task , damp_ind , &
     qsq = qsq + qia ( ia ) * qia ( ia )
     thetasq= thetasq + (theta(1,1,ia)+theta(2,2,ia)+theta(3,3,ia))*qia(ia)
   enddo
+  !WRITE(stdout,'(a,2f18.10)') 'thetasq',thetasq,theta(1,1,1)
   qmu_sum ( 1 ) = qtot ( 1 ) + mutot ( 1 )
   qmu_sum ( 2 ) = qtot ( 2 ) + mutot ( 2 )
   qmu_sum ( 3 ) = qtot ( 3 ) + mutot ( 3 )
@@ -3134,12 +3140,12 @@ SUBROUTINE multipole_ES_rec ( u_rec , ef_rec, efg_rec , fx_rec , fy_rec , fz_rec
         rhonk_R    = rhonk_R - k_dot_mu * skr(ia) 
         rhonk_I    = rhonk_I + k_dot_mu * ckr(ia) ! rhon_R + i rhon_I
         if ( .not. lquad ) cycle
-        thetaixx = theta ( ia , 1 , 1 )
-        thetaiyy = theta ( ia , 2 , 2 )
-        thetaizz = theta ( ia , 3 , 3 )
-        thetaixy = theta ( ia , 1 , 2 )
-        thetaixz = theta ( ia , 1 , 3 )
-        thetaiyz = theta ( ia , 2 , 3 )
+        thetaixx = theta ( 1 , 1 , ia)
+        thetaiyy = theta ( 2 , 2 , ia)
+        thetaizz = theta ( 3 , 3 , ia)
+        thetaixy = theta ( 1 , 2 , ia)
+        thetaixz = theta ( 1 , 3 , ia)
+        thetaiyz = theta ( 2 , 3 , ia)
         K_dot_Q =           thetaixx * kx * kx + thetaixy * kx * ky + thetaixz * kx * kz
         K_dot_Q = K_dot_Q + thetaixy * kx * ky + thetaiyy * ky * ky + thetaiyz * ky * kz
         K_dot_Q = K_dot_Q + thetaixz * kz * kx + thetaiyz * ky * kz + thetaizz * kz * kz
@@ -3233,12 +3239,12 @@ SUBROUTINE multipole_ES_rec ( u_rec , ef_rec, efg_rec , fx_rec , fy_rec , fz_rec
         fy_rec ( ia ) = fy_rec ( ia ) + ky * k_dot_mu
         fz_rec ( ia ) = fz_rec ( ia ) + kz * k_dot_mu
         if ( .not. lquad ) cycle
-        thetaixx = theta ( ia , 1 , 1 )
-        thetaiyy = theta ( ia , 2 , 2 )
-        thetaizz = theta ( ia , 3 , 3 )
-        thetaixy = theta ( ia , 1 , 2 )
-        thetaixz = theta ( ia , 1 , 3 )
-        thetaiyz = theta ( ia , 2 , 3 )
+        thetaixx = theta ( 1 , 1 , ia)
+        thetaiyy = theta ( 2 , 2 , ia)
+        thetaizz = theta ( 3 , 3 , ia)
+        thetaixy = theta ( 1 , 2 , ia)
+        thetaixz = theta ( 1 , 3 , ia)
+        thetaiyz = theta ( 2 , 3 , ia)
         K_dot_Q =           thetaixx * kx * kx + thetaixy * kx * ky + thetaixz * kx * kz
         K_dot_Q = K_dot_Q + thetaixy * kx * ky + thetaiyy * ky * ky + thetaiyz * ky * kz
         K_dot_Q = K_dot_Q + thetaixz * kz * kx + thetaiyz * ky * kz + thetaizz * kz * kz
@@ -3489,7 +3495,6 @@ SUBROUTINE engforce_bmhftd_pbc
         endif
      endif
    enddo 
-
   enddo
   vir = vir/3.0_dp
   tau_nonb = tau_nonb / simu_cell%omega / press_unit * 0.5_dp
@@ -3935,6 +3940,8 @@ SUBROUTINE moment_from_pola_scf ( mu_ind , theta_ind , didpim )
   stotime
   addtime(time_moment_from_pola)
 #endif
+  ! temporary
+  theta_ind=0.0_dp
 
   return
 
@@ -4221,6 +4228,8 @@ SUBROUTINE moment_from_pola_scf_kO_v1 ( mu_ind , theta_ind , didpim )
   stotime
   addtime(time_moment_from_pola)
 #endif
+  ! temporary
+  theta_ind=0.0_dp
 
   return
 
@@ -4532,6 +4541,10 @@ SUBROUTINE moment_from_pola_scf_kO_v2 ( mu_ind , theta_ind , didpim )
   stotime
   addtime(time_moment_from_pola)
 #endif
+
+
+  ! temporary
+  theta_ind=0.0_dp
 
   return
 
@@ -4860,6 +4873,8 @@ SUBROUTINE moment_from_pola_scf_kO_v3 ( mu_ind , theta_ind , didpim )
   stotime
   addtime(time_moment_from_pola)
 #endif
+  ! temporary
+  theta_ind=0.0_dp
 
   return
 
@@ -5143,7 +5158,7 @@ SUBROUTINE moment_from_pola_scf_kO_v4 ( mu_ind , theta_ind , didpim )
   
 #ifdef debug_extrapolate
     if ( ioprintnode ) then
-      print*,'previous step',itime
+      WRITE(stdout,'(a,i5)') 'previous step',itime
       do ia=1,natm
         write(stdout,'(i5,<extrapolate_order+2>e16.8)') ia, mu_ind ( 1 , ia ), (dipia_ind_t ( t , 1 , ia ) , t=1, extrapolate_order+1 )
       enddo
@@ -5156,6 +5171,8 @@ SUBROUTINE moment_from_pola_scf_kO_v4 ( mu_ind , theta_ind , didpim )
 #endif
 
   deallocate ( F_h , mu_h , F_ind , dmu ) 
+  ! temporary
+  theta_ind=0.0_dp
 
   return
 
@@ -5410,7 +5427,6 @@ SUBROUTINE get_dipole_moments ( mu , theta , didpim )
   fx_save = fx ; fy_save = fy ; fz_save = fz
   dipia_ind = 0.0d0
 
-  WRITE(stdout,'(a,a)') 'get_dipole_moments subroutine',algo_moment_from_pola
   ! ======================================
   !     induced moment from polarisation 
   ! ======================================
@@ -5454,7 +5470,8 @@ SUBROUTINE get_dipole_moments ( mu , theta , didpim )
     endif
   else
     mu    = dipia  + dipia_ind
-    theta = quadia + quadia_ind
+    !theta = quadia + quadia_ind
+    theta = 0.0_dp
   endif
 
   fx = fx_save

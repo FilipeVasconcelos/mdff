@@ -16,15 +16,15 @@
 
 &mdtag
         integrator    = 'nve-vv' 
-        npas          = 8000
+        npas          = 800 
         dt            = 0.0005
-        nprint        = 20
-        fprint        = 20
+        nprint        = 10 
+        fprint        = 1
 
         !INCLUDE <thermostat>
         !INCLUDE <barostat>
         temp          = 2500.0
-        nequil        = 1800
+        nequil        = 200 
         nequil_period = 10
 
 &end

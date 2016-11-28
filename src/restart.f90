@@ -38,6 +38,7 @@ SUBROUTINE restart_init ( MDFF )
   USE control
   USE config
   USE field
+  USE tt_damp
   USE md
 
   implicit none
@@ -136,6 +137,7 @@ SUBROUTINE restart_init ( MDFF )
   READ( kunit_RESTART   ) massia
   READ( kunit_RESTART   ) quadia_nuc
   READ( kunit_RESTART   ) dipia
+  READ( kunit_RESTART   ) quadia 
   READ( kunit_RESTART   ) poldipia
   READ( kunit_RESTART   ) polquadia
   READ( kunit_RESTART   ) invpoldipia
@@ -266,6 +268,7 @@ SUBROUTINE restart_init ( MDFF )
   if ( lcoulomb ) then
     CALL initialize_coulomb
   endif
+  CALL get_TT_damp
   READ( kunit_RESTART   ) mu_t 
 
   ! ================================
@@ -361,6 +364,7 @@ SUBROUTINE write_RESTART
   WRITE( kunit_RESTART   ) massia
   WRITE( kunit_RESTART   ) quadia_nuc
   WRITE( kunit_RESTART   ) dipia
+  WRITE( kunit_RESTART   ) quadia 
   WRITE( kunit_RESTART   ) poldipia
   WRITE( kunit_RESTART   ) polquadia
   WRITE( kunit_RESTART   ) invpoldipia

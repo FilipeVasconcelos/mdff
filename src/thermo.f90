@@ -351,7 +351,6 @@ SUBROUTINE write_thermo ( step , kunit , key )
   ccell = simu_cell%ANORM(3)
 
   u_vdw_r = u_lj_r + u_bmhft_r + u_morse_r
-  print*,u_lj_r,u_bmhft_r,u_morse_r,u_vdw_r
   pvirial_vdw_r   = pvirial_lj_r + pvirial_morse_r + pvirial_bmhft_r 
 
   if ( key .eq. 'osz' ) then

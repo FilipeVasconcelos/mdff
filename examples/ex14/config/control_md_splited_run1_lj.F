@@ -4,7 +4,7 @@
         skindiff      = 1.0d0
         restart_data  = 'rnn'
         lreduced      = .false.
-        lrestart      = .false.
+        lrestart      = .true.
         full_restart  = .false.
         lnmlj         = .true.
         lvnlist       = .true.
