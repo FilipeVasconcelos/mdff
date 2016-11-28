@@ -2,7 +2,7 @@
         calc          = 'md'
         cutshortrange = 8.5d0
         skindiff      = 1.0d0
-        restart_data  = 'rnn'
+        posff_data    = 'rnn'
         lnmlj         = .true.
         lvnlist       = .false.
         ltraj         = .true.

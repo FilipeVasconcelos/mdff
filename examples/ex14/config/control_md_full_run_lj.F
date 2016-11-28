@@ -2,11 +2,11 @@
         calc          = 'md'
         cutshortrange = 8.5d0
         skindiff      = 1.0d0
-        restart_data  = 'rnn'
         lreduced      = .false.
-        lrestart      = .false.
+        lwrite_restart= .false.
         full_restart  = .false.
         lnmlj         = .true.
+        posff_data    = 'rnn'
         lvnlist       = .true.
         ltraj         = .true.
         itraj_start   = 0

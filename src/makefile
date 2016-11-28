@@ -69,11 +69,11 @@ endif
 #FCFLAGS = -O3 -xHost -align all 
 #FCFLAGS = -O3 -ip -static -align all 
 #FCFLAGS = -O3 -ip -static -xHost  -align all
-#FCFLAGS = -O3 -xHost -align all
+FCFLAGS = -O3 -xHost -align all
 #FCFLAGS = -O3 -ip -xW
 #FCFLAGS = -O0 -check all  -check:noarg_temp_created
 #FCFLAGS = -O0 -check all
-FCFLAGS = -O1 
+#FCFLAGS = -O1 
 #ifeq ($(HOST),debian-charrue)
 #FCFLAGS = -O3 -ip -align all
 #endif

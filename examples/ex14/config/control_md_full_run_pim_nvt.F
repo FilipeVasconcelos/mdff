@@ -4,9 +4,9 @@
         cutlongrange  = 5.0
         skindiff      = 1.0d0
         lvnlist       = .true.
-        lrestart      = .false.
+        lwrite_restart= .false.
         full_restart  = .false.
-        restart_data  = 'rnn' 
+        posff_data    = 'rnn' 
         lbmhftd       = .true.
         lcoulomb      = .true.
         ltraj         = .false. 
