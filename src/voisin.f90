@@ -142,18 +142,8 @@ SUBROUTINE vois1_check_tag
 
   implicit none
 
-  ! local
-  logical :: allowed
-  integer :: i
 
-  allowed = .false.
-  do i = 1 , size ( vois1algo_allowed )
-    if ( TRIM( vois1algo ) == vois1algo_allowed(i) ) allowed = .TRUE.
-  enddo
-  if ( .not. allowed ) then
-    io_node WRITE ( stdout ,'(a,a)') 'ERROR vois1tag: vois1algo should be ',vois1algo_allowed
-    STOP
-  endif
+  CALL check_allowed_tags( vois1algo_allowed , vois1algo , 'vois1tag' , 'vois1algo' ) 
 
   return
 

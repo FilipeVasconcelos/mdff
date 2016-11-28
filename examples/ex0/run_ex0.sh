@@ -63,7 +63,7 @@ echo
 echo $sep
 echo 
 # print energy informations
-etot=`grep Etot mdff/stdout | awk '{print $NF}'` 
+etot=`grep Etot mdff/stdout | tail -n 1 | awk '{print $NF}'` 
 etot2=`echo ${etot} | sed -e 's/[eE]+*/\\*10\\^/'`
 natm=`grep natm mdff/stdout | awk '{print $NF}'`
 lr=`grep "long range correction (init) energy" mdff/stdout |  awk '{print $NF}'`

@@ -95,7 +95,7 @@ MODULE control
   !  format of TRAJFF allowed  
   ! =====================================================
   character(len=3), SAVE :: trajff_data
-  character(len=3), SAVE :: restart_data
+  character(len=3), SAVE :: posff_data
   character(len=3), SAVE :: iscff_data
   character(len=3), SAVE :: data_allowed(4)
   data data_allowed / 'rvf' , 'rnn' , 'rnf' , 'rvn' /
@@ -157,7 +157,7 @@ SUBROUTINE control_init ( MDFF )
                          iefall_format  , & 
                          iefgall_format , & 
                          idipall_format , & 
-                         restart_data   , & 
+                         posff_data   , & 
                          skindiff     
                
   ! ======================
@@ -238,7 +238,7 @@ SUBROUTINE control_default_tag
   idipall_format= 1
   trajff_data   = 'rnn'
   iscff_data    = 'rnn'
-  restart_data  = 'rnn'
+  posff_data  = 'rnn'
 
   return 
  
@@ -266,57 +266,27 @@ SUBROUTINE control_check_tag
   ! ======
   !  calc
   ! ======
-  do i = 1 , size( calc_allowed ) 
-   if ( trim(calc) .eq. calc_allowed(i))  allowed = .true.
-  enddo
-  if ( .not. allowed ) then
-      if ( ionode )  WRITE ( stdout , '(a)' ) 'ERROR controltag: calc should be ', calc_allowed
-      STOP 
-  endif
-  allowed = .false.
+  CALL check_allowed_tags( calc_allowed, calc, 'controltag','calc' )
   ! ===========
   !  longrange
   ! ===========
-  do i = 1 , size( longrange_allowed )
-   if ( trim(longrange) .eq. longrange_allowed(i))  allowed = .true.
-  enddo
-  if ( .not. allowed ) then
-    io_node WRITE ( stdout , '(a)' ) 'ERROR controltag: longrange should be ', longrange_allowed
-  endif
-  allowed = .false.
+  CALL check_allowed_tags( longrange_allowed, longrange, 'controltag','longrange' )
   ! =========
   !  dgauss
   ! =========
-  do i = 1 , size( dgauss_allowed )
-   if ( trim(dgauss) .eq. dgauss_allowed(i))  allowed = .true.
-  enddo
-  if ( .not. allowed ) then
-    io_node WRITE ( stdout , '(a)' ) 'ERROR controltag: dgauss should be ', dgauss_allowed
-  endif
-  ! =========
+  CALL check_allowed_tags( dgauss_allowed, dgauss, 'controltag','dgauss' )
+  ! ===========
   ! trajff_data  
-  ! =========
-  allowed = .false.
-  do i = 1 , size( data_allowed )
-   if ( trim(trajff_data) .eq. data_allowed(i))  allowed = .true.
-  enddo
-  if ( .not. allowed ) then
-    io_node WRITE ( stdout , '(a)' ) 'ERROR controltag: trajf_data should be ', data_allowed
-  endif
-  allowed = .false.
-  do i = 1 , size( data_allowed )
-   if ( trim(iscff_data) .eq. data_allowed(i))  allowed = .true.
-  enddo
-  if ( .not. allowed ) then
-    io_node WRITE ( stdout , '(a)' ) 'ERROR controltag: iscff_data should be ', data_allowed
-  endif
-  allowed = .false.
-  do i = 1 , size( data_allowed )
-   if ( trim(restart_data) .eq. data_allowed(i))  allowed = .true.
-  enddo
-  if ( .not. allowed ) then
-    io_node WRITE ( stdout , '(a)' ) 'ERROR controltag: restart_data should be ', data_allowed
-  endif
+  ! ===========
+  CALL check_allowed_tags( data_allowed, trajff_data, 'controltag','trajff_data' )
+  ! ===========
+  ! iscff_data  
+  ! ===========
+  CALL check_allowed_tags( data_allowed, iscff_data, 'controltag','iscff_data' )
+  ! ===========
+  ! posff_data  
+  ! ===========
+  CALL check_allowed_tags( data_allowed, posff_data, 'controltag','posff_data' )
 
   if ( lnmlj .or. lmorse .or. lbmhftd .or. lbmhft ) then
     non_bonded = .true.

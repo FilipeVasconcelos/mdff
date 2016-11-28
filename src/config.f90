@@ -633,7 +633,6 @@ SUBROUTINE read_traj_header ( kunit , iformat )
 
   integer, intent(in) :: kunit , iformat 
   integer            :: i , it
-  logical            :: allowed
   character(len=60)  :: coord_format
   character(len=60)  :: coord_format1
   character(len=1)   :: coord_format2
@@ -664,16 +663,13 @@ SUBROUTINE read_traj_header ( kunit , iformat )
   endif
   if ( ionode ) WRITE ( stdout ,'(A,20A3)' ) 'found type information on TRAJFF : ', atypei ( 1:ntype )
 
+
+
   ! ===================
   !  coord_format test
   ! ===================
-  do i = 1 , size( coord_format_allowed )
-    if ( trim(coord_format) .eq. coord_format_allowed(i))  allowed = .true.
-  enddo
-  if ( .not. allowed ) then
-    if ( ionode )  WRITE ( stdout , '(a)' ) 'ERROR in TRAJFF at line 9 should be ', coord_format_allowed , coord_format1
-    STOP
-  endif
+  CALL check_allowed_tags ( coord_format_allowed , coord_format , ' in  TRAJFF at line 9' , 'coord_format' )
+
   if ( ionode .and. &
        ( coord_format .eq. 'Direct' .or. coord_format .eq. 'D' ) ) &
        WRITE ( stdout      ,'(A,20A3)' ) 'atomic positions in direct coordinates in TRAJFF'
@@ -699,7 +695,6 @@ SUBROUTINE read_traj ( kunit , iformat , csave )
   integer, intent(in) :: kunit , iformat
   character(len=3)    :: csave
   integer             :: ia , i , it
-  logical             :: allowed
   character(len=60)   :: coord_format
   character(len=60)   :: coord_format1
   character(len=1)    :: coord_format2
@@ -761,16 +756,10 @@ SUBROUTINE read_traj ( kunit , iformat , csave )
     endif
   endif
 
-  ! ====================
+  ! ===================
   !  coord_format test
-  ! ====================
-  do i = 1 , size( coord_format_allowed )
-    if ( trim(coord_format) .eq. coord_format_allowed(i))  allowed = .true.
-  enddo
-  if ( .not. allowed ) then
-    if ( ionode )  WRITE ( stdout , '(a)' ) 'ERROR in POSFF at line 9 should be ', coord_format_allowed , coord_format
-    STOP
-  endif
+  ! ===================
+  CALL check_allowed_tags ( coord_format_allowed , coord_format , ' in POSFF at line 9' , 'coord_format' )
 
   ! ======================================
   !         direct to cartesian

@@ -90,7 +90,7 @@ SUBROUTINE restart_init ( MDFF )
   READ( kunit_RESTART   ) iefall_format  
   READ( kunit_RESTART   ) iefgall_format 
   READ( kunit_RESTART   ) idipall_format 
-  READ( kunit_RESTART   ) restart_data   
+  READ( kunit_RESTART   ) posff_data   
   READ( kunit_RESTART   ) skindiff
 
    CALL control_print_info( stdout , MDFF )
@@ -335,7 +335,7 @@ SUBROUTINE write_RESTART
   WRITE( kunit_RESTART   ) iefall_format  
   WRITE( kunit_RESTART   ) iefgall_format 
   WRITE( kunit_RESTART   ) idipall_format 
-  WRITE( kunit_RESTART   ) restart_data   
+  WRITE( kunit_RESTART   ) posff_data   
   WRITE( kunit_RESTART   ) skindiff
   ! ... continue reading RESTART (config info)  
   WRITE( kunit_RESTART ) natm

@@ -955,4 +955,42 @@ SUBROUTINE dumb_guy(kunit)
 
 END SUBROUTINE dumb_guy
 
+
+! *********************** SUBROUTINE check_allowed_tags **********************************
+!
+!> \brief
+!!  This subroutine check if a specific character tag is allowed
+!
+! ******************************************************************************
+SUBROUTINE check_allowed_tags( allowed_values , tag , tagsection , tagname )
+
+  USE io,       ONLY :  ionode, stdout
+
+  implicit none
+
+  ! global
+  character(len=60) :: allowed_values(:)
+  character(len=60) :: tag
+  character(len=60) :: tagsection
+  character(len=60) :: tagname
+  !
+  ! local
+  integer :: i
+  logical :: allowed
+
+  allowed = .false.
+  do i = 1 , size ( allowed_values )
+    if ( trim ( tag ) .eq. allowed_values ( i ) )  allowed = .true.
+  enddo
+  if ( .not. allowed ) then
+    if ( ionode )  WRITE ( stdout , '(a,a,a,a,a)' ) 'ERROR',tagsection,' :',tagname,' should be ',allowed_values
+    STOP
+  endif
+
+
+
+  return
+
+END SUBROUTINE check_allowed_tags
+
 ! ===== fmV =====

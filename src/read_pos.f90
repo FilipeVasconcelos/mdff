@@ -36,7 +36,7 @@
 SUBROUTINE read_pos 
  
   USE constants,                ONLY :  dp 
-  USE control,                  ONLY :  calc , restart_data
+  USE control,                  ONLY :  calc , posff_data
   USE config,                   ONLY :  rx , ry , rz , vx , vy , vz , fx , fy , fz , atype , atypei , itype , &
                                         natmi , natm , dipia , qia , ipolar , rho , system , ntype , config_alloc , &
                                         simu_cell , config_print_info , coord_format_allowed , write_CONTFF
@@ -99,20 +99,20 @@ SUBROUTINE read_pos
   ! =========================================      
   ! read positions, velocities, forces from disk 
   ! =========================================      
-  if ( restart_data == "rnn" ) then
+  if ( posff_data == "rnn" ) then
     READ  ( kunit_POSFF , * ) ( atype ( ia ) , rx ( ia ) , ry ( ia ) , rz ( ia ) , ia = 1 , natm )
     
-  else if ( restart_data == "rvn" ) then
+  else if ( posff_data == "rvn" ) then
     READ  ( kunit_POSFF , * ) ( atype ( ia ) , rx ( ia ) , ry ( ia ) , rz ( ia ) , &
                                                vx ( ia ) , vy ( ia ) , vz ( ia ) , ia = 1 , natm ) 
-  else if ( restart_data == "rvf" ) then  
+  else if ( posff_data == "rvf" ) then  
     READ  ( kunit_POSFF , * ) ( atype ( ia ) , rx ( ia ) , ry ( ia ) , rz ( ia ) , &
                                                vx ( ia ) , vy ( ia ) , vz ( ia ) , &
                                                fx ( ia ) , fy ( ia ) , fz ( ia ) , ia = 1 , natm )
   endif
   !27-11-16 a-t-on besoin de ca ?
   !if ( .not. lwrite_restart ) then  
-  !  if ( ionode .and. (( restart_data == "rvn" ) .or. ( restart_data == "rvf" )) ) WRITE ( stdout ,'(A,20A3)' ) &
+  !  if ( ionode .and. (( posff_data == "rvn" ) .or. ( posff_data == "rvf" )) ) WRITE ( stdout ,'(A,20A3)' ) &
   !  'WARNING in non restart mode velocities and forces are not considered even present in the input file POSFF'
   !  vx=0.0_dp
   !  vy=0.0_dp

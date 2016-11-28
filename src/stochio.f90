@@ -56,7 +56,6 @@ MODULE stochio
   real(kind=dp)       :: sumox , charg , density , a_o_b , a_o_c 
   real(kind=dp)       :: volume , totmass , acell , bcell , ccell , volume2
   character(len=135)  :: filename
-  logical             :: allowed
   logical             :: lexact , lcubic
   integer             :: sum_sto, numbands
   character(len=2)    :: atoms_in  (nelem)
@@ -493,29 +492,16 @@ SUBROUTINE stochio_check_tag
     endif
   endif
 
+
   ! =================
   !  check def param
   ! =================
-  allowed = .false.
-  do i = 1 , size( def_allowed )
-   if ( trim(def) .eq. def_allowed(i))  allowed = .true.
-  enddo
-  if ( .not. allowed ) then
-      WRITE ( stdout , '(a)' ) 'ERROR in stochiotag: def should be ', def_allowed
-      STOP
-  endif
+  CALL check_allowed_tags( def_allowed, def, 'stochiotag','def' ) 
   
   ! =================
   !  check typedef 
   ! =================
-  allowed = .false.
-  do i = 1 , size( typedef_allowed )
-   if ( trim(typedef) .eq. typedef_allowed(i))  allowed = .true.
-  enddo
-  if ( .not. allowed ) then
-      WRITE ( stdout , '(a)' ) 'ERROR in stochiotag: typedef should be ', typedef_allowed
-      STOP
-  endif
+  CALL check_allowed_tags( typedef_allowed, typedef, 'stochiotag', 'typedef' ) 
 
   return
 
