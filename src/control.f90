@@ -45,7 +45,7 @@ MODULE control
   logical,           SAVE :: ltraj            !< save trajectory                                    
   logical,           SAVE :: lstatic          !< no MD                                                
   logical,           SAVE :: lvnlist          !< verlet list if .true.                            
-  logical,           SAVE :: lwrite_restart   !< control RESTART file 
+  logical,           SAVE :: lwrite_restart   !< control RESTART file
   logical,           SAVE :: full_restart     !< full restart from RESTART file
   logical,           SAVE :: lreduced         !< print reduced units ( see reduced_units subroutine in constants.f90 )
   logical,           SAVE :: lreducedN        !< print reduced thermo quantites by the number of atoms (natm)
