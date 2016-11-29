@@ -2,7 +2,7 @@
 
 pwds=$PWD
 
-do_mdff=false
+do_mdff=true
 
 
 dir1=random_structs 

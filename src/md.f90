@@ -320,7 +320,11 @@ END SUBROUTINE md_check_tag
 
 SUBROUTINE extended_coordinates_alloc
 
+  USE control,  ONLY :  calc
+
   implicit none
+
+  if ( calc .ne. 'md' ) return
 
   ! allocation of thermostat coordinates
   if ( integrator .eq. 'nvt-nhc2' ) then
@@ -354,7 +358,11 @@ END SUBROUTINE extended_coordinates_alloc
 
 SUBROUTINE extended_coordinates_dealloc
 
+  USE control,  ONLY :  calc
+
   implicit none
+
+  if ( calc .ne. 'md' ) return
 
   ! Deallocation of thermostat coordinates
   if ( integrator .eq. 'nvt-nhc2' ) then

@@ -492,7 +492,6 @@ SUBROUTINE stochio_check_tag
     endif
   endif
 
-
   ! =================
   !  check def param
   ! =================
