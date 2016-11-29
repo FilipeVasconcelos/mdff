@@ -66,9 +66,11 @@ cat > plot.etot << eof
 #!/usr/bin/gnuplot 
 reset
 set term x11
+set termoption enhanced
+set encoding iso_8859_1
 set title "Total energy MD"
-set xlabel "time"
-set ylabel "E_{tot}"
+set xlabel "time [ps]"
+set ylabel "E_{tot} [eV]"
 p 'etot_l' u 6:9 w l title '',\
   $etot_aver title "",\
   'temp_l' u 6:24 w l title '',\
@@ -83,9 +85,11 @@ cat > plot.econf << eof
 #!/usr/bin/gnuplot 
 reset
 set term x11
+set termoption enhanced
+set encoding iso_8859_1
 set title "Potential energy MD"
-set xlabel "time "
-set ylabel "E_{pot}"
+set xlabel "time [ps]"
+set ylabel "E_{pot} [eV]"
 p 'etot_l' u 6:15 w l title '',\
   $epot_aver title ""
 pause -1
@@ -99,8 +103,8 @@ cat > plot.temp << eof
 reset
 set term x11
 set title "Temperature MD"
-set xlabel "time"
-set ylabel "T"
+set xlabel "time [ps]"
+set ylabel "T [K]"
 p 'temp_l' u 6:9 w l title '',\
   $temp_aver title ""
 pause -1
@@ -114,8 +118,8 @@ cat > plot.all << eof
 reset
 set term x11
 set title "Energies MD"
-set xlabel "time"
-set ylabel "E"
+set xlabel "time [ps]"
+set ylabel "E [eV]"
 p 'etot_l' u 6:9  w l title 'E',\
   'etot_l' u 6:15 w l title 'U',\
   'temp_l' u 6:24 w l title 'H'
@@ -130,8 +134,10 @@ cat > plot.vol << eof
 #!/usr/bin/gnuplot 
 reset
 set term x11
+set termoption enhanced
+set encoding iso_8859_1
 set title "Volume MD"
-set xlabel "volume"
+set xlabel "volume [{\305}^3]"
 set ylabel "V"
 p 'temp_l' u 6:21 w l title '',\
   $volu_aver title ""
