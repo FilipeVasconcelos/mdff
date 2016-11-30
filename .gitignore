@@ -125,5 +125,6 @@ examples/ex9/config/pot_mdff/scr9
 examples/ex9/cp2k/
 examples/ex9/mdff/
 examples/ex11/random_structs/*
+examples/ex12/mdff/
+examples/ex12/cp2k/
 examples/ex14/mdff/
-
