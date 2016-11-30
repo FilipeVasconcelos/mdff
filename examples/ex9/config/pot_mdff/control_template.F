@@ -4,7 +4,7 @@
         cutlongrange  = __RCUT__
         skindiff      = 1.0d0
         lvnlist       = .true.
-        restart_data  = 'rnn'
+        posff_data    = 'rnn'
         lreduced      = .false.
         lbmhft        = __BMH__
         lbmhftd       = __FT_ON__

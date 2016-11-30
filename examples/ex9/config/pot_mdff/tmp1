@@ -4,7 +4,7 @@
         cutlongrange  = __RCUT__
         skindiff      = 1.0d0
         lvnlist       = .true.
-        restart_data  = 'rnn'
+        posff_data    = 'rnn'
         lreduced      = .false.
         lbmhft        = __BMH__
         lbmhftd       = __FT_ON__
@@ -34,10 +34,10 @@
         qch= -2.0d0      4.0d0     3.0d0
         !INCLUDE <PIM.POT>
        ! polar on O
-        lpolar(1)=.true.
-        pol(1,1,1)=0.93971813676926158987
-        pol(1,2,2)=0.93971813676926158987
-        pol(1,3,3)=0.93971813676926158987
+        ldip_polar(1)=.true.
+        poldip(1,1,1)=0.93971813676926158987
+        poldip(1,2,2)=0.93971813676926158987
+        poldip(1,3,3)=0.93971813676926158987
 
         ! O - O
         ldip_damping(1,1,1) = .true.
