@@ -5,5 +5,5 @@
 
 &grtag
         resg = 0.05d0
-        nconf = 1000 
+        nconf = 1000
 &end
