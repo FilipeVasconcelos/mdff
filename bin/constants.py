@@ -1,6 +1,7 @@
 import numpy as np
 
 float_format = '%16.8f'
+float_format_config = '%20.9f'
 
 piroot       = np.sqrt(np.pi) 
 tpi          = 2. * np.pi

@@ -1,8 +1,28 @@
 #!/usr/bin/env python
+# ===============================================================
+# date       : 30 nov 2016 
+# author     : fmv
+# description: This script generate gnuplot plots from input OSZIFF file
+# ===============================================================
 
 import matplotlib.pyplot as plt
 import numpy as np
+import datetime
 from optparse import OptionParser
+
+
+name_quant=['step','Time','Etot','Ekin','Utot','U_vdw','U_coul','Temp','Press','Pvir_vdw','Pvir_coul','Volume','Htot']
+units={}
+units['Time']='[ps]'
+units['Etot']='[eV]'
+units['Ekin']='[eV]'
+units['Utot']='[eV]'
+units['U_vdw']='[eV]'
+units['U_coul']='[eV]'
+units['Temp']='[K]'
+units['Press']='[GPa]'
+units['Volume']='[${\AA}^3$]'
+units['Htot']='[eV]'
 
 def format_filename(filename):
 
@@ -18,7 +38,6 @@ def format_filename(filename):
 def read_OSZIFF(filename):
 
     alldata=[]
-    name_quant=['step','Time','Etot','Ekin','Utot','U_vdw','U_coul','Temp','Press','Pvir_vdw','Pvir_coul','Volume','Htot']
     step=[]
     time=[]
     etot=[]
@@ -68,7 +87,7 @@ def read_OSZIFF(filename):
     alldata.append(volu)
     alldata.append(htot)
 
-    return name_quant,alldata
+    return alldata
     
 def averaging(name_quant,alldata,last_points):
 
@@ -95,10 +114,9 @@ def plot_quant2(alldata,name_quant,average,q,title):
     plt.plot(t, s , 'g')
     plt.plot(t, x1, '--', color='g') 
 
-    plt.xlabel('time (ps)')
-    plt.ylabel(name_quant[q[0]])
+    plt.xlabel('Time'+' '+units['Time'])
+    plt.ylabel(name_quant[q[0]]+' '+units[name_quant[q[0]]])
     plt.title(title)
-    #plt.grid(True)
     plt.show()
 
 def plot_quant(alldata,name_quant,average,q,title):
@@ -109,15 +127,15 @@ def plot_quant(alldata,name_quant,average,q,title):
     plt.plot(t, s,'b')
     plt.plot(t, x1, '--' , color='b') 
 
-    plt.xlabel('time (ps)')
-    plt.ylabel(name_quant[q])
+    plt.xlabel('Time'+' '+units['Time'])
+    plt.ylabel(name_quant[q]+' '+units[name_quant[q]])
     plt.title(title)
     plt.show()
 
 
 def main_parser():
-    parser = OptionParser(usage="usage: %prog [options] filename")
-    parser.add_option("-n", "--no_plot",dest="plot_flag",action='store_false',
+    parser = OptionParser(usage="usage: %prog [options] filename",version="%prog 0.1")
+    parser.add_option("-n", "--no_plot",dest="plot_flag",action="store_false",default=True,
             help="show plot of average and instantaneous thermodynamic quantities along OSZIFF")
     parser.add_option("-l", "--last",dest="last_points",default=None,
             help="averaging on last <l> points")
@@ -130,15 +148,29 @@ def main_parser():
 
 if __name__ == '__main__':
 
+    separator=60*"="
+    now = datetime.datetime.now()
+
+    print separator
+    print now.strftime("%Y-%m-%d %H:%M")
+    print "author : filipe.manuel.vasconcelos@gmail.com"
+    print separator
+    print "Running poszi ..."
+    print "This script generate gnuplot plots from input OSZIFF file"
+
     options,args = main_parser()
     filename=args[0]
     option_dict = vars(options)
+
+
     if format_filename(filename):
-        name_quant,alldata = read_OSZIFF(filename)
+        alldata = read_OSZIFF(filename)
     else:
         raise ValueError('Format of input file doesnt match OSZIFF')
 
     last_points = option_dict['last_points'] 
+    plot_flag   = option_dict['plot_flag'] 
+
     if last_points == None :
         last_points = len(alldata[0])
     else:
@@ -148,8 +180,9 @@ if __name__ == '__main__':
     print "averaging on last",last_points,"points"
 
     average=averaging(name_quant,alldata,last_points)
-    
-    plot_quant2(alldata,name_quant,average,[2,12],title='Total Energy MD')
-    plot_quant(alldata,name_quant,average,4,title='Potential Energy MD')
-    plot_quant(alldata,name_quant,average,7,title='Temperature MD')
-    plot_quant(alldata,name_quant,average,11,title='Volume MD')
+   
+    if plot_flag :
+        plot_quant2(alldata,name_quant,average,[2,12],title='Total Energy MD')
+        plot_quant(alldata,name_quant,average,4,title='Potential Energy MD')
+        plot_quant(alldata,name_quant,average,7,title='Temperature MD')
+        plot_quant(alldata,name_quant,average,11,title='Volume MD')

@@ -1,11 +1,9 @@
-MDFF est accompagné d'un nombre important de script 
-facilitant la génération des fichiers d'inputs.
+MDFF comes with several python scripts to maniopulate input 
+and output files from the main MD code
 
-todo : add some summary here
-
-cartoff
-fftocar
-fftoconf
+cartoff.py            :  convert POSCAR (vasp) to POSFF (mdff)
+fftocar.py            :  convert POSFF (mdff) to POSCAR (vasp)    
+fftoconf              :  convert POSFF (mdff) to CONFIG (DL_POLY) not completely tested
 fftohis
 forcecp2k
 forceoutcar
@@ -14,9 +12,8 @@ histoff
 live-gnuplot
 mdff.x
 outoff
-poszi  
-averoszi
-random_struct.p
+poszi.py              : generate plots from OSZIFF (mdff output) file
+random_struct.py      :
 random_struct+stochio
 read_quench_table.py
 read_statis

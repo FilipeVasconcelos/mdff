@@ -969,11 +969,7 @@ SUBROUTINE check_allowed_tags( size_allowed , allowed_values , tag , tagsection 
   implicit none
 
   ! global
-  integer           :: size_allowed
-!  character(len=60) :: allowed_values(size_allowed)
-!  character(len=60) :: tag
-!  character(len=60) :: tagsection
-!  character(len=60) :: tagname
+  integer      :: size_allowed
   character(*) :: allowed_values(size_allowed)
   character(*) :: tag
   character(*) :: tagsection
