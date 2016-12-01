@@ -241,7 +241,6 @@ class Config(Lattice):
         cc = 0	
 	for it in range(self.ntype):
 	    ccs = cc
-            print it,cc,ccs,self.natmpertype[it]
 	    cc = cc + self.natmpertype[it]
             for ia in range ( ccs , cc  ):
                 self.change_typeinfo ( ia ,  type =self.types[it] , index_type = it )

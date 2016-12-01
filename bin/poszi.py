@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import datetime
 from optparse import OptionParser
+import sys
 
 
 name_quant=['step','Time','Etot','Ekin','Utot','U_vdw','U_coul','Temp','Press','Pvir_vdw','Pvir_coul','Volume','Htot']
@@ -96,20 +97,20 @@ def averaging(name_quant,alldata,last_points):
     average.append(None)#time
     for i,l in enumerate(alldata):
         if name_quant[i] != "step" and name_quant[i] != "Time":
-            average.append(np.mean(l[:last_points]))
-            print '{0:<11} {1:<10} {2:15.8e} {3:^10} {4:15.8e} '.format("<"+name_quant[i]+">","=",np.mean(l[:last_points]),"std.",np.std(l[:last_points]))
+            average.append(np.mean(l[-last_points:]))
+            print '{0:<11} {1:<10} {2:15.8e} {3:^10} {4:15.8e} '.format("<"+name_quant[i]+">","=",np.mean(l[-last_points:]),"std.",np.std(l[-last_points:]))
 
     return average
 
-def plot_quant2(alldata,name_quant,average,q,title):
+def plot_quant2(alldata,name_quant,average,q,title,l):
 
-    t = alldata[1] 
-    s = alldata[q[0]] 
+    t = alldata[1][-l:] 
+    s = alldata[q[0]][-l:] 
     x1= [average[q[0]]]*len(t)
     plt.plot(t, s,'b')
     plt.plot(t, x1, '--' , color='b') 
 
-    s = alldata[q[1]] 
+    s = alldata[q[1]][-l:] 
     x1= [average[q[1]]]*len(t)
     plt.plot(t, s , 'g')
     plt.plot(t, x1, '--', color='g') 
@@ -119,10 +120,11 @@ def plot_quant2(alldata,name_quant,average,q,title):
     plt.title(title)
     plt.show()
 
-def plot_quant(alldata,name_quant,average,q,title):
+def plot_quant(alldata,name_quant,average,q,title,l):
 
-    t = alldata[1] 
-    s = alldata[q] 
+    t = alldata[1][-l:] 
+    s = alldata[q][-l:] 
+
     x1= [average[q]]*len(t)
     plt.plot(t, s,'b')
     plt.plot(t, x1, '--' , color='b') 
@@ -177,12 +179,12 @@ if __name__ == '__main__':
         last_points = int( last_points ) 
 
     print len(alldata[0])," points in input file"
-    print "averaging on last",last_points,"points"
+    print "averaging and plot on last",last_points,"points"
 
     average=averaging(name_quant,alldata,last_points)
    
     if plot_flag :
-        plot_quant2(alldata,name_quant,average,[2,12],title='Total Energy MD')
-        plot_quant(alldata,name_quant,average,4,title='Potential Energy MD')
-        plot_quant(alldata,name_quant,average,7,title='Temperature MD')
-        plot_quant(alldata,name_quant,average,11,title='Volume MD')
+        plot_quant2(alldata,name_quant,average,[2,12],title='Total Energy MD',l=last_points)
+        plot_quant(alldata,name_quant,average,4,title='Potential Energy MD',l=last_points)
+        plot_quant(alldata,name_quant,average,7,title='Temperature MD',l=last_points)
+        plot_quant(alldata,name_quant,average,11,title='Volume MD',l=last_points)

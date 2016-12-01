@@ -5,7 +5,7 @@ cartoff.py            :  convert POSCAR (vasp) to POSFF (mdff)
 fftocar.py            :  convert POSFF (mdff) to POSCAR (vasp)    
 fftoconf              :  convert POSFF (mdff) to CONFIG (DL_POLY) not completely tested
 fftohis
-forcecp2k
+forcecp2k.py          :  extract forces from CP2K output
 forceoutcar
 gen_quench_controls
 histoff
