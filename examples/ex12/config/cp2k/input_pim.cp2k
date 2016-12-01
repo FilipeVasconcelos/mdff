@@ -34,7 +34,7 @@
 
    &MD
      ENSEMBLE  NVT
-     STEPS        1000
+     STEPS        2000
      TIMESTEP     0.5
      TEMPERATURE  2500.0
      &THERMOSTAT
