@@ -404,13 +404,13 @@ MAIN:  do itime = itime0 , itime1
        modcom1=com(1,1)*com(1,1)+com(1,2)*com(1,2)+com(1,3)*com(1,3) 
        modcom2=com(2,1)*com(2,1)+com(2,2)*com(2,2)+com(2,3)*com(2,3) 
        ! sum 
-       sumcom1   = sumcom1 + SQRT (modcom1)
-       sumcom2   = sumcom2 + SQRT (modcom2)
+       sumcom1   = sumcom1 + SQRT (modcom1,kind=dp)
+       sumcom2   = sumcom2 + SQRT (modcom2,kind=dp)
        ! sum od square
        sumcom1sq = sumcom1sq + modcom1
        sumcom2sq = sumcom2sq + modcom2
        ! counting  
-       ddtt      =1.0_dp / DBLE (comcount)
+       ddtt      =1.0_dp / REAL (comcount , kind = dp)
        ! average
        mcom1     = sumcom1*ddtt
        mcom2     = sumcom2*ddtt 

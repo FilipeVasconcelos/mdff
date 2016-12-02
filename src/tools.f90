@@ -854,8 +854,10 @@ END SUBROUTINE print_config_sample
 ! ******************************************************************************
 SUBROUTINE print_general_info (kunit)
 
-  USE io,  ONLY :  ionode 
-  USE config,   ONLY : natm , ntype , rho , simu_cell
+  USE io,               ONLY :  ionode 
+  USE constants,        ONLY :  rho_unit
+  USE config,           ONLY :  natm , ntype , rho , rhoN, simu_cell
+
 
   implicit none
 
@@ -869,7 +871,8 @@ SUBROUTINE print_general_info (kunit)
     WRITE ( kunit ,'(a)')          'Remind some parameters of the system:'
     WRITE ( kunit ,'(a,i5)')       'natm            = ', natm
     WRITE ( kunit ,'(a,i5)')       'ntype           = ', ntype
-    WRITE ( kunit ,'(a,f10.3)')    'density         = ', rho
+    WRITE ( kunit ,'(a,2f10.6,a)') 'density         = ', rhoN , rho * rho_unit ,' g/cm^3'
+    print*,rho
     WRITE ( kunit ,'(a,3f10.3)')   'cell parameters = ', (simu_cell%ANORM(i),i=1,3)
     WRITE ( kunit ,'(a,f10.3)')    'volume          = ', simu_cell%omega
   endif

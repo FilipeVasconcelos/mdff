@@ -138,35 +138,35 @@ SUBROUTINE block_
     enddo
 
     do j = 1, nquan
-      avv(j) = avv(j) + sum(j)  / DBLE ( nb20 )
-      svv(j) = svv(j) + ssum(j) / DBLE ( nb20 )
+      avv(j) = avv(j) + sum(j)  / REAL ( nb20 ,kind=dp )
+      svv(j) = svv(j) + ssum(j) / REAL ( nb20 ,kind=dp )
     enddo
 
-    io_node WRITE ( stdout , 99004) ii, ( sum( j ) / DBLE ( nb20 ) , j=1, nquan )
-    io_node WRITE ( stdout , 99004) ii, ( SQRT ( ssum ( j ) / DBLE ( nb20 ) - &
-                                          sum( j ) * sum( j ) / DBLE ( nb20 ) / DBLE ( nb20 ) )  , j=1, nquan )
+    io_node WRITE ( stdout , 99004) ii, ( sum( j ) / REAL ( nb20 ,kind=dp ) , j=1, nquan )
+    io_node WRITE ( stdout , 99004) ii, ( SQRT ( ssum ( j ) / REAL ( nb20 ,kind=dp ) - &
+                                          sum( j ) * sum( j ) / REAL ( nb20 ,kind=dp ) / REAL ( nb20 ,kind=dp ) )  , j=1, nquan )
 
   enddo
 
   io_node blankline(stdout)
 
   do j = 1, nquan
-    avv(j) = avv(j)/ DBLE ( div )
-    svv(j) = svv(j)/ DBLE ( div ) - avv(j)*avv(j)
-    io_node WRITE ( stdout , 99003) dname(j), avv(j), SQRT (svv(j)/DBLE (div))
+    avv(j) = avv(j)/ REAL ( div ,kind=dp )
+    svv(j) = svv(j)/ REAL ( div ,kind=dp ) - avv(j)*avv(j)
+    io_node WRITE ( stdout , 99003) dname(j), avv(j), SQRT (svv(j)/REAL (div,kind=dp ))
   enddo
 
   io_node blankline(stdout)
  
 
   do j = 1, nquan
-    av(j)  =  av(j) / DBLE ( nblock )
-    sav(j) = (sav(j)/ DBLE ( nblock ) ) - av(j)*av(j)
+    av(j)  =  av(j) / REAL ( nblock ,kind=dp )
+    sav(j) = (sav(j)/ REAL ( nblock ,kind=dp ) ) - av(j)*av(j)
 ! ==========================================
 !           estimate: <c0/(n-1)>
 ! ==========================================
-    av(j) = SQRT (sav(j)/DBLE ( (nblock-1) ) )
-    sav(j) = av(j)      / SQRT (2.*DBLE ( (nblock-1.)) )
+    av(j) = SQRT (sav(j)/REAL ( (nblock-1) ,kind=dp ) )
+    sav(j) = av(j)      / SQRT (2.*REAL ( (nblock-1.) ,kind=dp ) )
   END DO
 
   opbl = 0
@@ -196,15 +196,15 @@ SUBROUTINE block_
     enddo
 
     do j = 1, nquan
-      av(j)  =   av (j) / DBLE ( nblock )                        
-      sav(j) = ( sav(j) / DBLE ( nblock ) ) - av(j) * av(j)          ! c0 eq.8  
+      av(j)  =   av (j) / REAL ( nblock ,kind=dp )                        
+      sav(j) = ( sav(j) / REAL ( nblock ,kind=dp ) ) - av(j) * av(j)          ! c0 eq.8  
     enddo
 
 !  if ( ionode )  WRITE ( stdout , 99002) opbl, (av(j), sav(j), j=1, nquan)
 
     do j = 1, nquan
-      av(j) = SQRT ( sav(j)/DBLE ( (nblock-1)) )
-      sav(j) = av(j) / SQRT (2.*( DBLE (nblock) -1.))
+      av(j) = SQRT ( sav(j)/REAL ( (nblock-1),kind=dp ) )
+      sav(j) = av(j) / SQRT (2.*( REAL (nblock,kind=dp ) -1.))
     enddo
 
     opbl = opbl + 1

@@ -332,7 +332,7 @@ SUBROUTINE efgcalc
                                         kunit_NMRFF , kunit_DTETAFF , kunit_DTVZZFF , kunit_DTIBUFF , kunit_DTIBSFF
   USE constants,                ONLY :  fpi , coul_unit
   USE config,                   ONLY :  system , natm , ntype , atype , rx , ry , rz , itype , & 
-                                        atypei , natmi, rho , simu_cell , config_alloc , qia, &
+                                        atypei , natmi, rhoN , simu_cell , config_alloc , qia, &
                                         ipolar , fx , fy , fz , phi_coul_tot , config_print_info, &
                                         coord_format_allowed, atom_dec , read_traj_header , read_traj , config_dealloc, verlet_coul
   
@@ -377,7 +377,7 @@ SUBROUTINE efgcalc
 
 
     CALL lattice ( simu_cell ) 
-    rho = natm / simu_cell%omega
+    rhoN = natm / simu_cell%omega
     ! ===================================
     !  here we know natm, then alloc 
     !  and decomposition can be applied 
@@ -1829,7 +1829,7 @@ END SUBROUTINE efg_write_output
 SUBROUTINE efg_acf
 
   USE control,                  ONLY :  iefgall_format
-  USE config,                   ONLY :  system , natm , ntype , itype , atype , atypei, natmi , simu_cell , rho , config_alloc
+  USE config,                   ONLY :  system , natm , ntype , itype , atype , atypei, natmi , simu_cell , rhoN , config_alloc
   USE io,                       ONLY :  kunit_EFGALL , kunit_EFGACFFF , kunit_NMRACFFF , kunit_UIACFFF
   USE cell,                     ONLY :  lattice
 
@@ -1896,7 +1896,7 @@ SUBROUTINE efg_acf
   endif
 
   CALL lattice ( simu_cell ) 
-  rho = natm / simu_cell%omega
+  rhoN = natm / simu_cell%omega
   CALL config_alloc 
   CALL typeinfo_init
 
@@ -2159,7 +2159,7 @@ SUBROUTINE efg_stat ( kunit_input , kunit_nmroutput )
 
   USE control,                  ONLY :  iefgall_format
   USE config,                   ONLY :  system , natm , natmi , ntype , itype , &
-                                        atype , atypei , simu_cell , rho, config_alloc , quadia_nuc
+                                        atype , atypei , simu_cell , rhoN, config_alloc , quadia_nuc
   USE field,                    ONLY :  lwfc , field_init        
   USE constants,                ONLY :  CQ_UNIT
   USE cell,                     ONLY :  lattice
@@ -2227,7 +2227,7 @@ SUBROUTINE efg_stat ( kunit_input , kunit_nmroutput )
   endif
 
   CALL lattice ( simu_cell )
-  rho = natm / simu_cell%omega
+  rhoN = natm / simu_cell%omega
   ! ===================================
   !  here we know natm, then alloc 
   !  and decomposition can be applied 
@@ -2306,7 +2306,7 @@ SUBROUTINE efg_stat ( kunit_input , kunit_nmroutput )
     endif
 
     CALL lattice ( simu_cell )
-    rho = natm / simu_cell%omega
+    rhoN = natm / simu_cell%omega
 
     if ( iefgall_format .ne. 0 ) then
       do ia = 1 , natm
@@ -2407,17 +2407,17 @@ SUBROUTINE efg_stat ( kunit_input , kunit_nmroutput )
     !  END OF STAT FOR A GIVEN CONFIG
     ! =================================
 
-    vzzm  ( 0 )  = vzzm  ( 0 ) / DBLE ( natm )
-    vzzsq ( 0 )  = vzzsq ( 0 ) / DBLE ( natm )
-    vzzma ( 0 )  = vzzma ( 0 ) / DBLE ( natm )
-    etam  ( 0 )  = etam  ( 0 ) / DBLE ( natm )
-    pvzz  ( 0 )  = pvzz  ( 0 ) / DBLE ( natm )
+    vzzm  ( 0 )  = vzzm  ( 0 ) / REAL ( natm ,kind=dp )
+    vzzsq ( 0 )  = vzzsq ( 0 ) / REAL ( natm ,kind=dp)
+    vzzma ( 0 )  = vzzma ( 0 ) / REAL ( natm ,kind=dp )
+    etam  ( 0 )  = etam  ( 0 ) / REAL ( natm ,kind=dp )
+    pvzz  ( 0 )  = pvzz  ( 0 ) / REAL ( natm ,kind=dp )
     do it=1,ntype
-      vzzm ( it ) = vzzm ( it ) / DBLE ( natmi ( it ) )
-      vzzsq( it ) = vzzsq( it ) / DBLE ( natmi ( it ) )
-      vzzma( it ) = vzzma( it ) / DBLE ( natmi ( it ) )
-      etam ( it ) = etam ( it ) / DBLE ( natmi ( it ) )
-      pvzz ( it ) = pvzz ( it ) / DBLE ( natmi ( it ) )
+      vzzm ( it ) = vzzm ( it ) / REAL ( natmi ( it ) ,kind=dp )
+      vzzsq( it ) = vzzsq( it ) / REAL ( natmi ( it ) ,kind=dp )
+      vzzma( it ) = vzzma( it ) / REAL ( natmi ( it ) ,kind=dp )
+      etam ( it ) = etam ( it ) / REAL ( natmi ( it ) ,kind=dp )
+      pvzz ( it ) = pvzz ( it ) / REAL ( natmi ( it ) ,kind=dp )
     enddo
 
     do it = 0 , ntype

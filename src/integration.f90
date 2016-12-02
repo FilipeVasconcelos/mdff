@@ -1071,7 +1071,7 @@ END SUBROUTINE nhcnp
 SUBROUTINE prop_pos_vel_verlet_npt ( kin , xe , ve , xe0 , L , W )
 
   USE constants,                ONLY :  dp
-  USE config,                   ONLY :  natm , massia , rx , ry , rz , ry , vx , vy , vz , fx , fy , fz, simu_cell, rho
+  USE config,                   ONLY :  natm , massia , rx , ry , rz , ry , vx , vy , vz , fx , fy , fz, simu_cell, rhoN
   USE md,                       ONLY :  dt , nhc_n , temp , press , first_time_xe0
   USE field,                    ONLY :  engforce_driver
   USE cell,                     ONLY :  lattice , kardir, dirkar, periodicbc
@@ -1131,7 +1131,7 @@ SUBROUTINE prop_pos_vel_verlet_npt ( kin , xe , ve , xe0 , L , W )
   xe0 = xe 
 
   CALL lattice ( simu_cell )
-  rho = DBLE ( natm ) / simu_cell%omega
+  rhoN = REAL ( natm , kind =dp) / simu_cell%omega
 
   ARG = ve*dt2 / W
   ARG2 = ARG*ARG 

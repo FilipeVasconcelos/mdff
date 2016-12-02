@@ -32,6 +32,7 @@
 !! dipole moment : Debye
 !! efg           : V  / angstom**2 
 !! forces        : eV / angtrom
+!! density       : g/cm^3
 !!
 !! Internal units:
 !! length        : angstom 
@@ -78,15 +79,16 @@ MODULE constants
   real(kind=dp),      PARAMETER :: evtoj       = 1.602176487e-19_dp                    !< eV to J 
   real(kind=dp),      PARAMETER :: hplanck     = 6.62617636e-34_dp                     !< Planck constant 
   real(kind=dp),      PARAMETER :: eh          = evtoj / 1e14_dp / hplanck             !< e/h (electron charge / Planck constant )
-  real(kind=dp),      PARAMETER :: cq_unit     = eh / 1000.0_dp                        !< Cq unit conversion 
-  real(kind=dp),      PARAMETER :: g_to_am     = 1.660538782_dp                        !< gram to atomic mass unit 
   ! -------------------------------------------------------------------------------------------------------------------
   ! units related
-  real(kind=dp)      :: press_unit  = 0.00624150964712042_dp                !< GPa = > internal unit of pressure ( eV / angstrom**3) 
-  real(kind=dp)      :: boltz_unit  = 8.61734229648141e-05                  !< boltzmann constant ( energy in eV)
-  real(kind=dp)      :: time_unit   = 98.2269514139276_dp                   !< unit of time picosecond => angstrom * ( atomicmassunit / eV ) ** 0.5
-  real(kind=dp)      :: Debye_unit  = 2.54174618782479816355_dp / bohr      !< Debye unit for dipole moments in eA
-  real(kind=dp)      :: coul_unit   = 14.3996441494161_dp                   !< 1 / 4pi epsilon0  in eV
+  ! set to 1 if reduced unit a requested
+  real(kind=dp)                 :: press_unit  = 0.00624150964712042_dp                !< GPa = > internal unit of pressure ( eV / angstrom**3) 
+  real(kind=dp)                 :: boltz_unit  = 8.61734229648141e-05                  !< boltzmann constant ( energy in eV)
+  real(kind=dp)                 :: time_unit   = 98.2269514139276_dp                   !< unit of time picosecond => angstrom * ( atomicmassunit / eV ) ** 0.5
+  real(kind=dp)                 :: debye_unit  = 2.54174618782479816355_dp / bohr      !< Debye unit for dipole moments in eA
+  real(kind=dp)                 :: coul_unit   = 14.3996441494161_dp                   !< 1 / 4pi epsilon0  in eV
+  real(kind=dp)                 :: rho_unit    = 1.660538782_dp                        !< g/cm^3 => internal unit of density (atomicmassunit/angstrom^3)
+  real(kind=dp)                 :: cq_unit     = eh / 1000.0_dp                        !< Cq unit conversion 
 
 
 
@@ -136,10 +138,12 @@ SUBROUTINE print_kind_info (stdout)
 
      implicit none
 
-     time_unit   = 1.0_dp
-     coul_unit   = 1.0_dp
-     press_unit  = 1.0_dp
-     boltz_unit  = 1.0_dp
+     time_unit     = 1.0_dp
+     coul_unit     = 1.0_dp
+     press_unit    = 1.0_dp
+     boltz_unit    = 1.0_dp
+     rho_unit      = 1.0_dp
+     cq_unit       = 1.0_dp
 
      return
 

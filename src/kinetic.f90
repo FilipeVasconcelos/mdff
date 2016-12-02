@@ -170,9 +170,9 @@ SUBROUTINE rescale_velocities (quite)
       SUMY = SUMY + vy ( ia )
       SUMZ = SUMZ + vz ( ia )
     enddo
-    SUMX = SUMX / DBLE ( natm )
-    SUMY = SUMY / DBLE ( natm )
-    SUMZ = SUMZ / DBLE ( natm )
+    SUMX = SUMX / REAL ( natm , kind = dp )
+    SUMY = SUMY / REAL ( natm , kind = dp )
+    SUMZ = SUMZ / REAL ( natm , kind = dp )
     do ia = 1 , natm
        vx ( ia ) = vx ( ia ) - SUMX
        vy ( ia ) = vy ( ia ) - SUMY
@@ -374,7 +374,7 @@ SUBROUTINE uniform_random_velocities
   Vx0t = 0.0_dp
   Vy0t = 0.0_dp
   Vz0t = 0.0_dp
-  f = SQRT ( 3 * DBLE ( natm ) * temp / v2 )
+  f = SQRT ( 3 * REAL ( natm , kind = dp ) * temp / v2 )
   v2 = 0.0_dp
   DO i = 1, natm
     VX(i) = (VX(i)-vx0) * f
@@ -385,7 +385,7 @@ SUBROUTINE uniform_random_velocities
     Vz0t = Vz0t + VZ(i)
     v2 = v2 + VX(i) ** 2 + VY(i) ** 2 + VZ(i) ** 2
   ENDDO
-  v2 = v2 / DBLE(3 * natm)
+  v2 = v2 / REAL (3 * natm , kind = dp )
   Vx0t = Vx0t/natm
   Vy0t = Vy0t/natm
   Vz0t = Vz0t/natm
@@ -504,9 +504,9 @@ SUBROUTINE maxwellboltzmann_velocities
     SUMZ = SUMZ + vz ( ia )
   enddo
 
-  SUMX = SUMX / DBLE ( natm )
-  SUMY = SUMY / DBLE ( natm )
-  SUMZ = SUMZ / DBLE ( natm )
+  SUMX = SUMX / REAL ( natm ,kind=dp)
+  SUMY = SUMY / REAL ( natm ,kind=dp)
+  SUMZ = SUMZ / REAL ( natm ,kind=dp)
 
   do ia  = 1 , natm
      vx ( ia ) = vx ( ia ) - SUMX

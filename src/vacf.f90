@@ -221,7 +221,7 @@ END SUBROUTINE vacf_dealloc
 ! ******************************************************************************
 SUBROUTINE vacf_main 
 
-  USE config,           ONLY :  natm , rx , ry , rz , vx , vy , vz , rho 
+  USE config,           ONLY :  natm , rx , ry , rz , vx , vy , vz 
   USE md,               ONLY :  dt
   USE io,               ONLY :  kunit_VACFFF
   USE constants,        ONLY :  pi
@@ -352,7 +352,7 @@ SUBROUTINE vacf_write_output
     ! ========
     in  = vacff
     CALL fft_1D_complex ( in , out , tmax )
-    rout = DBLE ( out ) 
+    rout = REAL ( out , kind = dp) 
 
     do i = 1 , tmax
       vtime = dtime * ( i - 1 )

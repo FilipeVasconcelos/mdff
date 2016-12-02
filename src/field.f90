@@ -585,9 +585,9 @@ END SUBROUTINE field_init
 ! ******************************************************************************
 SUBROUTINE field_print_info ( kunit , quiet )
 
-  USE config,           ONLY :  natm , ntype , atype , atypei , natmi , simu_cell , rho, massia 
+  USE config,           ONLY :  natm , ntype , atype , atypei , natmi , simu_cell , rhoN, rho , massia 
   USE control,          ONLY :  calc , cutshortrange , lnmlj , lmorse , lbmhft , lbmhftd , lcoulomb , longrange , lreducedN , cutlongrange
-  USE constants,        ONLY :  pi , pisq, g_to_am
+  USE constants,        ONLY :  pi , pisq, rho_unit
 
   implicit none
 
@@ -603,6 +603,11 @@ SUBROUTINE field_print_info ( kunit , quiet )
   else if ( ( present ( quiet ) .and. quiet ) .and. lquiet ) then
     return
   endif
+
+  ! ==============
+  !  mass density
+  ! ==============
+  rho = total_mass / simu_cell%omega
 
   qtot   = 0.0_dp
   qtot2  = 0.0_dp
@@ -633,7 +638,7 @@ SUBROUTINE field_print_info ( kunit , quiet )
     blankline(kunit)
     lseparator(kunit) 
     WRITE ( kunit ,'(a,f12.4,a)')       'total mass            = ', total_mass ,' a.m '
-    WRITE ( kunit ,'(a,2f12.4,a)')      'density               = ', rho , total_mass / simu_cell%omega * g_to_am ,' g/cm^3 '
+    WRITE ( kunit ,'(a,2f12.4,a)')      'density               = ', rhoN , rho * rho_unit ,' g/cm^3 '
     blankline(kunit)
     WRITE ( kunit ,'(a)')               'point charges: '
     lseparator(kunit) 
@@ -787,9 +792,9 @@ SUBROUTINE field_print_info ( kunit , quiet )
           do i=1,3
             kmax2 = pi * kES(i) / simu_cell%ANORM(i) / alphaES
             kmax2 = kmax2 * kmax2    
-            ereci(i)  = EXP ( - kmax2 ) / kmax2 * ( SQRT ( DBLE(kES(i)) ) / alphaES / simu_cell%ANORM(i) / simu_cell%ANORM(i) )
-            ereci2(i) = qtot2 * alphaES / pisq / ( SQRT ( DBLE(kES(i)) * DBLE(kES(i)) * DBLE(kES(i)) ) ) &
-            * EXP ( - ( pi * DBLE(kES(i)) / alphaES / simu_cell%ANORM(i) ) ** 2 )
+            ereci(i)  = EXP ( - kmax2 ) / kmax2 * ( SQRT ( REAL(kES(i),kind=dp) ) / alphaES / simu_cell%ANORM(i) / simu_cell%ANORM(i) )
+            ereci2(i) = qtot2 * alphaES / pisq / ( SQRT ( REAL(kES(i),kind=dp) * REAL(kES(i),kind=dp) * REAL( kES(i),kind=dp ) ) ) &
+            * EXP ( - ( pi * REAL(kES(i),kind=dp) / alphaES / simu_cell%ANORM(i) ) ** 2 )
           enddo
           rcut2  = cutlongrange * cutlongrange
           ereal  = EXP ( - alpha2 * rcut2 ) / alpha2  / rcut2 * SQRT ( cutlongrange / 2.0_dp / simu_cell%omega )
@@ -857,9 +862,10 @@ SUBROUTINE field_print_info ( kunit , quiet )
     if ( lmorse )       then
       blankline(kunit)
       lseparator(kunit) 
-      WRITE ( kunit ,'(a)')             'morse  potential'
+      WRITE ( kunit ,'(a)')             'Morse  potential'
       lseparator(kunit) 
       blankline(kunit)
+      WRITE ( kunit ,'(a)')             ' V = eps * exp ( -2 rho ( r - sigma ) ) - 2 eps * exp ( -rho ( r - sigma) ) '
       do it1 = 1 , ntype
         do it2 = it1 , ntype
           lseparator(kunit) 
@@ -995,7 +1001,7 @@ END SUBROUTINE ewald_param
 SUBROUTINE initialize_param_non_bonded
 
   USE constants,                ONLY :  tpi , press_unit
-  USE config,                   ONLY :  ntypemax , natm , natmi , rho , atype , itype  , ntype , simu_cell
+  USE config,                   ONLY :  ntypemax , natm , natmi , rhoN , atype , itype  , ntype , simu_cell
   USE control,                  ONLY :  skindiff , cutshortrange , calc
 
   implicit none

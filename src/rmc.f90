@@ -199,7 +199,7 @@ SUBROUTINE rmc_main
                                        kunit_POSFF , kunit_RMCLOG, kunit_TRAJFF , kunit_DTIBUFF , kunit_DTETAFF , kunit_DTVZZFF
   USE config,                   ONLY : natm, ntype , simu_cell, natmi, atypei, atype, allowedmove, rx, ry , rz, &
                                        config_alloc, coord_format_allowed, write_CONTFF, system , &
-                                       vx, vy, vz, fx, fy, fz, rho , config_print_info , itype , atom_dec , write_trajff_xyz
+                                       vx, vy, vz, fx, fy, fz, rhoN , config_print_info , itype , atom_dec , write_trajff_xyz
   USE radial_distrib,           ONLY : nbins, npairs , read_grtff, gr_main , gr_alloc , gr , resg, cutgr
   USE control,                  ONLY : lcoulomb
   USE cell,                     ONLY : lattice, dirkar, kardir
@@ -263,7 +263,7 @@ SUBROUTINE rmc_main
       READ( kunit_RMCFF, * ) (natmi(it),it=1,ntype)
     CLOSE(UNIT=kunit_RMCFF) 
     CALL lattice ( simu_cell ) 
-    rho = REAL ( natm , kind = dp ) / simu_cell%omega
+    rhoN = REAL ( natm , kind = dp ) / simu_cell%omega
     npairs = ntype * ( ntype + 1 ) / 2
     CALL config_alloc
     CALL do_split ( natm , myrank , numprocs , atom_dec , 'atoms' )
@@ -296,7 +296,7 @@ SUBROUTINE rmc_main
     endif
 
     CALL lattice ( simu_cell )
-    rho = REAL ( natm , kind = dp ) / simu_cell%omega
+    rhoN = REAL ( natm , kind = dp ) / simu_cell%omega
     CALL config_alloc
 
     READ  ( kunit_POSFF , * ) ( atype ( ia ) , rx ( ia ) , ry ( ia ) , rz ( ia ) , &

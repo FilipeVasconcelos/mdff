@@ -44,7 +44,7 @@ MODULE opt
 
   implicit none
 
-  logical :: lforce              !< calculate force of the optimise configuration
+  logical :: lforce              !< calculate force of the optimized configuration
 
   integer :: nconf               !< number of configurations in TRAJFF  
   integer :: nmaxopt             !< number of configurations optimized  
@@ -236,7 +236,7 @@ END SUBROUTINE opt_print_info
 SUBROUTINE opt_main 
 
   USE config,           ONLY :  system , natm , ntype , rx , ry , rz , vx , vy ,vz , fx , fy , fz , &
-                                atype  , rho , config_alloc , simu_cell , &
+                                atype  , rhoN , config_alloc , simu_cell , &
                                 atypei , itype, natmi , qia , dipia , ipolar, coord_format_allowed , atom_dec, read_traj , read_traj_header , verlet_coul , verlet_vdw, write_CONTFF
   USE control,          ONLY :  myrank , numprocs , lcoulomb , iscff_format , itraj_format , trajff_data,cutlongrange,cutshortrange , lvnlist
   USE io,               ONLY :  kunit_TRAJFF , kunit_ISTHFF , kunit_ISCFF
@@ -275,7 +275,7 @@ SUBROUTINE opt_main
   if ( itraj_format .eq. 0 ) OPEN ( UNIT = kunit_TRAJFF  , FILE = 'TRAJFF' , form = 'unformatted')
      
   CALL lattice (simu_cell)
-  rho = DBLE ( natm )  / simu_cell%omega 
+  rhoN = REAL ( natm , kind = dp )  / simu_cell%omega 
 
   CALL print_general_info( stdout )
 
@@ -301,7 +301,7 @@ SUBROUTINE opt_main
     CALL read_traj ( kunit_TRAJFF , itraj_format , trajff_data ) 
 
     CALL lattice (simu_cell)
-    rho = DBLE ( natm )  / simu_cell%omega
+    rhoN = REAL ( natm , kind = dp )  / simu_cell%omega
 
     CALL typeinfo_init  
     verlet_vdw%listname='vdw'
@@ -1025,7 +1025,7 @@ SUBROUTINE lbfgs_driver ( icall, Eis , phigrad )
   !                IPRINT(2) = 3 : same as IPRINT(2)=2, plus gradient vector.
   !=================================================================================
   IPRINT(1)= -1 
-  IPRINT(2)= 0 
+  IPRINT(2)= 3 
 
   !=================================================================================
   ! We do not wish to provide the diagonal matrices Hk0, and 

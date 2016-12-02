@@ -54,7 +54,8 @@ MODULE config
   TYPE ( celltype )                            :: simu_cell          !< simulation cell
   real(kind=dp)                                :: tau_nonb ( 3 , 3 ) !< stress tensor ( lennard-jones , morse ... )
   real(kind=dp)                                :: tau_coul ( 3 , 3 ) !< stress tensor coulombic
-  real(kind=dp)                                :: rho                !< density  
+  real(kind=dp)                                :: rhoN               !< number density N / V  (no units)
+  real(kind=dp)                                :: rho                !< mass density M / V  (g/cm^3)
 
   real(kind=dp), dimension(:)    , allocatable :: rx  , ry  , rz     !< positions
   real(kind=dp), dimension(:)    , allocatable :: vx  , vy  , vz     !< velocities
@@ -161,7 +162,7 @@ SUBROUTINE config_print_info(kunit)
     WRITE ( kunit ,'(a,i16)')        'ntype                 = ',ntype
     do it = 1 , ntype     
       WRITE ( kunit ,'(a,a,a,i16,f8.2,a1)') &
-                          'n',atypei(it),'                  = ',natmi(it),DBLE(natmi(it))/DBLE(natm) * 100.0_dp,'%'
+                          'n',atypei(it),'                  = ',natmi(it),REAL(natmi(it),kind=dp )/REAL(natm,kind=dp ) * 100.0_dp,'%'
     enddo
     blankline(kunit)
     lseparator(kunit)
@@ -396,9 +397,9 @@ SUBROUTINE center_of_mass ( ax , ay , az , com )
   enddo
 
   do it = 0 , ntype
-    com ( it , 1 )  = com ( it , 1 ) / DBLE ( natmi ( it ) )
-    com ( it , 2 )  = com ( it , 2 ) / DBLE ( natmi ( it ) )
-    com ( it , 3 )  = com ( it , 3 ) / DBLE ( natmi ( it ) )
+    com ( it , 1 )  = com ( it , 1 ) / REAL ( natmi ( it ) ,kind=dp )
+    com ( it , 2 )  = com ( it , 2 ) / REAL ( natmi ( it ) ,kind=dp )
+    com ( it , 3 )  = com ( it , 3 ) / REAL ( natmi ( it ) ,kind=dp )
   enddo
 
   return
@@ -527,7 +528,7 @@ SUBROUTINE ions_displacement( dis, ax , ay , az )
                 ( rdist( 2 ) - riy(isa) )**2 + &
                 ( rdist( 3 ) - riz(isa) )**2 
     enddo 
-    dis(it) = dis(it) + r2 / DBLE(natmi(it))
+    dis(it) = dis(it) + r2 / REAL(natmi(it),kind=dp )
   enddo
   
   return

@@ -38,7 +38,7 @@ SUBROUTINE read_pos
   USE constants,                ONLY :  dp 
   USE control,                  ONLY :  calc , posff_data
   USE config,                   ONLY :  rx , ry , rz , vx , vy , vz , fx , fy , fz , atype , atypei , itype , &
-                                        natmi , natm , dipia , qia , ipolar , rho , system , ntype , config_alloc , &
+                                        natmi , natm , dipia , qia , ipolar , rhoN , system , ntype , config_alloc , &
                                         simu_cell , config_print_info , coord_format_allowed , write_CONTFF
   USE field,                    ONLY :  qch , dip , quad, ldip_polar , field_init
   USE io,                       ONLY :  ionode , stdout , kunit_POSFF
@@ -81,7 +81,7 @@ SUBROUTINE read_pos
 
  
   CALL lattice ( simu_cell )
-  rho = DBLE ( natm ) / simu_cell%omega
+  rhoN = REAL ( natm ,kind=dp ) / simu_cell%omega
 
   CALL config_alloc 
 

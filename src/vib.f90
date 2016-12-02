@@ -180,7 +180,7 @@ END SUBROUTINE vib_check_tag
 SUBROUTINE vib_print_info(kunit)
 
   USE control,                  ONLY :  calc 
-  USE config,                   ONLY :  natm , ntype, rho
+  USE config,                   ONLY :  natm , ntype
 
   implicit none
 
@@ -233,7 +233,7 @@ SUBROUTINE vib_main
 
   USE config,                   ONLY :  system , natm , natmi , rx , ry , rz ,  & 
                                         atype , atypei , itype , simu_cell , & 
-                                        rho , ntype, config_alloc , coord_format_allowed , atom_dec , read_traj_header , read_traj
+                                        rhoN , ntype, config_alloc , coord_format_allowed , atom_dec , read_traj_header , read_traj
   USE control,                  ONLY :  calc , iscff_format , iscff_data
   USE io,                       ONLY :  kunit_ISCFF , kunit_EIGFF , kunit_VECTFF , & 
                                         kunit_DOSFF , kunit_MODFF, kunit_DOSKFF , kunit_IBZKPTFF
@@ -288,7 +288,7 @@ SUBROUTINE vib_main
   
 
   CALL lattice ( simu_cell )
-  rho = REAL ( natm , kind=dp ) / simu_cell%omega 
+  rhoN = REAL ( natm , kind=dp ) / simu_cell%omega 
   ! ===================================
   !  here we know natm, then alloc 
   !  and decomposition can be applied 
@@ -329,7 +329,7 @@ SUBROUTINE vib_main
     CALL read_traj ( kunit_ISCFF , iscff_format , iscff_data )
 
     CALL lattice ( simu_cell )
-    rho = natm / simu_cell%omega
+    rhoN = REAL ( natm, kind=dp ) / simu_cell%omega
 
     CALL typeinfo_init
 

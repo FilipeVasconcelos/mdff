@@ -197,7 +197,7 @@ SUBROUTINE vois1_driver
 
   USE io,                       ONLY :  kunit_TRAJFF , kunit_DTNBFF , kunit_VOIS1FF
   USE config,                   ONLY :  system , natm , ntype , atype , rx , ry , rz , itype , & 
-                                        atypei , natmi , rho , simu_cell , config_alloc , &
+                                        atypei , natmi , rhoN , simu_cell , config_alloc , &
                                         config_print_info , coord_format_allowed , atom_dec , read_traj_header , read_traj 
   USE cell,                     ONLY :  lattice, dirkar
   USE control,                  ONLY :  itraj_format , trajff_data
@@ -220,7 +220,7 @@ SUBROUTINE vois1_driver
   if ( itraj_format .eq. 0 ) OPEN ( UNIT = kunit_TRAJFF  , FILE = 'TRAJFF' , form = 'unformatted')
 
   CALL lattice ( simu_cell )
-  rho = natm / simu_cell%omega
+  rhoN = REAL ( natm, kind = dp )  / simu_cell%omega
   ! ===================================
   !  here we know natm, then alloc 
   !  and decomposition can be applied 

@@ -28,7 +28,7 @@
 ! ******************************************************************************
 MODULE stochio
 
-  USE constants,        ONLY :  dp, g_to_am
+  USE constants,        ONLY :  dp, rho_unit 
   USE io,               ONLY :  ionode, stdin, stdout
   USE oxyde
 
@@ -112,7 +112,7 @@ SUBROUTINE stochio_atomic_calc
       endif
     enddo
     blankline(stdout)
-    volume = totmass /  density * g_to_am
+    volume = totmass /  density * rho_unit
     acell =( volume /  REAL(a_o_b,kind=dp) / REAL(a_o_c,kind=dp) )**(1._dp/3._dp)
     WRITE(stdout , '(a,i12)' )       'NBANDS        = ',numbands/2
     WRITE(stdout , '(a,f12.4,a)' )   'density       = ',density,' g/cm^3 '
@@ -345,7 +345,7 @@ SUBROUTINE stochio_oxydes_calc
       endif
     enddo
     blankline(stdout)
-    volume = totmass /  density * g_to_am   
+    volume = totmass /  density * rho_unit   
     acell =( volume /  REAL(a_o_b,kind=dp) / REAL(a_o_c,kind=dp) )**(1._dp/3._dp) 
     WRITE(stdout , '(a,i12)' )       'NBANDS        = ',numbands/2
     WRITE(stdout , '(a,f12.4,a)' )   'density       = ',density,' g/cm^3 '

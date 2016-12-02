@@ -106,7 +106,7 @@ SUBROUTINE restart_init ( MDFF )
   IF ( ionode ) WRITE ( stdout      ,'(A,20i4)' ) 'found type information on RESTART : ', natmi ( 1:ntype )
 
   CALL lattice ( simu_cell )
-  rho = DBLE ( natm ) / simu_cell%omega
+  rho = REAL ( natm , kind= dp ) / simu_cell%omega
 
   CALL config_alloc
 
