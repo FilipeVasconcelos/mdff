@@ -638,7 +638,7 @@ SUBROUTINE field_print_info ( kunit , quiet )
     blankline(kunit)
     lseparator(kunit) 
     WRITE ( kunit ,'(a,f12.4,a)')       'total mass            = ', total_mass ,' a.m '
-    WRITE ( kunit ,'(a,2f12.4,a)')      'density               = ', rhoN , rho * rho_unit ,' g/cm^3 '
+    WRITE ( kunit ,'(a,2f12.4,a)')      'density               = ', rhoN , rho / rho_unit ,' g/cm^3 '
     blankline(kunit)
     WRITE ( kunit ,'(a)')               'point charges: '
     lseparator(kunit) 

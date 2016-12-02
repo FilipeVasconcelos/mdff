@@ -112,7 +112,7 @@ SUBROUTINE stochio_atomic_calc
       endif
     enddo
     blankline(stdout)
-    volume = totmass /  density * rho_unit
+    volume = rho_unit * ( totmass /   density ) 
     acell =( volume /  REAL(a_o_b,kind=dp) / REAL(a_o_c,kind=dp) )**(1._dp/3._dp)
     WRITE(stdout , '(a,i12)' )       'NBANDS        = ',numbands/2
     WRITE(stdout , '(a,f12.4,a)' )   'density       = ',density,' g/cm^3 '
