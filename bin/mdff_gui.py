@@ -193,7 +193,7 @@ class MApp(tk.Frame):
         self.txt_control.bind("<Any-KeyRelease>", self.highlight_control)
         self.txt_control.bind("<Any-ButtonRelease>", self.highlight_control)
 
-        file = open(self.control_path.get(), 'rb')
+        file = open(self.control_path.get(), 'a+')
         if file != None:
             content = file.read()
             self.txt_control.delete('1.0','end')
@@ -851,7 +851,7 @@ class MApp(tk.Frame):
     #----------------------------------------------------------------------
     def _select_control_file(self):
         self.control_path.set(tkFileDialog.askopenfilename(title="Select MDff control file",filetypes=[('control files','.F'),('all files','.*')]))
-        file = open(self.control_path.get(), 'rb')
+        file = open(self.control_path.get(), 'a+')
         if file != None:
             content = file.read()
             self.txt_control.delete('1.0','end')
@@ -863,7 +863,7 @@ class MApp(tk.Frame):
     #----------------------------------------------------------------------
     def _select_posff_file(self):
         self.posff_path.set(tkFileDialog.askopenfilename(title="Select MDff POSFF file",filetypes=[('POSFF files','POSFF* CONTFF*'),('all files','*')]))
-        file = open(self.posff_path.get(), 'rb')
+        file = open(self.posff_path.get(), 'a+')
         if file != None:
             content = file.read()
             self.txt_posff.delete('1.0','end')

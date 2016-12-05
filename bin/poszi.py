@@ -8,7 +8,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import datetime
-from optparse import OptionParser
+import argparse
 import sys
 
 
@@ -136,17 +136,19 @@ def plot_quant(alldata,name_quant,average,q,title,l):
 
 
 def main_parser():
-    parser = OptionParser(usage="usage: %prog [options] filename",version="%prog 0.1")
-    parser.add_option("-n", "--no_plot",dest="plot_flag",action="store_false",default=True,
+
+    parser = argparse.ArgumentParser(description='')
+
+    parser.add_argument('-i','--input', help='Input file name',required=True,dest="input_file")
+    parser.add_argument("-n", "--no_plot",dest="plot_flag",action="store_false",default=True,
             help="show plot of average and instantaneous thermodynamic quantities along OSZIFF")
-    parser.add_option("-l", "--last",dest="last_points",default=None,
+    parser.add_argument("-l", "--last",dest="last_points",default=None,
             help="averaging on last <l> points")
-    (options, args) = parser.parse_args()
 
-    if len(args) != 1:
-        parser.error("wrong number of arguments")
+    args = parser.parse_args()
 
-    return options,args
+    return args
+
 
 if __name__ == '__main__':
 
@@ -160,30 +162,26 @@ if __name__ == '__main__':
     print "Running poszi ..."
     print "This script generate gnuplot plots from input OSZIFF file"
 
-    options,args = main_parser()
-    filename=args[0]
-    option_dict = vars(options)
+    args = main_parser()
 
+    input_file=args.input_file
 
-    if format_filename(filename):
-        alldata = read_OSZIFF(filename)
+    if format_filename(input_file):
+        alldata = read_OSZIFF(input_file)
     else:
         raise ValueError('Format of input file doesnt match OSZIFF')
 
-    last_points = option_dict['last_points'] 
-    plot_flag   = option_dict['plot_flag'] 
-
-    if last_points == None :
+    if args.last_points == None :
         last_points = len(alldata[0])
     else:
-        last_points = int( last_points ) 
+        last_points = int( args.last_points ) 
 
     print len(alldata[0])," points in input file"
     print "averaging and plot on last",last_points,"points"
 
     average=averaging(name_quant,alldata,last_points)
    
-    if plot_flag :
+    if args.plot_flag :
         plot_quant2(alldata,name_quant,average,[2,12],title='Total Energy MD',l=last_points)
         plot_quant(alldata,name_quant,average,4,title='Potential Energy MD',l=last_points)
         plot_quant(alldata,name_quant,average,7,title='Temperature MD',l=last_points)

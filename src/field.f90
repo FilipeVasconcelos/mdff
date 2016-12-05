@@ -604,6 +604,10 @@ SUBROUTINE field_print_info ( kunit , quiet )
     return
   endif
 
+  total_mass = 0.0_dp
+  do it = 1 , ntype
+    total_mass = total_mass + mass(it) * natmi(it)
+  enddo
   ! ==============
   !  mass density
   ! ==============
@@ -628,17 +632,14 @@ SUBROUTINE field_print_info ( kunit , quiet )
 
 
   if ( ionode ) then
-    total_mass = 0.0_dp
-    do ia = 1 , natm 
-      total_mass = total_mass + massia(ia)
-    enddo
     separator(kunit)    
     blankline(kunit)
     WRITE ( kunit ,'(a)')               'FIELD MODULE ... WELCOME'
     blankline(kunit)
     lseparator(kunit) 
     WRITE ( kunit ,'(a,f12.4,a)')       'total mass            = ', total_mass ,' a.m '
-    WRITE ( kunit ,'(a,2f12.4,a)')      'density               = ', rhoN , rho / rho_unit ,' g/cm^3 '
+    WRITE ( kunit ,'(a,2f12.4,a)')      'density               = ', rhoN , rho * rho_unit ,' g/cm^3 '
+    print*,rho_unit,rho
     blankline(kunit)
     WRITE ( kunit ,'(a)')               'point charges: '
     lseparator(kunit) 
@@ -1196,7 +1197,7 @@ END SUBROUTINE initialize_param_non_bonded
 ! ******************************************************************************
 SUBROUTINE engforce_driver 
 
-  USE config,                   ONLY :  natm , ntype, system , simu_cell, atypei ,natmi, atype, itype 
+  USE config,                   ONLY :  natm , ntype, system , simu_cell, atypei ,natmi, atype, itype , tau_coul, tau_nonb, tau
   USE control,                  ONLY :  lnmlj , lcoulomb , lbmhft , lbmhftd, lmorse , lharm , longrange, non_bonded, iefgall_format
   USE io,                       ONLY :  kunit_DIPFF, kunit_EFGALL , kunit_EFALL
 
@@ -1213,16 +1214,22 @@ SUBROUTINE engforce_driver
   !if ( lharm ) then
   !  CALL engforce_harm
   !endif
-
+  tau =0.0_dp
   ! =================================
   !    n-m lennard-jones potential 
   ! =================================
-  if ( lnmlj )                     CALL engforce_nmlj_pbc
+  if ( lnmlj ) then
+    CALL engforce_nmlj_pbc
+    tau = tau + tau_nonb
+  endif
 
   ! =================================
   !   bmft(d) potentials (d:damping) 
   ! =================================
-  if ( lbmhftd .or. lbmhft )       CALL engforce_bmhftd_pbc
+  if ( lbmhftd .or. lbmhft )  then
+    CALL engforce_bmhftd_pbc
+    tau = tau + tau_nonb
+  endif
 
   ! =================================
   !   coulombic potential 
@@ -1259,6 +1266,8 @@ SUBROUTINE engforce_driver
      deallocate( ef , efg , mu , theta )      
      deallocate ( pair_thole )  
      deallocate ( pair_thole_distance )  
+    
+     tau = tau + tau_coul
    
   endif
   ! ===========================
@@ -1439,6 +1448,7 @@ SUBROUTINE engforce_nmlj_pbc
   CALL MPI_ALL_REDUCE_DOUBLE ( tau_nonb( 1, : ) , 3  )
   CALL MPI_ALL_REDUCE_DOUBLE ( tau_nonb( 2, : ) , 3  )
   CALL MPI_ALL_REDUCE_DOUBLE ( tau_nonb( 3, : ) , 3  )
+
 
   u_lj = u 
   vir_lj = vir
@@ -2013,7 +2023,7 @@ SUBROUTINE multipole_ES ( ef , efg , mu , theta , task , damp_ind , &
 
   USE control,          ONLY :  lsurf
   USE constants,        ONLY :  tpi , piroot, coul_unit, press_unit
-  USE config,           ONLY :  natm, qia, rx ,ry ,rz, simu_cell, fx, fy, fz, tau_coul, atype 
+  USE config,           ONLY :  natm, qia, rx ,ry ,rz, simu_cell, fx, fy, fz, tau, tau_coul, atype 
   USE thermodynamic,    ONLY :  u_coul, u_pol, pvirial_coul
   USE time,             ONLY :  fcoultimetot1 , fcoultimetot2
   USE tensors_rk,       ONLY :  interaction_dd
@@ -2192,6 +2202,7 @@ SUBROUTINE multipole_ES ( ef , efg , mu , theta , task , damp_ind , &
     fx       = fx + ( fx_rec  + fx_dir  + fx_surf                     ) * coul_unit
     fy       = fy + ( fy_rec  + fy_dir  + fy_surf                     ) * coul_unit
     fz       = fz + ( fz_rec  + fz_dir  + fz_surf                     ) * coul_unit
+    tau      = tau  + tau_coul
   else
     u_coul   =      ( u_dir   + u_rec   + u_self  + u_pol  ) * coul_unit
     ef       =      ( ef_dir  + ef_rec  + ef_self          ) 
@@ -2200,6 +2211,7 @@ SUBROUTINE multipole_ES ( ef , efg , mu , theta , task , damp_ind , &
     fx       = fx + ( fx_rec  + fx_dir                     ) * coul_unit
     fy       = fy + ( fy_rec  + fy_dir                     ) * coul_unit
     fz       = fz + ( fz_rec  + fz_dir                     ) * coul_unit
+    tau      = tau  + tau_coul
   endif
 
   
@@ -3123,19 +3135,19 @@ SUBROUTINE multipole_ES_rec ( u_rec , ef_rec, efg_rec , fx_rec , fy_rec , fz_rec
         k_dot_mu = ( muix * kx + muiy * ky + muiz * kz )
         rhonk_R    = rhonk_R - k_dot_mu * skr(ia) 
         rhonk_I    = rhonk_I + k_dot_mu * ckr(ia) ! rhon_R + i rhon_I
-        if ( .not. lquad ) cycle
-        thetaixx = theta ( 1 , 1 , ia)
-        thetaiyy = theta ( 2 , 2 , ia)
-        thetaizz = theta ( 3 , 3 , ia)
-        thetaixy = theta ( 1 , 2 , ia)
-        thetaixz = theta ( 1 , 3 , ia)
-        thetaiyz = theta ( 2 , 3 , ia)
-        K_dot_Q =           thetaixx * kx * kx + thetaixy * kx * ky + thetaixz * kx * kz
-        K_dot_Q = K_dot_Q + thetaixy * kx * ky + thetaiyy * ky * ky + thetaiyz * ky * kz
-        K_dot_Q = K_dot_Q + thetaixz * kz * kx + thetaiyz * ky * kz + thetaizz * kz * kz
-        K_dot_Q = K_dot_Q / 3.0_dp
-        rhonk_R    = rhonk_R - K_dot_Q * ckr(ia)
-        rhonk_I    = rhonk_I - K_dot_Q * skr(ia)  ! rhon_R + i rhon_I
+  !      if ( .not. lquad ) cycle
+  !      thetaixx = theta ( 1 , 1 , ia)
+  !      thetaiyy = theta ( 2 , 2 , ia)
+  !      thetaizz = theta ( 3 , 3 , ia)
+  !      thetaixy = theta ( 1 , 2 , ia)
+  !      thetaixz = theta ( 1 , 3 , ia)
+  !      thetaiyz = theta ( 2 , 3 , ia)
+  !      K_dot_Q =           thetaixx * kx * kx + thetaixy * kx * ky + thetaixz * kx * kz
+  !      K_dot_Q = K_dot_Q + thetaixy * kx * ky + thetaiyy * ky * ky + thetaiyz * ky * kz
+  !      K_dot_Q = K_dot_Q + thetaixz * kz * kx + thetaiyz * ky * kz + thetaizz * kz * kz
+  !      K_dot_Q = K_dot_Q / 3.0_dp
+  !      rhonk_R    = rhonk_R - K_dot_Q * ckr(ia)
+  !      rhonk_I    = rhonk_I - K_dot_Q * skr(ia)  ! rhon_R + i rhon_I
       enddo atom1
 
 #ifdef MPI
@@ -3222,20 +3234,20 @@ SUBROUTINE multipole_ES_rec ( u_rec , ef_rec, efg_rec , fx_rec , fy_rec , fz_rec
         fx_rec ( ia ) = fx_rec ( ia ) + kx * k_dot_mu
         fy_rec ( ia ) = fy_rec ( ia ) + ky * k_dot_mu
         fz_rec ( ia ) = fz_rec ( ia ) + kz * k_dot_mu
-        if ( .not. lquad ) cycle
-        thetaixx = theta ( 1 , 1 , ia)
-        thetaiyy = theta ( 2 , 2 , ia)
-        thetaizz = theta ( 3 , 3 , ia)
-        thetaixy = theta ( 1 , 2 , ia)
-        thetaixz = theta ( 1 , 3 , ia)
-        thetaiyz = theta ( 2 , 3 , ia)
-        K_dot_Q =           thetaixx * kx * kx + thetaixy * kx * ky + thetaixz * kx * kz
-        K_dot_Q = K_dot_Q + thetaixy * kx * ky + thetaiyy * ky * ky + thetaiyz * ky * kz
-        K_dot_Q = K_dot_Q + thetaixz * kz * kx + thetaiyz * ky * kz + thetaizz * kz * kz
-        K_dot_Q = K_dot_Q * recarg
-        fx_rec ( ia ) = fx_rec ( ia ) + kx * K_dot_Q
-        fy_rec ( ia ) = fy_rec ( ia ) + ky * K_dot_Q
-        fz_rec ( ia ) = fz_rec ( ia ) + kz * K_dot_Q
+   !     if ( .not. lquad ) cycle
+   !     thetaixx = theta ( 1 , 1 , ia)
+   !     thetaiyy = theta ( 2 , 2 , ia)
+   !     thetaizz = theta ( 3 , 3 , ia)
+   !     thetaixy = theta ( 1 , 2 , ia)
+   !     thetaixz = theta ( 1 , 3 , ia)
+   !     thetaiyz = theta ( 2 , 3 , ia)
+   !     K_dot_Q =           thetaixx * kx * kx + thetaixy * kx * ky + thetaixz * kx * kz
+   !     K_dot_Q = K_dot_Q + thetaixy * kx * ky + thetaiyy * ky * ky + thetaiyz * ky * kz
+   !     K_dot_Q = K_dot_Q + thetaixz * kz * kx + thetaiyz * ky * kz + thetaizz * kz * kz
+   !     K_dot_Q = K_dot_Q * recarg
+   !     fx_rec ( ia ) = fx_rec ( ia ) + kx * K_dot_Q
+   !     fy_rec ( ia ) = fy_rec ( ia ) + ky * K_dot_Q
+   !     fz_rec ( ia ) = fz_rec ( ia ) + kz * K_dot_Q
       endif
 
     enddo atom2

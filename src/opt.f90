@@ -60,6 +60,11 @@ MODULE opt
   character(len=60) :: optalgo    !< algorithm used during optimization 
   character(len=60) :: optalgo_allowed(3)
   data                 optalgo_allowed  / 'sastry' , 'lbfgs' , 'm1qn3' /
+
+
+  character(len=3) :: optvar    !< 
+  character(len=3) :: optvar_allowed(3)
+  data                 optvar_allowed  / 'pos' , 'cel' , 'all'/
   
 
 CONTAINS
@@ -83,6 +88,7 @@ SUBROUTINE opt_init
                     epsrel_m1qn3  , & 
                     epsrel_lbfgs  , & 
                     lforce        , &
+                    optvar        , &
                     nmaxopt       
 
   ! ===============================
@@ -139,6 +145,7 @@ SUBROUTINE opt_default_tag
   epsrel_lbfgs = 1.0e-5
   lforce       = .true.
   nopt_print   = 2
+  optvar       = 'pos'
 
   return 
  
@@ -156,6 +163,8 @@ SUBROUTINE opt_check_tag
   implicit none
 
   CALL check_allowed_tags( size( optalgo_allowed ), optalgo_allowed, optalgo, 'in optag','optalgo' ) 
+
+  CALL check_allowed_tags( size( optvar_allowed ), optvar_allowed, optvar, 'in optag','optvar' ) 
 
   nperiodopt = nconf/nmaxopt
   if ( nperiodopt .lt. 1) nperiodopt = 1
@@ -249,7 +258,7 @@ SUBROUTINE opt_main
   implicit none
 
   ! local 
-  integer           :: ia , it , ic, neng, iter, nopt , ierr
+  integer           :: ia , it , ic, neng, iter, nopt , ierr, ii 
   real(kind=dp)     :: phigrad, pressure0, pot0, Eis
   real(kind=dp)     :: ttt1,ttt2
   real(kind=dp)     :: ttt1p,ttt2p
@@ -352,8 +361,18 @@ SUBROUTINE opt_main
           WRITE ( stdout ,'(a)')             '    its       grad              ener'
         endif
         CALL write_CONTFF 
-        CALL m1qn3_driver ( iter, Eis , phigrad )
+        if  ( optvar == 'pos' ) then
+          CALL m1qn3_driver ( iter, Eis , phigrad , 'pos' )
+        else if ( optvar == 'cel' ) then
+          CALL m1qn3_driver ( iter, Eis , phigrad , 'cel' )
+        else if ( optvar == 'all' ) then
+                do ii=1,5      
+          CALL m1qn3_driver ( iter, Eis , phigrad , 'pos' )      
+          CALL m1qn3_driver ( iter, Eis , phigrad , 'cel' )
+          enddo
+        endif
         neng = iter ! the number of function call is iter
+
       endif
 
       CALL calc_thermo  
@@ -361,7 +380,7 @@ SUBROUTINE opt_main
       !  write final thermodynamic info 
       ! ================================
       if ( ionode ) then
-        WRITE ( stdout , '(a,2f16.8)' )      '   final energy&pressure = ',Eis,pressure_tot
+        WRITE ( stdout , '(a,2e20.8)' )      '   final energy&pressure = ',Eis,pressure_tot
         WRITE ( kunit_ISTHFF , '(i8,3f20.12,2i8,2f20.12)' ) &
         ic , Eis , phigrad , pressure_tot , iter , neng , pot0 , pressure0
         blankline(stdout)
@@ -1191,18 +1210,20 @@ END SUBROUTINE lbfgs_driver
 !! driver routine for the optimsation algorithm m1qn3 (see m1qn3.f90)
 !
 ! ******************************************************************************
-SUBROUTINE m1qn3_driver ( icall, Eis , phigrad )
+SUBROUTINE m1qn3_driver ( icall, Eis , phigrad ,optvar_lc)
 
   USE control,                  ONLY :  myrank , numprocs
-  USE config,                   ONLY :  natm , rx , ry , rz, fx ,fy ,fz , write_CONTFF
+  USE config,                   ONLY :  natm , rx , ry , rz, fx ,fy ,fz , write_CONTFF, simu_cell , tau
   USE thermodynamic,            ONLY :  u_tot , u_lj_r , calc_thermo
   USE field,                    ONLY :  engforce_driver
+  USE cell,                     ONLY :  lattice
 
   implicit none
 
   ! global
   integer          :: icall
   real(kind=dp)    :: Eis , phigrad
+  character(len=3)                         :: optvar_lc
 
   !local
   integer                                   :: ia , n , kl 
@@ -1212,6 +1233,7 @@ SUBROUTINE m1qn3_driver ( icall, Eis , phigrad )
   character(len=3)                          :: normtype
   real                                      :: rzs(1)
   real(kind=dp)                             :: f , dxmin , df1 , epsrel , dzs(1)
+  real(kind=dp)                             :: strain(3,3) 
   real(kind=dp), dimension (:), allocatable :: x , g , dz
 
   ! external 
@@ -1220,7 +1242,13 @@ SUBROUTINE m1qn3_driver ( icall, Eis , phigrad )
   ! =====================
   !   initialization
   ! =====================
-  n=3*natm
+  if   (optvar_lc == 'pos' ) then
+    n = 3*natm
+  else if (optvar_lc == 'cel' ) then
+    n = 9
+    strain = 0.0_dp
+  endif
+
   ndz=4*n+5*(2*n+1)
   icall = 0
   kl = 1
@@ -1228,6 +1256,8 @@ SUBROUTINE m1qn3_driver ( icall, Eis , phigrad )
   ALLOCATE ( g (N) )
   ALLOCATE ( dz (ndz) )
 
+
+  if ( optvar_lc == 'pos' ) then
   ! ========================================
   !  set X ( 3 *natm ) to rx , ry , rz
   ! ========================================
@@ -1236,6 +1266,30 @@ SUBROUTINE m1qn3_driver ( icall, Eis , phigrad )
     X( natm + ia )     = ry( ia )
     X( 2 * natm + ia ) = rz( ia )
   enddo
+  else if (optvar_lc == 'cel' ) then
+  ! ======
+  ! cell parameters
+  ! 
+!  X ( 1 ) = strain(1,1)
+!  X ( 2 ) = strain(2,2) 
+!  X ( 3 ) = strain(3,3) 
+!  X ( 4 ) = strain(2,1) 
+!  X ( 5 ) = strain(2,2) 
+!  X ( 6 ) = strain(2,3) 
+!  X ( 7 ) = strain(3,1) 
+!  X ( 8 ) = strain(3,2) 
+!  X ( 9 ) = strain(3,3) 
+  X ( 1 ) =  simu_cell%A(1,1) 
+  X ( 2 ) =  simu_cell%A(1,2) 
+  X ( 3 ) =  simu_cell%A(1,3) 
+  X ( 4 ) =  simu_cell%A(2,1) 
+  X ( 5 ) =  simu_cell%A(2,2) 
+  X ( 6 ) =  simu_cell%A(2,3) 
+  X ( 7 ) =  simu_cell%A(3,1) 
+  X ( 8 ) =  simu_cell%A(3,2) 
+  X ( 9 ) =  simu_cell%A(3,3) 
+  endif
+
 
 #ifdef debug
      call print_config_sample(icall,0)
@@ -1255,7 +1309,7 @@ SUBROUTINE m1qn3_driver ( icall, Eis , phigrad )
   !CALL write_CONTFF
   !stop
 
-
+  if ( optvar_lc == 'pos' ) then
   ! ===============================
   !  set the gradient to fx,fy,fz
   ! ===============================
@@ -1264,6 +1318,19 @@ SUBROUTINE m1qn3_driver ( icall, Eis , phigrad )
     G( natm + ia    ) =  - fy( ia )
     G( 2* natm + ia ) =  - fz( ia )
   ENDDO
+  else if (optvar_lc == 'cel' ) then
+  G ( 1 ) = tau(1,1) !* simu_cell%omega
+  G ( 2 ) = tau(1,2) !* simu_cell%omega
+  G ( 3 ) = tau(1,3) !* simu_cell%omega
+  G ( 4 ) = tau(2,1) !* simu_cell%omega
+  G ( 5 ) = tau(2,2) !* simu_cell%omega
+  G ( 6 ) = tau(2,3) !* simu_cell%omega
+  G ( 7 ) = tau(3,1) !* simu_cell%omega
+  G ( 8 ) = tau(3,2) !* simu_cell%omega
+  G ( 9 ) = tau(3,3) !* simu_cell%omega
+  endif
+
+
 
   ! =========================================================
   !  call the optimization code
@@ -1276,7 +1343,8 @@ SUBROUTINE m1qn3_driver ( icall, Eis , phigrad )
   epsrel   = epsrel_m1qn3 
   niter    = 6000     
   nsim     = 6000     
-  normtype = 'dfn'       
+!  normtype = 'dfn'       
+  normtype = 'two'       
   iom      = stdout    ! io output
   imp      = 0         ! impress  no print
   imode(1) = 0         ! imode(1) = 0 DIS  
@@ -1296,6 +1364,8 @@ SUBROUTINE m1qn3_driver ( icall, Eis , phigrad )
     call m1qn3 (simul_rc,euclid,ctonbe,ctcabe,n,x,f,g,dxmin,df1, &
                 epsrel,normtype,imp,iom,imode,omode,niter,nsim,iz, & 
                 dz,ndz,reverse,indic,izs,rzs,dzs)
+
+    if (optvar_lc == 'pos' ) then
     ! ===============================================
     !  reset positions for energy/forces calculation
     ! ==============================================
@@ -1304,6 +1374,34 @@ SUBROUTINE m1qn3_driver ( icall, Eis , phigrad )
       ry( ia )   = X ( natm + ia )
       rz( ia )   = X ( 2* natm + ia )
     enddo
+    else if (optvar_lc == 'cel' ) then
+    !strain(1,1) = X ( 1 )
+    !strain(1,2) = X ( 2 )
+    !strain(1,3) = X ( 3 )
+    !strain(2,1) = X ( 4 )
+    !strain(2,2) = X ( 5 )
+    !strain(2,3) = X ( 6 )
+    !strain(3,1) = X ( 7 )
+    !strain(3,2) = X ( 8 )
+    !strain(3,3) = X ( 9 )
+
+    simu_cell%A(1,1) = X ( 1 )
+    simu_cell%A(1,2) = X ( 2 )
+    simu_cell%A(1,3) = X ( 3 )
+    simu_cell%A(2,1) = X ( 4 )
+    simu_cell%A(2,2) = X ( 5 )
+    simu_cell%A(2,3) = X ( 6 )
+    simu_cell%A(3,1) = X ( 7 )
+    simu_cell%A(3,2) = X ( 8 )
+    simu_cell%A(3,3) = X ( 9 )
+
+    !simu_cell%A = simu_cell%A +  strain
+    !simu_cell%A(1,1) = simu_cell%A(1,1)  + strain(1,1) 
+    !simu_cell%A(2,2) = simu_cell%A(2,2)  + strain(2,2) 
+    !simu_cell%A(3,3) = simu_cell%A(3,3)  + strain(3,3) 
+    CALL lattice ( simu_cell )
+    !print*,strain(1,1)
+    endif
 
 #ifdef debug
      call print_config_sample(icall,0)
@@ -1321,7 +1419,8 @@ SUBROUTINE m1qn3_driver ( icall, Eis , phigrad )
 #ifdef debug
      call print_config_sample(icall,0)
 #endif
- 
+
+    if (optvar_lc == 'pos' ) then
     ! ===============================
     !  set the gradient to fx,fy,fz
     ! ===============================
@@ -1334,9 +1433,28 @@ SUBROUTINE m1qn3_driver ( icall, Eis , phigrad )
       G ( ia ) * G( ia ) + G( natm + ia ) * G( natm + ia )  + G( 2* natm + ia ) * G( 2* natm + ia )
     ENDDO
 
+    else if (optvar_lc == 'cel' ) then
+    G ( 1 ) = tau(1,1) !* simu_cell%omega
+    G ( 2 ) = tau(1,2) !* simu_cell%omega 
+    G ( 3 ) = tau(1,3) !* simu_cell%omega
+    G ( 4 ) = tau(2,1) !* simu_cell%omega
+    G ( 5 ) = tau(2,2) !* simu_cell%omega
+    G ( 6 ) = tau(2,3) !* simu_cell%omega
+    G ( 7 ) = tau(3,1) !* simu_cell%omega
+    G ( 8 ) = tau(3,2) !* simu_cell%omega
+    G ( 9 ) = tau(3,3) !* simu_cell%omega
+
+    phigrad=0.0_dp
+    do ia = 1, 9
+      phigrad = phigrad + &
+                    G ( ia ) * G( ia )
+    enddo
+
+    endif
+
     ! write step information
     if ( ionode .and. MOD ( icall , kl ) .eq. 0 ) then
-      WRITE (stdout,'(i6,2E24.16)') icall , phigrad , u_tot
+      WRITE (stdout,'(i6,4E24.16)') icall , phigrad , u_tot , simu_cell%omega, epsrel 
       kl = nopt_print * kl
       ! ioprint condition
       ioprint = .true.

@@ -43,8 +43,10 @@
 !! pressure      : ( eV / angstrom**3)
 !! charge        : atomic charge ( proton charge )
 !! dipole moment : angstrom * atomiccharge 
-!! 1/4piepsilon0 : eV  * angstrom / atomiccharge **2 == 1.0
 !! efg           : atomiccharge / angstrom ** 3  
+!! forces        : eV / angtrom
+!! density       :  atomic mass unit / angstrom^3
+!! 1/4piepsilon0 : eV  * angstrom / atomiccharge **2 == 1.0
 
 ! ******************************************************************************
 MODULE constants 

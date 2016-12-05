@@ -13,7 +13,7 @@ TABLE:
    |   5    |  YES    |   NO    |   YES    |  NO   |     NO        |
    |   6    |  YES    |   NO    |   YES    |  YES  |     NO        |
    |   7    |  YES    |   NO    |   YES    |  YES  |     YES       |
-   |   8    |  NO     |  YES    |   iNO    |  NO   |     NO        |
+   |   8    |  NO     |  YES    |    NO    |  NO   |     NO        |
    |   9    |  NO     |  YES    |   YES    |  NO   |     NO        |
    |   10   |  NO     |  YES    |   YES    |  YES  |     NO        |
    |   11   |  NO     |  YES    |   YES    |  YES  |     YES       |

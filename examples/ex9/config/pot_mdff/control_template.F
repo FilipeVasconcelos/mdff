@@ -26,7 +26,8 @@
         max_scf_pol_iter = 100
         conv_tol_ind = __CONV_SCF__ 
         !algo_moment_from_pola = 'scf_kO_v4_1'
-        algo_moment_from_pola = 'scf_kO_v1'
+        !algo_moment_from_pola = 'scf_kO_v1'
+        algo_moment_from_pola = 'scf'
 
         !INCLUDE <IONS.POT>
         !INCLUDE <PIM.POT>

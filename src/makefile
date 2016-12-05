@@ -72,7 +72,7 @@ endif
 FCFLAGS = -O3 -xHost -align all
 #FCFLAGS = -O3 -ip -xW
 #FCFLAGS = -O0 -check all  -check:noarg_temp_created
-#FCFLAGS = -O0 -check all
+#FCFLAGS = -O0 
 #FCFLAGS = -O1 
 #ifeq ($(HOST),debian-charrue)
 #FCFLAGS = -O3 -ip -align all

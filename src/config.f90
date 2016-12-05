@@ -52,6 +52,7 @@ MODULE config
   integer, dimension(0:ntypemax)               :: natmi              !< number of atoms (per type)
 
   TYPE ( celltype )                            :: simu_cell          !< simulation cell
+  real(kind=dp)                                :: tau      ( 3 , 3 ) !< total stress tensor ( lennard-jones , morse ... )
   real(kind=dp)                                :: tau_nonb ( 3 , 3 ) !< stress tensor ( lennard-jones , morse ... )
   real(kind=dp)                                :: tau_coul ( 3 , 3 ) !< stress tensor coulombic
   real(kind=dp)                                :: rhoN               !< number density N / V  (no units)
