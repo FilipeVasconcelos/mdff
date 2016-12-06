@@ -56,15 +56,16 @@ SUBROUTINE md_run
   USE config,                   ONLY :  natm , natmi , ntype , atype , atypei , itype , rx , ry , rz , rxs , rys , rzs , vx , vy , vz , fx, fy , fz , &
                                         write_CONTFF , center_of_mass , ntypemax , tau_nonb , tau_coul , write_trajff_xyz , simu_cell , system
   USE control,                  ONLY :  ltraj , longrange , calc , lstatic , lvnlist , lnmlj , lcoulomb , lmorse , &
-                                        non_bonded, numprocs, myrank , itraj_period , itraj_start , itraj_format, iefgall_format , iefall_format , idipall_format , lmsd, lvacf
+                                        lnon_bonded, numprocs, myrank , itraj_period , itraj_start , itraj_format, iefgall_format , iefall_format , idipall_format , lmsd, lvacf
   USE io,                       ONLY :  ionode , stdout, kunit_OSZIFF, kunit_TRAJFF,  kunit_EFGALL , kunit_EFALL , kunit_EQUILFF, ioprint , ioprintnode, kunit_DIPFF
   USE md,                       ONLY :  npas , lleapequi , nequil , nequil_period , nprint, &
                                         fprint, spas , dt,  temp , updatevnl , integrator , itime, itime0, itime1, xi ,vxi, nhc_n, npropr,npropr_start
 
   USE thermodynamic,            ONLY :  e_tot, u_lj_r, h_tot, e_kin , temp_r , init_general_accumulator , write_thermo ,  write_average_thermo , calc_thermo
   USE time,                     ONLY :  mdsteptimetot
-  USE field,                    ONLY :  engforce_driver , doefg , doefield , ef_t , efg_t , mu_t , lwfc , lwrite_dip , lwrite_quad,  &
-                                        lwrite_ef , lwrite_efg , write_DIPFF , write_EFGALL , write_EFALL, write_QUADFF
+!  USE field,                    ONLY :  engforce_driver , doefg , doefield , ef_t , efg_t , mu_t , lwfc , lwrite_dip , lwrite_quad,  &
+!                                        lwrite_ef , lwrite_efg , write_DIPFF , write_EFGALL , write_EFALL, write_QUADFF
+  USE engforce_driver,          ONLY :  engforce
   USE mpimdff
   USE msd
   USE vacf
@@ -126,20 +127,20 @@ SUBROUTINE md_run
  
   allocate( xtmp(natm), ytmp(natm), ztmp(natm) )
 
-  if ( lwrite_dip ) then
-    if ( idipall_format .ne. 0 ) OPEN (unit = kunit_DIPFF ,file = 'DIPFF', STATUS='REPLACE')
-    if ( idipall_format .eq. 0 ) OPEN (unit = kunit_DIPFF ,file = 'DIPFF', STATUS='REPLACE' , form ='unformatted')
-  endif 
+!  if ( lwrite_dip ) then
+!    if ( idipall_format .ne. 0 ) OPEN (unit = kunit_DIPFF ,file = 'DIPFF', STATUS='REPLACE')
+!    if ( idipall_format .eq. 0 ) OPEN (unit = kunit_DIPFF ,file = 'DIPFF', STATUS='REPLACE' , form ='unformatted')
+!  endif 
 
-  if ( doefield ) then
-    if ( iefall_format .ne. 0 ) OPEN (unit = kunit_EFALL  ,file = 'EFALL', STATUS='REPLACE')
-    if ( iefall_format .eq. 0 ) OPEN (unit = kunit_EFALL  ,file = 'EFALL', STATUS='REPLACE' , form ='unformatted')
-  endif
+!  if ( doefield ) then
+!    if ( iefall_format .ne. 0 ) OPEN (unit = kunit_EFALL  ,file = 'EFALL', STATUS='REPLACE')
+!    if ( iefall_format .eq. 0 ) OPEN (unit = kunit_EFALL  ,file = 'EFALL', STATUS='REPLACE' , form ='unformatted')
+!  endif
 
-  if ( doefg ) then
-    if ( iefgall_format .ne. 0 ) OPEN (unit = kunit_EFGALL  ,file = 'EFGALL', STATUS='REPLACE')
-    if ( iefgall_format .eq. 0 ) OPEN (unit = kunit_EFGALL  ,file = 'EFGALL', STATUS='REPLACE' , form ='unformatted')
-  endif
+!  if ( doefg ) then
+!    if ( iefgall_format .ne. 0 ) OPEN (unit = kunit_EFGALL  ,file = 'EFGALL', STATUS='REPLACE')
+!    if ( iefgall_format .eq. 0 ) OPEN (unit = kunit_EFGALL  ,file = 'EFGALL', STATUS='REPLACE' , form ='unformatted')
+!  endif
 
   OPEN (unit = kunit_OSZIFF ,file = 'OSZIFF',STATUS = 'UNKNOWN')
   if ( itraj_format .ne. 0 ) OPEN (unit = kunit_TRAJFF ,file = 'TRAJFF')
@@ -166,7 +167,7 @@ SUBROUTINE md_run
     ! =========================
     ! force + potential at t=0
     ! =========================
-     CALL engforce_driver 
+     CALL engforce
 
     ! ==================================================
     ! write thermodynamic information of config at t=0
@@ -193,7 +194,7 @@ SUBROUTINE md_run
     ! ===================
     ! force + potential
     ! ===================
-    CALL engforce_driver 
+    CALL engforce
     ! =======================================================
     ! write thermodynamic information of the starting point
     ! =======================================================
@@ -221,7 +222,7 @@ SUBROUTINE md_run
     io_node blankline(stdout)
   endif    
 
-  if ( non_bonded ) then 
+  if ( lnon_bonded ) then 
     io_node WRITE ( stdout , '(a)' )   "  non_bonded stress tensor"
     CALL print_tensor_n ( tau_nonb ) 
   endif
@@ -347,38 +348,38 @@ MAIN:  do itime = itime0 , itime1
            ! ================================
            !  write EFALL file (trajectory)
            ! ================================
-             if ( lwrite_ef ) then
-               CALL write_EFALL
-             endif
+           !  if ( lwrite_ef ) then
+           !    CALL write_EFALL
+           !  endif
 
            ! ================================
            !  write EFGALL file (trajectory)
            ! ================================
-             if ( lwrite_efg ) then
-                     write(*,*) 'in runmd write_efg'
-               CALL write_EFGALL
-             endif
+           !  if ( lwrite_efg ) then
+           !          write(*,*) 'in runmd write_efg'
+           !    CALL write_EFGALL
+           !  endif
 
            ! ================================
            !  write DIPFF file (trajectory)
            ! ================================
-             if ( lwrite_dip ) then
-               CALL write_DIPFF 
-             endif
+           !  if ( lwrite_dip ) then
+           !    CALL write_DIPFF 
+           !  endif
 
            ! ================================
            !  write DIPFF file (trajectory)
            ! ================================
-             if ( lwrite_quad ) then
-               CALL write_QUADFF 
-             endif
+           !  if ( lwrite_quad ) then
+           !    CALL write_QUADFF 
+           !  endif
 
          endif
 
 #ifdef stress_t
   io_printnode blankline(stdout)
   if ( ioprintnode ) then
-    if ( non_bonded ) then 
+    if ( lnon_bonded ) then 
       WRITE ( stdout , '(a)' )   "  non_bonded stress tensor"
       CALL print_tensor_n ( tau_nonb ) 
     endif
@@ -503,7 +504,7 @@ MAIN:  do itime = itime0 , itime1
     io_node blankline(stdout)
     io_node WRITE ( stdout , '(a)' ) '  stress tensor of final configuration' 
     if ( ionode ) then
-      if ( non_bonded ) then 
+      if ( lnon_bonded ) then 
         WRITE ( stdout , '(a)' )   "  non_bonded stress tensor"
         CALL print_tensor_n ( tau_nonb ) 
       endif
@@ -556,9 +557,9 @@ MAIN:  do itime = itime0 , itime1
 #ifdef block
   CLOSE ( kunit_EQUILFF )
 #endif
-  if ( doefg ) then
-    CLOSE (kunit_EFGALL)
-  endif
+  !if ( doefg ) then
+  !  CLOSE (kunit_EFGALL)
+  !endif
   CLOSE ( kunit_TRAJFF )
   CLOSE ( kunit_OSZIFF )
   deallocate( xtmp, ytmp, ztmp )

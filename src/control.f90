@@ -103,7 +103,7 @@ MODULE control
   ! ==============================================================
   !  non-bonded potential if one of lnmlj, lbmhftd, lbmhftd,lmorse is true 
   ! ==============================================================
-  logical, SAVE           :: non_bonded 
+  logical, SAVE           :: lnon_bonded
    
 CONTAINS
 
@@ -287,10 +287,10 @@ SUBROUTINE control_check_tag
   CALL check_allowed_tags( size( data_allowed ), data_allowed , posff_data, 'in controltag','posff_data' )
 
   if ( lnmlj .or. lmorse .or. lbmhftd .or. lbmhft ) then
-    non_bonded = .true.
+    lnon_bonded = .true.
   endif
 
-  if ( non_bonded .and. cutshortrange .eq. 0.0_dp ) then
+  if ( lnon_bonded .and. cutshortrange .eq. 0.0_dp ) then
     io_node WRITE ( stdout , '(a)' ) 'controltag: cutshortrange is null', cutshortrange
     STOP
   endif

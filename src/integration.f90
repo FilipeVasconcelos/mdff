@@ -53,7 +53,7 @@ SUBROUTINE prop_leap_frog
   USE md,                       ONLY :  dt
   USE config,                   ONLY :  natm , massia , rx , ry , rz , fx , fy , fz , vx , vy , vz , rxs , rys , rzs
   USE thermodynamic,            ONLY :  temp_r , e_kin
-  USE field,                    ONLY :  engforce_driver
+  USE engforce_driver,          ONLY :  engforce
 
   implicit none
 
@@ -74,7 +74,7 @@ SUBROUTINE prop_leap_frog
   ! ==========================
   ! force + potential f(t)
   ! ==========================
-  CALL engforce_driver 
+  CALL engforce
 
   ! ================================================= 
   !  r(t+dt) = 2 r(t) - r (t-dt) + f(t)/m dt*dt
@@ -136,7 +136,7 @@ SUBROUTINE prop_velocity_verlet
   USE md,                       ONLY :  dt, integrator
   USE thermodynamic,            ONLY :  temp_r , e_kin
   USE io,                       ONLY :  ionode
-  USE field,                    ONLY :  engforce_driver
+  USE engforce_driver,          ONLY :  engforce
 
   implicit none
 
@@ -172,7 +172,7 @@ SUBROUTINE prop_velocity_verlet
   ! ==========================
   ! force + potential f(t+dt)
   ! ==========================
-  CALL engforce_driver 
+  CALL engforce
 
   ! ==============================================
   !  v(t+dt) = v(t) + ( f(t-dt) + f(t) ) * dt / 2
@@ -336,7 +336,7 @@ SUBROUTINE prop_pos_vel_verlet ( kin )
   USE constants,                ONLY :  dp 
   USE config,                   ONLY :  natm , massia , rx , ry , rz , ry , vx , vy , vz , fx , fy , fz 
   USE md,                       ONLY :  dt
-  USE field,                    ONLY :  engforce_driver
+  USE engforce_driver,          ONLY :  engforce
 
   implicit none
 
@@ -366,7 +366,7 @@ SUBROUTINE prop_pos_vel_verlet ( kin )
   ! ==========================
   ! f(t+dt)
   ! ==========================
-  CALL engforce_driver 
+  CALL engforce
 
   ! =========================================
   !   v(t) = v(t+dt2) + f(t+dt) * dt2
@@ -400,7 +400,7 @@ SUBROUTINE beeman
   USE config,                   ONLY :  natm , massia , rx , ry , rz , ry , vx , vy , vz , fx , fy , fz , fxs , fys , fzs 
   USE thermodynamic,            ONLY :  temp_r , e_kin
   USE md,                       ONLY :  dt
-  USE field,                    ONLY :  engforce_driver
+  USE engforce_driver,          ONLY :  engforce
 
   implicit none
 
@@ -441,7 +441,7 @@ SUBROUTINE beeman
   ! ===========================
   ! force + potential  f(t+dt)
   ! ===========================
-  CALL engforce_driver 
+  CALL engforce
 
   ! ==================================================================
   ! v (t+dt) = v (t) + ( 1/3 f(t+dt) + 5/6 f(t) - 1/6  f(t-dt) )  dt
@@ -1073,7 +1073,7 @@ SUBROUTINE prop_pos_vel_verlet_npt ( kin , xe , ve , xe0 , L , W )
   USE constants,                ONLY :  dp
   USE config,                   ONLY :  natm , massia , rx , ry , rz , ry , vx , vy , vz , fx , fy , fz, simu_cell, rhoN
   USE md,                       ONLY :  dt , nhc_n , temp , press , first_time_xe0
-  USE field,                    ONLY :  engforce_driver
+  USE engforce_driver,          ONLY :  engforce
   USE cell,                     ONLY :  lattice , kardir, dirkar, periodicbc
   USE thermodynamic,            ONLY :  calc_thermo, pvirial_tot
   USE io,                       ONLY :  stdout, ioprintnode
@@ -1148,7 +1148,7 @@ SUBROUTINE prop_pos_vel_verlet_npt ( kin , xe , ve , xe0 , L , W )
   ! ==========================
   ! f(t+dt)
   ! ==========================
-  CALL engforce_driver
+  CALL engforce
 
   ! =========================================
   !   v(t) = v(t+dt2) + f(t+dt) * dt2

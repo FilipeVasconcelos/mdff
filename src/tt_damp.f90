@@ -28,5 +28,46 @@ SUBROUTINE get_TT_damp
 
 END SUBROUTINE get_TT_damp
 
+! *********************** SUBROUTINE TT_damping_functions **********************
+!> \brief
+!! Tang-Toennies damping function
+!> \author
+!! FMV
+!> \date 
+!! February 2014
+! ******************************************************************************
+SUBROUTINE TT_damping_functions(b,c,r,f,fd,order)
+
+!  USE tt_damp,          ONLY : E_TT ! Tang-Toennies coefficients define once up to order 8 
+
+  implicit none
+
+  ! global 
+  integer :: order
+  real(kind=dp) :: b , c , r, f , fd  ! f damping function , fd first derivative
+
+
+  ! local 
+  integer :: k
+  real(kind=dp) :: expbdr , br
+
+  br = b * r
+  expbdr = EXP(-br) * c
+
+  f = E_TT(order)
+  do k=order-1,1,-1
+    f = f * br + E_TT(k)
+  enddo
+  f = f * br + E_TT(0)
+  f = 1.0_dp - f * expbdr
+
+  ! derivative of f checked on sage 18/02/14 worksheet BMHFTD
+  fd = E_TT(order) * ( br ) ** ( order ) * expbdr * b
+
+  return
+
+END SUBROUTINE TT_damping_functions
+
+
 
 END MODULE tt_damp

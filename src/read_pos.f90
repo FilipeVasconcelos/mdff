@@ -40,7 +40,9 @@ SUBROUTINE read_pos
   USE config,                   ONLY :  rx , ry , rz , vx , vy , vz , fx , fy , fz , atype , atypei , itype , &
                                         natmi , natm , dipia , qia , ipolar , rhoN , system , ntype , config_alloc , &
                                         simu_cell , config_print_info , coord_format_allowed , write_CONTFF
-  USE field,                    ONLY :  qch , dip , quad, ldip_polar , field_init
+  USE field,                    ONLY :  field_init
+  USE coulomb,                  ONLY :  qch , dip , quad
+  USE pim,                      ONLY :  ldip_polar
   USE io,                       ONLY :  ionode , stdout , kunit_POSFF
   USE cell,                     ONLY :  lattice, periodicbc , dirkar, kardir
 
@@ -157,11 +159,13 @@ END SUBROUTINE read_pos
 ! ******************************************************************************
 SUBROUTINE typeinfo_init
 
-  USE constants, ONLY :  dp
-  USE config ,  ONLY :  atype , atypei , itype , natmi , natm , ntype , massia, dipia , quadia, qia , &
+  USE constants,        ONLY :  dp
+  USE config,           ONLY :  atype , atypei , itype , natmi , natm , ntype , massia, dipia , quadia, qia , &
                         quadia_nuc , ipolar , poldipia , polquadia, invpoldipia 
-  USE field ,   ONLY :  mass, qch , quad_nuc , dip , quad , ldip_polar , poldip , polquad
-  USE io,       ONLY :  stdout
+  USE field,            ONLY :  mass
+  USE coulomb,          ONLY :  qch , quad_nuc , dip , quad 
+  USE pim,              ONLY :  ldip_polar , poldip , polquad
+  USE io,               ONLY :  stdout
   
   implicit none
 

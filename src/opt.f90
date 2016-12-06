@@ -252,7 +252,8 @@ SUBROUTINE opt_main
   USE thermodynamic,    ONLY :  u_tot , pressure_tot , calc_thermo
   USE constants,        ONLY :  dzero
   USE cell,             ONLY :  lattice , dirkar
-  USE field,            ONLY :  field_init , engforce_driver , km_coul
+  USE field,            ONLY :  field_init !, km_coul
+  USE engforce_driver,  ONLY :  engforce
   USE time,             ONLY :  opttimetot
 
   implicit none
@@ -295,7 +296,7 @@ SUBROUTINE opt_main
   CALL config_alloc 
   CALL field_init
                   CALL do_split ( natm       , myrank , numprocs , atom_dec        , 'atoms' )
-  if ( lcoulomb ) CALL do_split ( km_coul%nk , myrank , numprocs , km_coul%kpt_dec ,'kpts-dec' )
+!  if ( lcoulomb ) CALL do_split ( km_coul%nk , myrank , numprocs , km_coul%kpt_dec ,'kpts-dec' )
 
   conf : do ic = 1, nconf
     ioprint = .true.
@@ -325,7 +326,7 @@ SUBROUTINE opt_main
       !  calc initial thermo  
       ! =======================  
       neng = 0
-      CALL engforce_driver 
+      CALL engforce
       CALL calc_thermo
       pot0 = u_tot 
       pressure0 = pressure_tot
@@ -390,7 +391,7 @@ SUBROUTINE opt_main
       ! ===========================================
       !  calculated forces (they should be small) 
       ! ===========================================
-      if ( lforce ) CALL engforce_driver 
+      if ( lforce ) CALL engforce
       ! =============================================
       !  write IS structures
       !  new configurations are stored in rx ,ry ,rz, fx , fy ,fz
@@ -465,7 +466,7 @@ SUBROUTINE sastry ( iter , Eis , phigrad , neng )
 
   USE config,                   ONLY :  natm , rx , ry , rz , fx , fy , fz , write_trajff_xyz
   USE thermodynamic,            ONLY :  u_tot      
-  USE field,                    ONLY :  engforce_driver 
+  USE engforce_driver,          ONLY :  engforce
 
   implicit none
 
@@ -504,7 +505,7 @@ SUBROUTINE sastry ( iter , Eis , phigrad , neng )
   itmax = 10000
   nskp = 1
   nstep = 0
-  CALL engforce_driver 
+  CALL engforce
   neng = neng + 1
 
   umag = 0.0_dp
@@ -784,7 +785,7 @@ SUBROUTINE sastry ( iter , Eis , phigrad , neng )
     DD2 = ftol * ( ABS ( ukeep) + ABS ( u_tot ) + epsilon)
 
     if ( DD1 .LE. DD2) then 
-      CALL engforce_driver 
+      CALL engforce
       neng = neng + 1
 
       Eis = u_tot
@@ -876,7 +877,7 @@ SUBROUTINE eforce1d( x , pot , vir , f1d , xix , xiy , xiz , neng )
 
   USE config,                   ONLY :  natm, rx, ry, rz, fx, fy, fz
   USE thermodynamic,            ONLY :  vir_tot , u_tot , calc_thermo
-  USE field,                    ONLY :  engforce_driver
+  USE engforce_driver,          ONLY :  engforce
 
   implicit none
 
@@ -924,7 +925,7 @@ SUBROUTINE eforce1d( x , pot , vir , f1d , xix , xiy , xiz , neng )
   ! ====================
   !  warning ! only pbc
   ! ====================
-  CALL engforce_driver 
+  CALL engforce
   CALL calc_thermo
   vir = vir_tot
   pot = u_tot  
@@ -984,7 +985,7 @@ SUBROUTINE lbfgs_driver ( icall, Eis , phigrad )
 
   USE config,                   ONLY :  natm, rx, ry, rz , fx , fy , fz 
   USE thermodynamic,            ONLY :  u_tot , u_lj_r , calc_thermo
-  USE field,                    ONLY :  engforce_driver
+  USE engforce_driver,          ONLY :  engforce
 
   implicit none
 
@@ -1133,14 +1134,14 @@ SUBROUTINE lbfgs_driver ( icall, Eis , phigrad )
 
 #ifdef debug
      call print_config_sample(icall,0)
-     WRITE ( stdout , '(a)') 'print before first engforce_driver in opt'
+     WRITE ( stdout , '(a)') 'print before first engforce in opt'
 #endif
-    CALL engforce_driver 
+    CALL engforce
     CALL calc_thermo
 
 #ifdef debug
      call print_config_sample(icall,0)
-     WRITE ( stdout , '(a)') 'print after first engforce_driver in opt'
+     WRITE ( stdout , '(a)') 'print after first engforce in opt'
 #endif
 
     ! ===============================
@@ -1215,7 +1216,7 @@ SUBROUTINE m1qn3_driver ( icall, Eis , phigrad ,optvar_lc)
   USE control,                  ONLY :  myrank , numprocs
   USE config,                   ONLY :  natm , rx , ry , rz, fx ,fy ,fz , write_CONTFF, simu_cell , tau
   USE thermodynamic,            ONLY :  u_tot , u_lj_r , calc_thermo
-  USE field,                    ONLY :  engforce_driver
+  USE engforce_driver,          ONLY :  engforce
   USE cell,                     ONLY :  lattice
 
   implicit none
@@ -1293,15 +1294,15 @@ SUBROUTINE m1qn3_driver ( icall, Eis , phigrad ,optvar_lc)
 
 #ifdef debug
      call print_config_sample(icall,0)
-     WRITE ( stdout , '(a)') 'print before first engforce_driver in opt'
+     WRITE ( stdout , '(a)') 'print before first engforce in opt'
 #endif
 
-  CALL engforce_driver 
+  CALL engforce
   CALL calc_thermo
 
 #ifdef debug
      call print_config_sample(icall,0)
-     WRITE ( stdout , '(a)') 'print after first engforce_driver in opt'
+     WRITE ( stdout , '(a)') 'print after first engforce in opt'
 #endif
 
   f=u_tot
@@ -1407,7 +1408,7 @@ SUBROUTINE m1qn3_driver ( icall, Eis , phigrad ,optvar_lc)
      call print_config_sample(icall,0)
      WRITE ( stdout , '(a,i5)') 'print before in opt loop',icall
 #endif
-    CALL engforce_driver 
+    CALL engforce
     CALL calc_thermo
 #ifdef debug
      call print_config_sample(icall,0)

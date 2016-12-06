@@ -239,7 +239,8 @@ SUBROUTINE vib_main
                                         kunit_DOSFF , kunit_MODFF, kunit_DOSKFF , kunit_IBZKPTFF
   USE thermodynamic,            ONLY :  u_tot , pressure_tot , calc_thermo
   USE cell,                     ONLY :  lattice , dirkar
-  USE field,                    ONLY :  field_init , engforce_driver
+  USE field,                    ONLY :  field_init 
+  USE engforce_driver,          ONLY :  engforce
   USE time,                     ONLY :  vibtimetot , diaghessiantimetot
   USE kspace,                   ONLY :  kmesh , kpoint_sum_init_BZ
 
@@ -336,7 +337,7 @@ SUBROUTINE vib_main
     ! ===============================================
     ! do we need forces or energy at this point ??? 
     ! ===============================================
-    !CALL engforce_driver 
+    !CALL engforce
 
     !CALL calc_thermo
     !pot0      = u_tot
@@ -599,7 +600,7 @@ END SUBROUTINE vib_main
 SUBROUTINE hessian ( hess )
 
   USE config,           ONLY :  natm , rx , ry , rz , itype , ntype , simu_cell 
-  USE field,            ONLY :  rcutsq , sigsq , epsp , fc , uc , plj , qlj
+  USE non_bonded,       ONLY :  rcutsq , sigsq , epsp , fc , uc , plj , qlj
   USE cell,             ONLY :  kardir , dirkar
   USE time,             ONLY :  hessiantimetot
 
@@ -1340,7 +1341,7 @@ SUBROUTINE band ( hess )
   USE control,          ONLY :  calc
   USE constants,        ONLY :  tpi , pi
   USE io,               ONLY :  kunit_DOSKFF
-  USE field,            ONLY :  rcutsq , sigsq , epsp , fc , uc 
+  USE non_bonded,       ONLY :  rcutsq , sigsq , epsp , fc , uc 
   USE kspace,           ONLY :  kpath , get_kpath
   USE cell,             ONLY :  dirkar , kardir
   USE time,             ONLY :  bandtimetot
@@ -1516,7 +1517,7 @@ SUBROUTINE doskpt ( hess , eigenk , km )
   USE control,          ONLY :  calc
   USE constants,        ONLY :  tpi , pi
   USE io,               ONLY :  kunit_IBZKPTFF , kunit_DKFF
-  USE field,            ONLY :  rcutsq , sigsq , epsp , fc , uc 
+  USE non_bonded,       ONLY :  rcutsq , sigsq , epsp , fc , uc 
   USE cell,             ONLY :  kardir , dirkar
   USE time,             ONLY :  doskpttimetot
   USE kspace,           ONLY :  kmesh

@@ -59,12 +59,12 @@ PROGRAM main_MDFF
   USE config
   USE time
   USE md 
+  USE non_bonded 
+  USE coulomb 
   USE field 
   USE vib
   USE opt
-  USE efg
   USE radial_distrib 
-  USE rmc
   USE voisin
   USE msd
   USE vacf 
@@ -199,8 +199,8 @@ PROGRAM main_MDFF
     if ( calc .eq. 'md' ) then
       verlet_vdw%listname ='vdw ' 
       verlet_coul%listname='coul' 
-      if ( lvnlist .and. non_bonded )    CALL vnlist_pbc!( verlet_vdw  )    
-      if ( lvnlist .and. lcoulomb   )    CALL vnlist_pbc!( verlet_coul )    
+      if ( lvnlist .and. lnon_bonded     )    CALL vnlist_pbc!( verlet_vdw  )    
+      if ( lvnlist .and. lcoulomb       )    CALL vnlist_pbc!( verlet_coul )    
     endif  
 
     !IF MD
@@ -303,19 +303,19 @@ PROGRAM main_MDFF
     ! - calculate from point charges and/or dipoles
     ! - polarisation or wannier function centres (wfc)
     ! ==============================================
-    if ( calc .eq. 'efg' ) then
-      CALL efg_init
-      CALL efgcalc 
-    endif
+    !if ( calc .eq. 'efg' ) then
+    !  CALL efg_init
+    !  CALL efgcalc 
+    !endif
     ! ==============================================
     ! IF EFG+ACF : 
     ! - calculate EFG auto-correlation functions 
     ! - data in EFGALL    
     ! ==============================================
-    if ( calc .eq. 'efg+acf' ) then
-      CALL efg_init
-      CALL efg_acf 
-    endif
+!    if ( calc .eq. 'efg+acf' ) then
+!      CALL efg_init
+!      CALL efg_acf 
+!    endif
     ! ==============================================
     ! IF GR : 
     ! - radial distribution function  of structures 
@@ -324,10 +324,10 @@ PROGRAM main_MDFF
     if ( calc .eq. 'gr' ) then
       CALL grcalc 
     endif
-    if ( calc .eq. 'rmc' ) then 
-      CALL rmc_init
-      CALL rmc_main
-    endif    
+!    if ( calc .eq. 'rmc' ) then 
+!      CALL rmc_init
+!      CALL rmc_main
+!    endif    
     ! ==============================================
     ! IF VOIS1 : 
     ! - first neighbour sphere analysis  
@@ -341,11 +341,11 @@ PROGRAM main_MDFF
     ! ========================================================
     if ( calc .eq. 'md' ) then 
                              CALL write_CONTFF
-      if ( lwrite_dip     )  CALL write_DIPFF 
-      if ( lwrite_quad    )  CALL write_QUADFF 
-      if ( lwrite_ef      )  CALL write_EFALL 
-      if ( lwrite_efg     )  CALL write_EFGALL 
-      if ( lwrite_restart )  CALL write_RESTART
+      !if ( lwrite_dip     )  CALL write_DIPFF 
+      !if ( lwrite_quad    )  CALL write_QUADFF 
+      !if ( lwrite_ef      )  CALL write_EFALL 
+      !if ( lwrite_efg     )  CALL write_EFGALL 
+      !if ( lwrite_restart )  CALL write_RESTART
     endif
 
     if ( calc .eq. 'stochio' ) then
@@ -362,7 +362,7 @@ PROGRAM main_MDFF
     ! ==============================================
     ! Deallocate coulombic related quantities
     ! ==============================================
-    CALL finalize_coulomb
+!    CALL finalize_coulomb
     ! ==============================================
     ! Deallocate principal quantites
     ! ==============================================
