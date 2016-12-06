@@ -104,7 +104,9 @@ SUBROUTINE engforce
   USE config,                   ONLY :  natm , ntype, system , simu_cell, atypei ,natmi, atype, itype , tau_coul, tau_nonb, tau
   USE control,                  ONLY :  lnmlj , lcoulomb , lbmhft , lbmhftd, lmorse , lharm , longrange, lnon_bonded, iefgall_format
   USE non_bonded,               ONLY :  engforce_nmlj_pbc, engforce_bmhftd_pbc
-  USE coulomb,                  ONLY :  task_coul, multipole_ES, pair_thole, pair_thole_distance
+  USE moment_from_pola,         ONLY :  get_dipole_moments
+  USE coulomb,                  ONLY :  task_coul, pair_thole, pair_thole_distance, mu_t, theta_t, ef_t, efg_t   
+  USE ewald,                    ONLY :  multipole_ES
   USE field,                    ONLY :  doefield, doefg
   USE io,                       ONLY :  kunit_DIPFF, kunit_EFGALL , kunit_EFALL
 
@@ -146,19 +148,16 @@ SUBROUTINE engforce
   if ( lcoulomb ) then
 
      allocate( ef(3,natm) , efg(3,3,natm) , mu(3,natm) , theta(3,3,natm))
-     allocate ( pair_thole ( natm ) )
-     allocate ( pair_thole_distance ( natm ) )
-!     pair_thole = 0
-!     pair_thole_distance = 0.0_dp
-!     mu=0.0_dp
-!     theta=0.0_dp
+     pair_thole_distance = 0.0_dp
+     mu=0.0_dp
+     theta=0.0_dp
 
      ! this subroutine set the total dipole moment from :
      ! static          (if given in control file dip TODO: read from DIPFF )
      ! wannier centers (if given in POSFF )
      ! induced         (if polar are set in control file)
-!     CALL get_dipole_moments ( mu , theta , didpim )
-!     theta=0.0_dp
+     CALL get_dipole_moments ( mu , theta , didpim )
+     theta=0.0_dp
 
      ! ====================================
      ! get all the electrostatic quantities
@@ -166,11 +165,11 @@ SUBROUTINE engforce
      CALL multipole_ES ( ef , efg , mu , theta , task_coul , damp_ind=.true. , &
                          do_efield=doefield , do_efg=doefg , do_forces=.true. , &
                          do_stress=.true. , do_rec=.true. , do_dir=.true. , do_strucfact =.false. , use_ckrskr = didpim )
-!     theta=0.0_dp
-!     mu_t     = mu
-!     theta_t  = theta
- !    ef_t     = ef
- !    efg_t    = efg
+     theta=0.0_dp
+     mu_t     = mu
+     theta_t  = theta
+     ef_t     = ef
+     efg_t    = efg
 
      deallocate( ef , efg , mu , theta )
      deallocate ( pair_thole )

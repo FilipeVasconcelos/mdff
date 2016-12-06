@@ -19,24 +19,6 @@
 ! ======= Hardware =======
 #include "symbol.h"
 !#define debug
-!#define debug_ES
-!#define debug_ES_field_forces
-!#define debug_ES_energy
-!#define debug_ES_stress
-!#define debug_ES_efg
-!#define debug_ES_dir
-!#define debug_scf_pola
-!#define debug_wfc
-!#define debug_morse
-!#define debug_nmlj
-!#define debug_nmlj_pbc
-!#define debug_quadratic
-!#define debug_para
-!#define debug_mu
-!#define debug_cg
-!#define debug_extrapolate
-!#define debug_print_dipff_scf
-!#define debug_scf_kO_inner
 ! ======= Hardware =======
 
 ! *********************** MODULE field *****************************************
@@ -57,7 +39,6 @@ MODULE field
 
   integer :: cccc=0
   logical           :: doefield , doefg
-  logical, SAVE     :: lwrite_dip_wfc    !< write dipoles from wannier centers to file
   logical, SAVE     :: lwrite_dip        !< write dipoles 
   logical, SAVE     :: lwrite_quad       !< write quadrupoles to QUADFF
   logical, SAVE     :: lwrite_efg        !< write electric field gradient to EFGALL
@@ -141,7 +122,8 @@ SUBROUTINE field_init
 
   USE control,                  ONLY :  calc , lnmlj , lcoulomb , lmorse , longrange, lnon_bonded
   USE non_bonded,               ONLY :  non_bonded_init
-  USE coulomb,                  ONLY :  qch, dip, quad, quad_nuc ,coulomb_init 
+  USE coulomb,                  ONLY :  qch, dip, quad, quad_nuc ,coulomb_init, coulomb_print_info 
+  USE pim,                      ONLY :  pim_init
 
   implicit none
 
@@ -196,6 +178,11 @@ SUBROUTINE field_init
 
   if ( lcoulomb ) then
     CALL coulomb_init
+    CALL pim_init
+    ! ================================
+    !  print coulomb info
+    ! ================================
+    CALL coulomb_print_info(stdout)
   endif
 
   ! ================================
@@ -309,6 +296,52 @@ SUBROUTINE field_print_info ( kunit , quiet )
   return
 
 END SUBROUTINE field_print_info 
+
+
+! *********************** SUBROUTINE write_DIPFF ******************************
+!
+!>\brief
+! write dipoles at ions to DIPFF file
+!
+! ******************************************************************************
+SUBROUTINE write_DIPFF
+
+  USE io,                       ONLY :  kunit_DIPFF
+  USE coulomb,                  ONLY :  mu_t
+  USE cell,                     ONLY :  kardir , periodicbc , dirkar
+  USE control,                  ONLY :  lstatic
+  USE config,                   ONLY :  system , natm , ntype , atype , simu_cell, atypei, natmi
+
+  implicit none
+
+  ! local
+  integer :: ia , it
+
+  if ( ionode ) then
+
+  write(stdout,'(a)') 'writing DIPFF'
+  if ( lstatic ) OPEN ( kunit_DIPFF ,file = 'DIPFF',STATUS = 'UNKNOWN')
+
+    WRITE ( kunit_DIPFF , * )  natm
+    WRITE ( kunit_DIPFF , * )  system
+    WRITE ( kunit_DIPFF , * )  simu_cell%A(1,1) , simu_cell%A(2,1) , simu_cell%A(3,1)
+    WRITE ( kunit_DIPFF , * )  simu_cell%A(1,2) , simu_cell%A(2,2) , simu_cell%A(3,2)
+    WRITE ( kunit_DIPFF , * )  simu_cell%A(1,3) , simu_cell%A(2,3) , simu_cell%A(3,3)
+    WRITE ( kunit_DIPFF , * )  ntype
+    WRITE ( kunit_DIPFF , * )  ( atypei ( it ) , it = 1 , ntype )
+    WRITE ( kunit_DIPFF , * )  ( natmi  ( it ) , it = 1 , ntype )
+    WRITE ( kunit_DIPFF ,'(a)') &
+              '      ia type                   mux                  muy                 muz'
+    do ia= 1 , natm
+      WRITE ( kunit_DIPFF , '(i8,2x,a3,6e24.16)' ) ia , atype( ia ) , mu_t ( 1 , ia ) , mu_t ( 2 , ia ) , mu_t ( 3 , ia )
+    enddo
+  endif
+
+  if ( lstatic ) CLOSE( kunit_DIPFF )
+
+  return
+
+END SUBROUTINE write_DIPFF
 
 
 

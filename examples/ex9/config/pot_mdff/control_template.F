@@ -28,7 +28,11 @@
 &end
 
 
-&coulomb
+&coulombtag
         lautoES = .true.
         epsw = __EPSW__ 
+&end
+
+&pimtag
+       !INCLUDE <PIM.POT>
 &end
