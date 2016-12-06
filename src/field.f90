@@ -335,7 +335,165 @@ SUBROUTINE write_DIPFF
 
 END SUBROUTINE write_DIPFF
 
+! *********************** SUBROUTINE write_QUADFF ******************************
+!
+!>\brief
+! write dipoles at ions to QUADFF file
+!
+! ******************************************************************************
+SUBROUTINE write_QUADFF 
 
+  USE io,                       ONLY :  kunit_QUADFF
+  USE coulomb,                  ONLY :  theta_t
+  USE cell,                     ONLY :  kardir , periodicbc , dirkar
+  USE control,                  ONLY :  lstatic
+  USE config,                   ONLY :  system , natm , ntype , atype , simu_cell, atypei, natmi
+
+  implicit none
+
+  ! local
+  integer :: ia , it
+
+  if ( ionode ) then
+
+  write(stdout,'(a)') 'writing QUADFF'
+  if ( lstatic ) OPEN ( kunit_QUADFF ,file = 'QUADFF',STATUS = 'UNKNOWN')
+
+    WRITE ( kunit_QUADFF , * )  natm
+    WRITE ( kunit_QUADFF , * )  system
+    WRITE ( kunit_QUADFF , * )  simu_cell%A(1,1) , simu_cell%A(2,1) , simu_cell%A(3,1)
+    WRITE ( kunit_QUADFF , * )  simu_cell%A(1,2) , simu_cell%A(2,2) , simu_cell%A(3,2)
+    WRITE ( kunit_QUADFF , * )  simu_cell%A(1,3) , simu_cell%A(2,3) , simu_cell%A(3,3)
+    WRITE ( kunit_QUADFF , * )  ntype
+    WRITE ( kunit_QUADFF , * )  ( atypei ( it ) , it = 1 , ntype )
+    WRITE ( kunit_QUADFF , * )  ( natmi  ( it ) , it = 1 , ntype )
+    WRITE ( kunit_QUADFF ,'(a)') &
+      '      ia type                   thetaxx                     thetayy                     thetazz                     thetaxy                  thetaxz                     thetayz'
+    do ia= 1 , natm
+          WRITE ( kunit_QUADFF ,'(i8,2x,a3,6e24.16)') ia , atype ( ia ) , theta_t ( 1 , 1, ia) , theta_t ( 2 , 2, ia) , &
+                                                                          theta_t ( 3 , 3, ia) , theta_t ( 1 , 2, ia) , &
+                                                                          theta_t ( 1 , 3, ia) , theta_t ( 2 , 3, ia)
+    enddo
+  endif
+
+  if ( lstatic ) CLOSE( kunit_QUADFF )
+
+  return
+
+END SUBROUTINE write_QUADFF
+
+! *********************** SUBROUTINE write_EFGALL ******************************
+!
+!>\brief
+! write Electric Field Gradient at ions to EFGALL file
+!
+! ******************************************************************************
+SUBROUTINE write_EFGALL
+
+  USE io,                       ONLY :  kunit_EFGALL
+  USE coulomb,                  ONLY :  efg_t
+  USE pim,                      ONLY :  lwfc
+  USE cell,                     ONLY :  kardir , periodicbc , dirkar
+  USE control,                  ONLY :  lstatic, iefgall_format
+  USE config,                   ONLY :  system , natm , ntype , atype , itype , simu_cell, atypei, natmi
+
+  implicit none
+
+  ! local
+  integer :: ia , it
+
+  if ( ionode ) then
+
+    if ( lstatic ) OPEN ( kunit_EFGALL ,file = 'EFGALL',STATUS = 'UNKNOWN')
+    if ( iefgall_format .ne. 0 ) then
+      WRITE ( kunit_EFGALL , * )  natm
+      WRITE ( kunit_EFGALL , * )  system
+      WRITE ( kunit_EFGALL , * )  simu_cell%A(1,1) , simu_cell%A(2,1) , simu_cell%A(3,1)
+      WRITE ( kunit_EFGALL , * )  simu_cell%A(1,2) , simu_cell%A(2,2) , simu_cell%A(3,2)
+      WRITE ( kunit_EFGALL , * )  simu_cell%A(1,3) , simu_cell%A(2,3) , simu_cell%A(3,3)
+      WRITE ( kunit_EFGALL , * )  ntype
+      WRITE ( kunit_EFGALL , * )  ( atypei ( it ) , it = 1 , ntype )
+      WRITE ( kunit_EFGALL , * )  ( natmi  ( it ) , it = 1 , ntype )
+      WRITE ( kunit_EFGALL ,'(a)') &
+      '      ia type                   vxx                     vyy                     vzz                     vxy                     vxz                     vyz'
+      do ia = 1 , natm
+        it = itype ( ia )
+        if ( lwfc( it ) .ge. 0 ) then
+          WRITE ( kunit_EFGALL ,'(i8,2x,a3,6e24.16)') ia , atype ( ia ) , efg_t ( 1 , 1 , ia ) , efg_t ( 2 , 2 , ia ) , &
+                                                                          efg_t ( 3 , 3 , ia ) , efg_t ( 1 , 2 , ia ) , &
+                                                                          efg_t ( 1 , 3 , ia ) , efg_t ( 2 , 3 , ia )
+        endif
+      enddo
+    endif
+
+    if ( iefgall_format .eq. 0 ) then
+      WRITE ( kunit_EFGALL )  natm
+      WRITE ( kunit_EFGALL )  system
+      WRITE ( kunit_EFGALL )  simu_cell%A(1,1) , simu_cell%A(2,1) , simu_cell%A(3,1)
+      WRITE ( kunit_EFGALL )  simu_cell%A(1,2) , simu_cell%A(2,2) , simu_cell%A(3,2)
+      WRITE ( kunit_EFGALL )  simu_cell%A(1,3) , simu_cell%A(2,3) , simu_cell%A(3,3)
+      WRITE ( kunit_EFGALL )  ntype
+      WRITE ( kunit_EFGALL )  ( atypei ( it ) , it = 1 , ntype )
+      WRITE ( kunit_EFGALL )  ( natmi  ( it ) , it = 1 , ntype )
+      WRITE ( kunit_EFGALL )  efg_t
+    endif
+
+  endif
+
+  if ( lstatic ) CLOSE( kunit_EFGALL )
+
+  return
+
+END SUBROUTINE write_EFGALL
+
+
+! *********************** SUBROUTINE write_EFALL ******************************
+!
+!>\brief
+! write configuration (pos,vel) to CONTFF file
+!
+! ******************************************************************************
+SUBROUTINE write_EFALL
+
+  USE io,                       ONLY :  kunit_EFALL
+  USE pim,                      ONLY :  lwfc
+  USE coulomb,                  ONLY :  ef_t
+  USE cell,                     ONLY :  kardir , periodicbc , dirkar
+  USE control,                  ONLY :  lstatic
+  USE config,                   ONLY :  system , natm , ntype , atype , itype , simu_cell, atypei, natmi
+
+  implicit none
+
+  ! local
+  integer :: ia , it
+
+  if ( ionode ) then
+
+    if ( lstatic ) OPEN ( kunit_EFALL ,file = 'EFALL',STATUS = 'UNKNOWN')
+      WRITE ( kunit_EFALL , * )  natm
+      WRITE ( kunit_EFALL , * )  system
+      WRITE ( kunit_EFALL , * )  simu_cell%A(1,1) , simu_cell%A(2,1) , simu_cell%A(3,1)
+      WRITE ( kunit_EFALL , * )  simu_cell%A(1,2) , simu_cell%A(2,2) , simu_cell%A(3,2)
+      WRITE ( kunit_EFALL , * )  simu_cell%A(1,3) , simu_cell%A(2,3) , simu_cell%A(3,3)
+      WRITE ( kunit_EFALL , * )  ntype
+      WRITE ( kunit_EFALL , * )  ( atypei ( it ) , it = 1 , ntype )
+      WRITE ( kunit_EFALL , * )  ( natmi  ( it ) , it = 1 , ntype )
+      WRITE ( kunit_EFALL ,'(a)') &
+                                 '      ia type                   Ex                      Ey                      Ez'
+      do ia = 1 , natm
+        it = itype ( ia )
+        if ( lwfc( it ) .ge. 0 ) then
+          WRITE ( kunit_EFALL ,'(i8,2x,a3,3e24.16)') ia , atype ( ia ) , ef_t ( ia , 1 ) , ef_t ( ia , 2 ) , ef_t ( ia , 3 )
+        endif
+      enddo
+
+  endif
+
+  if ( lstatic ) CLOSE( kunit_EFALL )
+
+  return
+
+END SUBROUTINE write_EFALL
 
 END MODULE field 
 ! ===== fmV =====

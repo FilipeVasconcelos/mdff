@@ -53,6 +53,8 @@ def read_OSZIFF(filename):
     volu=[]
     htot=[]
 
+    etot_l=open("etot_l","w+") 
+    temp_l=open("temp_l","w+") 
     f=open(filename)
     for i,line in enumerate(f) :
         l = line.split()
@@ -64,6 +66,7 @@ def read_OSZIFF(filename):
             utot.append(float(l[14]))
             uvdw.append(float(l[17]))
             ucou.append(float(l[20]))
+            print >> etot_l, line,
         if i%2 == 1:
             temp.append(float(l[8]))
             pres.append(float(l[11]))
@@ -71,8 +74,11 @@ def read_OSZIFF(filename):
             pvir_coul.append(float(l[17]))
             volu.append(float(l[20]))
             htot.append(float(l[23]))
+            print >> temp_l, line,
 
     f.close()
+    etot_l.close()
+    temp_l.close()
 
     alldata.append(step)
     alldata.append(time)

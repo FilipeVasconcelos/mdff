@@ -31,7 +31,7 @@ echo "# mdff calculation "
 cp ../config/control.F .
 cp ../config/POSFF .
 $EXEMDFF control.F > stdout
-poszi.py -i OSZIFF 
+poszi.py -i OSZIFF -n
 cd ..
 
 if $do_dlpoly; then

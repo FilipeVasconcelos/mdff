@@ -45,7 +45,7 @@ if $mdff; then
 		mv OSZIFF OSZIFF.run2_pim_nvt
 		for c in full_lj run1_lj run2_lj full_pim run1_pim run2_pim full_pim_nvt run1_pim_nvt run2_pim_nvt
 		do
-			poszi -n -i OSZIFF.$c
+			poszi.py -n -i OSZIFF.$c
 			mv etot_l etot_l.$c
 			mv temp_l temp_l.$c
 		done
