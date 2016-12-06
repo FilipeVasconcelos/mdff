@@ -29,21 +29,23 @@
 
 &end
 
-&fieldtag
+&coulombtag
         ! ewald summation
         lautoES       = .true.
         epsw          = 1.e-5
-        algo_moment_from_pola='scf_kO_v2'
-        !algo_moment_from_pola='scf_kO_v4_2'
-        omegakO       = 0.7 
-        conv_tol_ind  = 1e-5
-        algo_ext_dipole = 'aspc'
-        extrapolate_order = 4
-
+&end
+&fieldtag
         !         O      Si 
         mass=15.99994d0 28.084d0
         !         O       Si
         qch= -2.0d0      4.0d0
+&end
+&pimtag
+        algo_moment_from_pola='scf_kO_v2'
+        omegakO       = 0.7 
+        conv_tol_ind  = 1e-5
+        algo_ext_dipole = 'aspc'
+        extrapolate_order = 4
         ! ===========================================
         !               polar on O
         ldip_polar(1)=.true.
@@ -60,6 +62,8 @@
         pol_damp_b(1,1,2) = 3.66480
         pol_damp_c(1,1,2) = 1.44589
         pol_damp_k(1,1,2) = 4
+&end
+&non_bondedtag
         ! BMHFTD potential
         !O-O               eV               hartree
         Abmhftd(1,1)  = 7902.1862      !    290.4

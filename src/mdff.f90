@@ -61,6 +61,7 @@ PROGRAM main_MDFF
   USE md 
   USE non_bonded 
   USE coulomb 
+  USE pim
   USE field 
   USE vib
   USE opt
@@ -303,7 +304,6 @@ PROGRAM main_MDFF
     ! - calculate from point charges and/or dipoles
     ! - polarisation or wannier function centres (wfc)
     ! ==============================================
-    !if ( calc .eq. 'efg' ) then
     !  CALL efg_init
     !  CALL efgcalc 
     !endif
@@ -324,10 +324,6 @@ PROGRAM main_MDFF
     if ( calc .eq. 'gr' ) then
       CALL grcalc 
     endif
-!    if ( calc .eq. 'rmc' ) then 
-!      CALL rmc_init
-!      CALL rmc_main
-!    endif    
     ! ==============================================
     ! IF VOIS1 : 
     ! - first neighbour sphere analysis  
@@ -341,11 +337,11 @@ PROGRAM main_MDFF
     ! ========================================================
     if ( calc .eq. 'md' ) then 
                              CALL write_CONTFF
-      !if ( lwrite_dip     )  CALL write_DIPFF 
-      !if ( lwrite_quad    )  CALL write_QUADFF 
-      !if ( lwrite_ef      )  CALL write_EFALL 
-      !if ( lwrite_efg     )  CALL write_EFGALL 
-      !if ( lwrite_restart )  CALL write_RESTART
+      if ( lwrite_dip     )  CALL write_DIPFF 
+      if ( lwrite_quad    )  CALL write_QUADFF 
+      if ( lwrite_ef      )  CALL write_EFALL 
+      if ( lwrite_efg     )  CALL write_EFGALL 
+      if ( lwrite_restart )  CALL write_RESTART
     endif
 
     if ( calc .eq. 'stochio' ) then

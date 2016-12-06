@@ -45,6 +45,7 @@ MODULE coulomb
 
   logical, PRIVATE :: symmetric_pot
   logical, SAVE     :: lautoES           !< auto-determination of Ewald parameter from epsw ( accuracy)
+  logical           :: doefield , doefg
 
   ! ewald sum related 
   real(kind=dp)    :: epsw                             !< accuracy of the ewald sum 
@@ -60,7 +61,6 @@ MODULE coulomb
   ! direct sum
   integer          :: ncelldirect                      !< number of cells  in the direct summation
   TYPE ( rmesh )   :: rm_coul                          !< real space mesh ( see rspace.f90 )
-  logical          :: doefield , doefg
 
  ! THOLE FUNCTION RELATED
   integer      , dimension (:) , allocatable :: pair_thole

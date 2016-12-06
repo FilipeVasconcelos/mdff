@@ -38,7 +38,6 @@ MODULE field
   implicit none
 
   integer :: cccc=0
-  logical           :: doefield , doefg
   logical, SAVE     :: lwrite_dip        !< write dipoles 
   logical, SAVE     :: lwrite_quad       !< write quadrupoles to QUADFF
   logical, SAVE     :: lwrite_efg        !< write electric field gradient to EFGALL
@@ -51,12 +50,7 @@ MODULE field
 
   ! type dependent properties
   real(kind=dp)    :: mass     ( ntypemax )            !< masses ( not yet tested everywhere )
-  real(kind=dp)    :: poldip   ( ntypemax , 3 , 3 )    !< dipole     polarizability if ldip_polar( it ) = .true. 
-  real(kind=dp)    :: poldip_iso ( ntypemax )          !< isotropic dipole polarizability if ldip_polar( it ) = .true.
-  real(kind=dp)    :: polquad  ( ntypemax , 3 , 3 , 3 )!< quadrupole polarizability if lquad_polar( it ) = .true.
-  real(kind=dp)    :: polquad_iso ( ntypemax )         !< isotropic quadrupole polarizability if ldip_polar( it ) = .true. 
-  real(kind=dp)    :: quad_nuc ( ntypemax )            !< quadrupolar moment nucleus NMR
-  logical          :: ldip_polar   ( ntypemax )                          !< induced moment from pola. Is this type of ion polarizable ?
+
 
 
 CONTAINS
@@ -81,8 +75,6 @@ SUBROUTINE field_default_tag
   dip           = 0.0_dp  ! dipolar moment
   quad          = 0.0_dp  ! quadrupolar moment
   quad_nuc      = 0.0_dp  ! quadrupolar moment
-  doefield      = .false. ! calculate electric field ( it is internally swicth on for induced polarization calculation )
-  doefg         = .false. ! electric field gradient
   lwrite_dip    = .false.            
   lwrite_quad   = .false.            
   lwrite_ef     = .false.            

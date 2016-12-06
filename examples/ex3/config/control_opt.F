@@ -20,6 +20,8 @@
 
 &end
 &fieldtag
+&end
+&non_bondedtag
         ctrunc = 'notrunc'
         epslj(1,1)  = 1.0d0
         sigmalj(1,1)= 3.405d0

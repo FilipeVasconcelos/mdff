@@ -13,7 +13,7 @@
 EXEDLPOLY=DLPOLY.X
 EXEMDFF=mdff.x
 
-do_dlpoly=true
+do_dlpoly=false
 
 # =====================================================
 
@@ -31,7 +31,7 @@ echo "# mdff calculation "
 cp ../config/control.F .
 cp ../config/POSFF .
 $EXEMDFF control.F > stdout
-poszi -i OSZIFF -n
+poszi.py -i OSZIFF 
 cd ..
 
 if $do_dlpoly; then
@@ -56,7 +56,7 @@ set term x11
 set title "Total energy MD ex1."
 set xlabel "time"
 set ylabel "E_{tot}"
-p 'dl_poly/ene' u 1:2 w l title "DL_POLY",'mdff/etot_l' u 6:(\$9+($lr)) w l title "MDFF+LR",'mdff/etot_l' u 6:9 w l title "MDFF+LR"
+p 'dl_poly/ene' u 1:2 w l title "DL_POLY"
 eof
 chmod u+x plot
 ./plot

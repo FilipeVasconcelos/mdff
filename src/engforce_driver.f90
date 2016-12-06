@@ -105,9 +105,8 @@ SUBROUTINE engforce
   USE control,                  ONLY :  lnmlj , lcoulomb , lbmhft , lbmhftd, lmorse , lharm , longrange, lnon_bonded, iefgall_format
   USE non_bonded,               ONLY :  engforce_nmlj_pbc, engforce_bmhftd_pbc
   USE moment_from_pola,         ONLY :  get_dipole_moments
-  USE coulomb,                  ONLY :  task_coul, pair_thole, pair_thole_distance, mu_t, theta_t, ef_t, efg_t   
+  USE coulomb,                  ONLY :  task_coul, pair_thole, pair_thole_distance, mu_t, theta_t, ef_t, efg_t, doefield, doefg   
   USE ewald,                    ONLY :  multipole_ES
-  USE field,                    ONLY :  doefield, doefg
   USE io,                       ONLY :  kunit_DIPFF, kunit_EFGALL , kunit_EFALL
 
   implicit none

@@ -24,8 +24,10 @@
         temp          = 86.56d0 
 &end
 &fieldtag
+        mass=39.95d0
+&end
+&non_bondedtag
         ctrunc = 'notrunc'
         epslj(1,1)  = 0.010323576 
         sigmalj(1,1)= 3.405d0
-        mass=39.95d0
 &end

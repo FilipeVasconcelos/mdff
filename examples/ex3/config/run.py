@@ -38,7 +38,8 @@ if __name__ == "__main__" :
     energy = float('inf')
 
     a = natm ** (1./3.) * 10.0
-    print a
+    print "cluster with",natm,"LJ atoms" 
+    print "target energy (M.R. Hoare and P. Pal, Adv. Phys. 20 161 (1971)",target
 
     it=0
     while (abs(energy-target)>1e-4) :
