@@ -1,0 +1,17 @@
+  &POISSON
+     &EWALD
+       EWALD_TYPE EWALD
+       #ALPHA 0.59185 
+       ALPHA 0.66197 
+       GMAX  15
+       RCUT 5.0
+       EWALD_ACCURACY 1.e-6
+       &MULTIPOLES T
+         MAX_MULTIPOLE_EXPANSION DIPOLE
+         POL_SCF SELF_CONSISTENT 
+         EPS_POL 1.0e-6
+         MAX_IPOL_ITER 100
+       &END MULTIPOLES
+     &END EWALD
+    &END POISSON
+
