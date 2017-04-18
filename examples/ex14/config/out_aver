@@ -1,0 +1,17 @@
+generate etot and temp files
+
+8002 points in input file OSZIFF.3
+
+averaging on 8002 last points:
+
+<Etot>        =    -12.02456 <Etot^2>       =  1.44595e+02       std dev.=      0.07152 
+<Ekin>        =      2.86297 <Ekin^2>       =  8.20361e+00       std dev.=      0.08360 
+<Upot>        =    -14.88754 <Upot^2>       =  2.21651e+02       std dev.=      0.11028 
+<Uvdw>        =    -14.88754 <Uvdw^2>       =  2.21651e+02       std dev.=      0.11028 
+<Ucoul>       =      0.00000 <Ucoul^2>      =  0.00000e+00       std dev.=      NaN 
+<Temp>        =     86.51927 <Temp^2>       =  7.49197e+03       std dev.=      2.52648 
+<Press>       =      0.01284 <Press^2>      =  2.43489e-04       std dev.=      0.00886 
+<Pvir_coul>   =      0.00000 <Pvir_coul^2>  =  0.00000e+00       std dev.=      0.00000 
+<Pvir_vdw>    =      0.00008 <Pvir_vdw^2>   =  9.38756e-09       std dev.=      NaN 
+<vol>         =  11973.78300 <vol^2>        =  1.43371e+08       std dev.=      NaN 
+<Htot>        =    -12.02456 <Htot^2>       =  1.44595e+02       std dev.=      0.07152 

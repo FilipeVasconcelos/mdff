@@ -1,0 +1,8 @@
+#!/usr/bin/gnuplot 
+reset
+set term x11
+set title "Total energy MD"
+set xlabel "time"
+set ylabel "E_{tot}"
+p 'etot_l' u 6:9 w l title '',  -11.93248 title "",  'temp_l' u 6:24 w l title '',  -11.93248 title ""
+pause -1

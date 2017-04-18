@@ -1,0 +1,8 @@
+#!/usr/bin/gnuplot 
+reset
+set term x11
+set title "Energies MD"
+set xlabel "time"
+set ylabel "E"
+p 'etot_l' u 6:9  w l title 'E',  'etot_l' u 6:15 w l title 'U',  'temp_l' u 6:24 w l title 'H'
+pause -1

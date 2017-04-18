@@ -1,0 +1,8 @@
+#!/usr/bin/gnuplot 
+reset
+set term x11
+set title "Volume MD"
+set xlabel "volume"
+set ylabel "V"
+p 'temp_l' u 6:21 w l title '',  11973.78300 title ""
+pause -1

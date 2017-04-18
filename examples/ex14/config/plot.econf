@@ -1,0 +1,8 @@
+#!/usr/bin/gnuplot 
+reset
+set term x11
+set title "Potential energy MD"
+set xlabel "time "
+set ylabel "E_{pot}"
+p 'etot_l' u 6:15 w l title '',  -14.80525 title ""
+pause -1

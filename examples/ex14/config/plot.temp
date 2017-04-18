@@ -1,0 +1,8 @@
+#!/usr/bin/gnuplot 
+reset
+set term x11
+set title "Temperature MD"
+set xlabel "time"
+set ylabel "T"
+p 'temp_l' u 6:9 w l title '',  86.81518 title ""
+pause -1
