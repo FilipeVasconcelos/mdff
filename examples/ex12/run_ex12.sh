@@ -3,7 +3,7 @@
 EXECP2K=cp2k
 EXEMDFF=mdff.x
 
-cp2k=true
+cp2k=false
 mdff=true
 
 if $cp2k; then
@@ -17,7 +17,7 @@ if $cp2k; then
 	$EXECP2K -i input_pim.cp2k -o output_pim.cp2k
 	mv SiO2-1.cell SiO2-pos-1.cell
 	xyztoff -i SiO2-pos-1.xyz -o TRAJFF
-	$EXEMDFF control_gr.F > stdout_gr
+	mpirun -np 2 $EXEMDFF control_gr.F > stdout_gr
 
 	cd ..
 fi
