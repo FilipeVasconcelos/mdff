@@ -89,6 +89,9 @@ examples/ex7/plot.gr
 examples/ex8/dlpoly/
 examples/ex8/mdff/
 examples/ex8/plot.gr
+examples/ex9/config/pot_mdff/tmp
+examples/ex9/config/pot_mdff/tmp1
+examples/ex9/config/DOALLC
 examples/ex9/config/pot_cp2k/input_test.1.cp2k
 examples/ex9/config/pot_cp2k/input_test.10.cp2k
 examples/ex9/config/pot_cp2k/input_test.11.cp2k
@@ -128,3 +131,4 @@ examples/ex11/random_structs/*
 examples/ex12/mdff/
 examples/ex12/cp2k/
 examples/ex14/mdff/
+
