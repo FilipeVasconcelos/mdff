@@ -18,6 +18,7 @@
 *.mod
 *.F90
 fort.*
+*_genmod.f90
 
 # Compiled Static libraries
 *.lai
@@ -39,13 +40,30 @@ DOSFF*
 DOSKFF*
 EIGFF*
 VECTFF*
+EFGALL*
+EFALL*
+RESTART
+DT*FF
+NMRFF*
 log.*
+etot*
+temp*
+plot*
+out_aver*
+stdout*
 
 #pictures/pdf/latex output
 *.aux
 *.pdf
 *.toc
 *.eps
+
+run/
+test/
+
+examples/ex0/cp2k/
+examples/ex0/dl_poly/
+examples/ex0/mdff/
 
 doc/mdff.log
 doc/missfont.log
@@ -54,6 +72,7 @@ examples/ex1/mdff/
 examples/ex1/plot
 examples/ex10/control_files/
 examples/ex11/md_runs/
+examples/ex4/POSFF
 examples/ex5/plot.band
 examples/ex5/plot.dos
 examples/ex5/stdout.vib
@@ -105,3 +124,7 @@ examples/ex9/config/pot_mdff/scr8
 examples/ex9/config/pot_mdff/scr9
 examples/ex9/cp2k/
 examples/ex9/mdff/
+examples/ex11/random_structs/*
+examples/ex12/mdff/
+examples/ex12/cp2k/
+examples/ex14/mdff/

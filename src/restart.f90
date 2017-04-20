@@ -20,39 +20,44 @@
 
 ! ======= Hardware =======
 #include "symbol.h"
+!#define debug 
 !#define GFORTRAN
 ! ======= Hardware =======
 
 
 MODULE restart
 
+  USE io,  ONLY :  ionode, stdout
 
 CONTAINS
 
 SUBROUTINE restart_init ( MDFF ) 
 
+  USE io,       ONLY :  kunit_RESTART
   USE cell
   USE control
   USE config
+  USE non_bonded
+  USE coulomb
+  USE pim
   USE field
+  USE tt_damp
   USE md
- 
-  USE io,  ONLY :  stdout, kunit_RESTART
 
   implicit none
+
   ! global
   character(len=80)  :: MDFF
+
   ! local 
   integer :: i
-  logical           :: allowed
   character(len=60) :: cpos
   character(len=20) :: FMT 
 
   CALL print_RESTART_info ( stdout )
  
   ! default values
-  itime = 1
- 
+  itime = itime0
 
   OPEN(kunit_RESTART, FILE='RESTART', form ='unformatted')
   ! reading RESTART (control parameters)
@@ -72,7 +77,7 @@ SUBROUTINE restart_init ( MDFF )
   READ( kunit_RESTART   ) ltest          
   READ( kunit_RESTART   ) lmsd           
   READ( kunit_RESTART   ) lvacf          
-  READ( kunit_RESTART   ) lrestart       
+  READ( kunit_RESTART   ) lwrite_restart       
   READ( kunit_RESTART   ) cutlongrange   
   READ( kunit_RESTART   ) cutshortrange  
   READ( kunit_RESTART   ) calc           
@@ -87,7 +92,7 @@ SUBROUTINE restart_init ( MDFF )
   READ( kunit_RESTART   ) iefall_format  
   READ( kunit_RESTART   ) iefgall_format 
   READ( kunit_RESTART   ) idipall_format 
-  READ( kunit_RESTART   ) restart_data   
+  READ( kunit_RESTART   ) posff_data   
   READ( kunit_RESTART   ) skindiff
 
    CALL control_print_info( stdout , MDFF )
@@ -104,7 +109,7 @@ SUBROUTINE restart_init ( MDFF )
   IF ( ionode ) WRITE ( stdout      ,'(A,20i4)' ) 'found type information on RESTART : ', natmi ( 1:ntype )
 
   CALL lattice ( simu_cell )
-  rho = DBLE ( natm ) / simu_cell%omega
+  rho = REAL ( natm , kind= dp ) / simu_cell%omega
 
   CALL config_alloc
 
@@ -117,6 +122,8 @@ SUBROUTINE restart_init ( MDFF )
   READ( kunit_RESTART   ) rx,ry,rz
   READ( kunit_RESTART   ) vx,vy,vz 
   READ( kunit_RESTART   ) fx,fy,fz
+
+
   READ( kunit_RESTART   ) fxs,fys,fzs
   READ( kunit_RESTART   ) rxs,rys,rzs
   READ( kunit_RESTART   ) xs,ys,zs
@@ -132,6 +139,7 @@ SUBROUTINE restart_init ( MDFF )
   READ( kunit_RESTART   ) massia
   READ( kunit_RESTART   ) quadia_nuc
   READ( kunit_RESTART   ) dipia
+  READ( kunit_RESTART   ) quadia 
   READ( kunit_RESTART   ) poldipia
   READ( kunit_RESTART   ) polquadia
   READ( kunit_RESTART   ) invpoldipia
@@ -165,8 +173,10 @@ SUBROUTINE restart_init ( MDFF )
   READ( kunit_RESTART   ) nhc_n
   READ( kunit_RESTART   ) nhc_yosh_order 
   READ( kunit_RESTART   ) nhc_mults
+  print*,'here b'
   CALL extended_coordinates_alloc
   READ( kunit_RESTART   ) vxi
+  print*,'here a'
   READ( kunit_RESTART   ) xi
   READ( kunit_RESTART   ) vxib
   READ( kunit_RESTART   ) xib
@@ -183,6 +193,10 @@ SUBROUTINE restart_init ( MDFF )
     write(*,'(a,<nhc_n>f)') 'restart read ',xi
 #endif
   endif
+  print*,'here'
+  print*,'here',vxi
+  itime0=itime
+  itime1=itime0+npas
   
   ! ===================
   !  print mdtag info
@@ -193,7 +207,6 @@ SUBROUTINE restart_init ( MDFF )
 
   READ( kunit_RESTART   ) lKA 
   READ( kunit_RESTART   ) ctrunc 
-  READ( kunit_RESTART   ) symmetric_pot 
   READ( kunit_RESTART   ) ncelldirect 
   READ( kunit_RESTART   ) kES 
   READ( kunit_RESTART   ) alphaES 
@@ -204,8 +217,17 @@ SUBROUTINE restart_init ( MDFF )
   READ( kunit_RESTART   ) sigmamor 
   READ( kunit_RESTART   ) epsmor 
   READ( kunit_RESTART   ) rhomor 
+  READ( kunit_RESTART   ) mass 
   READ( kunit_RESTART   ) doefield 
   READ( kunit_RESTART   ) doefg
+  READ( kunit_RESTART   ) qch           
+  READ( kunit_RESTART   ) quad_nuc      
+  READ( kunit_RESTART   ) dip           
+  READ( kunit_RESTART   ) quad          
+  READ( kunit_RESTART   ) poldip        
+  READ( kunit_RESTART   ) poldip_iso    
+  READ( kunit_RESTART   ) polquad       
+  READ( kunit_RESTART   ) polquad_iso   
   READ( kunit_RESTART   ) pol_damp_b 
   READ( kunit_RESTART   ) pol_damp_c 
   READ( kunit_RESTART   ) pol_damp_k
@@ -215,11 +237,16 @@ SUBROUTINE restart_init ( MDFF )
   READ( kunit_RESTART   ) max_scf_pol_iter
   READ( kunit_RESTART   ) algo_ext_dipole 
   READ( kunit_RESTART   ) thole_functions
+  READ( kunit_RESTART   ) thole_function_type
+  READ( kunit_RESTART   ) thole_param
+  READ( kunit_RESTART   ) omegakO 
   READ( kunit_RESTART   ) epsw
   READ( kunit_RESTART   ) lautoES 
-  READ( kunit_RESTART   ) lwfc
   READ( kunit_RESTART   ) lwrite_dip_wfc
   READ( kunit_RESTART   ) lwrite_dip
+  READ( kunit_RESTART   ) lwrite_quad
+  READ( kunit_RESTART   ) lwrite_ef
+  READ( kunit_RESTART   ) lwrite_efg
   READ( kunit_RESTART   ) ldip_wfc
   READ( kunit_RESTART   ) rcut_wfc
   READ( kunit_RESTART   ) ldip_polar 
@@ -230,16 +257,20 @@ SUBROUTINE restart_init ( MDFF )
   READ( kunit_RESTART   ) Cbmhftd 
   READ( kunit_RESTART   ) Dbmhftd 
   READ( kunit_RESTART   ) BDbmhftd 
+  READ( kunit_RESTART   ) task_coul
+  READ( kunit_RESTART   ) algo_moment_from_pola 
    
   ! ================================
   ! initialize constant parameters
   ! ================================
-  if ( non_bonded )    then
+  if ( lnon_bonded )    then
     CALL initialize_param_non_bonded
   endif
   if ( lcoulomb ) then
     CALL initialize_coulomb
   endif
+  CALL get_TT_damp
+  READ( kunit_RESTART   ) mu_t 
 
   ! ================================
   !  pint field info
@@ -247,10 +278,14 @@ SUBROUTINE restart_init ( MDFF )
   CALL field_print_info(stdout,quiet=.false.)
 
   !allocate ( dipia_ind_t ( extrapolate_order+1, natm , 3 ) )
- 
-  CLOSE(kunit_RESTART)
 
-  print*,'end of restart_init'
+  CLOSE(kunit_RESTART)
+#ifdef debug
+   WRITE(stdout,'(a)') 'print config inside read RESTART'
+   CALL print_config_sample(0,0)
+#endif
+
+  WRITE(stdout,'(a)') 'end of restart_init'
 
   return
 
@@ -259,13 +294,15 @@ END SUBROUTINE restart_init
 
 SUBROUTINE write_RESTART
 
+  USE io,  ONLY :  kunit_RESTART
   USE cell
   USE control
   USE config
+  USE non_bonded
+  USE coulomb
+  USE pim
   USE field
   USE md
- 
-  USE io,  ONLY :  kunit_RESTART
 
   implicit none
 
@@ -287,7 +324,7 @@ SUBROUTINE write_RESTART
   WRITE( kunit_RESTART   ) ltest          
   WRITE( kunit_RESTART   ) lmsd           
   WRITE( kunit_RESTART   ) lvacf          
-  WRITE( kunit_RESTART   ) lrestart       
+  WRITE( kunit_RESTART   ) lwrite_restart       
   WRITE( kunit_RESTART   ) cutlongrange   
   WRITE( kunit_RESTART   ) cutshortrange  
   WRITE( kunit_RESTART   ) calc           
@@ -302,7 +339,7 @@ SUBROUTINE write_RESTART
   WRITE( kunit_RESTART   ) iefall_format  
   WRITE( kunit_RESTART   ) iefgall_format 
   WRITE( kunit_RESTART   ) idipall_format 
-  WRITE( kunit_RESTART   ) restart_data   
+  WRITE( kunit_RESTART   ) posff_data   
   WRITE( kunit_RESTART   ) skindiff
   ! ... continue reading RESTART (config info)  
   WRITE( kunit_RESTART ) natm
@@ -331,6 +368,7 @@ SUBROUTINE write_RESTART
   WRITE( kunit_RESTART   ) massia
   WRITE( kunit_RESTART   ) quadia_nuc
   WRITE( kunit_RESTART   ) dipia
+  WRITE( kunit_RESTART   ) quadia 
   WRITE( kunit_RESTART   ) poldipia
   WRITE( kunit_RESTART   ) polquadia
   WRITE( kunit_RESTART   ) invpoldipia
@@ -373,7 +411,6 @@ SUBROUTINE write_RESTART
   ! ... continue reading RESTART (field parameters)
   WRITE( kunit_RESTART   ) lKA 
   WRITE( kunit_RESTART   ) ctrunc 
-  WRITE( kunit_RESTART   ) symmetric_pot 
   WRITE( kunit_RESTART   ) ncelldirect 
   WRITE( kunit_RESTART   ) kES 
   WRITE( kunit_RESTART   ) alphaES 
@@ -384,8 +421,17 @@ SUBROUTINE write_RESTART
   WRITE( kunit_RESTART   ) sigmamor 
   WRITE( kunit_RESTART   ) epsmor 
   WRITE( kunit_RESTART   ) rhomor 
+  WRITE( kunit_RESTART   ) mass 
   WRITE( kunit_RESTART   ) doefield 
   WRITE( kunit_RESTART   ) doefg
+  WRITE( kunit_RESTART   ) qch           
+  WRITE( kunit_RESTART   ) quad_nuc      
+  WRITE( kunit_RESTART   ) dip           
+  WRITE( kunit_RESTART   ) quad          
+  WRITE( kunit_RESTART   ) poldip        
+  WRITE( kunit_RESTART   ) poldip_iso    
+  WRITE( kunit_RESTART   ) polquad       
+  WRITE( kunit_RESTART   ) polquad_iso   
   WRITE( kunit_RESTART   ) pol_damp_b 
   WRITE( kunit_RESTART   ) pol_damp_c 
   WRITE( kunit_RESTART   ) pol_damp_k
@@ -395,11 +441,16 @@ SUBROUTINE write_RESTART
   WRITE( kunit_RESTART   ) max_scf_pol_iter
   WRITE( kunit_RESTART   ) algo_ext_dipole 
   WRITE( kunit_RESTART   ) thole_functions
+  WRITE( kunit_RESTART   ) thole_function_type
+  WRITE( kunit_RESTART   ) thole_param
+  WRITE( kunit_RESTART   ) omegakO 
   WRITE( kunit_RESTART   ) epsw
   WRITE( kunit_RESTART   ) lautoES 
-  WRITE( kunit_RESTART   ) lwfc
   WRITE( kunit_RESTART   ) lwrite_dip_wfc
   WRITE( kunit_RESTART   ) lwrite_dip
+  WRITE( kunit_RESTART   ) lwrite_quad
+  WRITE( kunit_RESTART   ) lwrite_ef
+  WRITE( kunit_RESTART   ) lwrite_efg
   WRITE( kunit_RESTART   ) ldip_wfc
   WRITE( kunit_RESTART   ) rcut_wfc
   WRITE( kunit_RESTART   ) ldip_polar 
@@ -410,7 +461,12 @@ SUBROUTINE write_RESTART
   WRITE( kunit_RESTART   ) Cbmhftd 
   WRITE( kunit_RESTART   ) Dbmhftd 
   WRITE( kunit_RESTART   ) BDbmhftd 
+  WRITE( kunit_RESTART   ) task_coul
+  WRITE( kunit_RESTART   ) algo_moment_from_pola 
+  WRITE( kunit_RESTART   ) mu_t 
   CLOSE(kunit_RESTART)
+
+
 
 !  if ( ionode ) then
 !    write(*,'(a,<nhc_n>f)') 'restart write ',vxi
@@ -423,7 +479,6 @@ END SUBROUTINE write_RESTART
 
 SUBROUTINE print_RESTART_info ( kunit ) 
 
-  USE io,  ONLY :  ionode
   implicit none
 
   ! local 
@@ -441,7 +496,8 @@ SUBROUTINE print_RESTART_info ( kunit )
      separator(kunit)
      blankline(kunit)
      WRITE ( kunit ,'(a)')       "WARING : the full restart mode is only reading parameters in"
-     WRITE ( kunit ,'(a)')       "the local RESTART file. The control file is not used at all."
+     WRITE ( kunit ,'(a)')       "the local RESTART file. The control file is not used at all" 
+     WRITE ( kunit ,'(a)')       "(except full_restart tag;)"
      WRITE ( kunit ,'(a)')       "Be carefull !! "  
      WRITE ( kunit ,'(a)')       "Some of the most important parameters read from the RESTART "
      WRITE ( kunit ,'(a)')       "file are reminded below. But not all of them !!!"

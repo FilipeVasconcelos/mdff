@@ -42,6 +42,7 @@
 ! ******************************************************************************
 MODULE voisin
 
+  USE io,                               ONLY :  ionode , stdin , stdout , stderr
   USE constants,                        ONLY :  dp
   USE config,                           ONLY :  ntypemax
   USE mpimdff
@@ -74,7 +75,6 @@ CONTAINS
 ! ******************************************************************************
 SUBROUTINE vois1_init
 
-  USE io,                       ONLY :  ionode , stdin , stdout , stderr
   USE control,                  ONLY :  calc
 
   implicit none
@@ -140,22 +140,10 @@ END SUBROUTINE vois1_default_tag
 ! ******************************************************************************
 SUBROUTINE vois1_check_tag
 
-  USE io,                  ONLY :  ionode , stdout 
-
   implicit none
 
-  ! local
-  logical :: allowed
-  integer :: i
 
-  allowed = .false.
-  do i = 1 , size ( vois1algo_allowed )
-    if ( TRIM( vois1algo ) == vois1algo_allowed(i) ) allowed = .TRUE.
-  enddo
-  if ( .not. allowed ) then
-    io_node WRITE ( stdout ,'(a,a)') 'ERROR vois1tag: vois1algo should be ',vois1algo_allowed
-    STOP
-  endif
+  CALL check_allowed_tags( size( vois1algo_allowed ), vois1algo_allowed , vois1algo , 'vois1tag' , 'vois1algo' ) 
 
   return
 
@@ -167,7 +155,6 @@ END SUBROUTINE vois1_check_tag
 SUBROUTINE vois1_print_info(kunit)
 
   USE config,                   ONLY :  ntype , atypei
-  USE io,                       ONLY :  ionode
 
   implicit none
 
@@ -208,9 +195,9 @@ END SUBROUTINE vois1_print_info
 ! ******************************************************************************
 SUBROUTINE vois1_driver
 
-  USE io,                       ONLY :  ionode , stdout , stderr , kunit_TRAJFF , kunit_DTNBFF , kunit_VOIS1FF
+  USE io,                       ONLY :  kunit_TRAJFF , kunit_DTNBFF , kunit_VOIS1FF
   USE config,                   ONLY :  system , natm , ntype , atype , rx , ry , rz , itype , & 
-                                        atypei , natmi , rho , simu_cell , config_alloc , &
+                                        atypei , natmi , rhoN , simu_cell , config_alloc , &
                                         config_print_info , coord_format_allowed , atom_dec , read_traj_header , read_traj 
   USE cell,                     ONLY :  lattice, dirkar
   USE control,                  ONLY :  itraj_format , trajff_data
@@ -233,7 +220,7 @@ SUBROUTINE vois1_driver
   if ( itraj_format .eq. 0 ) OPEN ( UNIT = kunit_TRAJFF  , FILE = 'TRAJFF' , form = 'unformatted')
 
   CALL lattice ( simu_cell )
-  rho = natm / simu_cell%omega
+  rhoN = REAL ( natm, kind = dp )  / simu_cell%omega
   ! ===================================
   !  here we know natm, then alloc 
   !  and decomposition can be applied 
@@ -331,7 +318,7 @@ SUBROUTINE fixed_distance
 
   USE config,                   ONLY :  natm , ntype , rx , ry, rz , simu_cell , atype , itype , atypei 
   USE cell,                     ONLY :  kardir , dirkar , dirkar_1
-  USE io,                       ONLY :  ionode , stdout , stderr , kunit_VOIS1FF
+  USE io,                       ONLY :  kunit_VOIS1FF
 
   implicit none
 
@@ -534,7 +521,7 @@ SUBROUTINE sann
   USE config,           ONLY :  natm , simu_cell , rx , ry , rz , atype , atypei , ntype , itype , natmi
   USE control,          ONLY :  cutshortrange
   USE cell,             ONLY :  kardir , dirkar, dirkar_1
-  USE io,               ONLY :  ionode , stderr , stdout , kunit_VOIS1FF
+  USE io,               ONLY :  kunit_VOIS1FF
   
   implicit none
   
@@ -1004,7 +991,7 @@ SUBROUTINE voronoi_construction
   USE config,           ONLY :  natm , simu_cell , rx, ry , rz , itype , ntype 
   USE control,          ONLY :  cutshortrange
   USE cell,             ONLY :  kardir, dirkar
-  USE io,          ONLY :  ionode, stdout , stderr , kunit_VOIS1FF
+  USE io,               ONLY :  kunit_VOIS1FF
 
   implicit none
 
@@ -1336,8 +1323,6 @@ END SUBROUTINE voronoi_construction
 !
 ! ******************************************************************************
 SUBROUTINE work_voronoi ( maxcan, nn , nv , ne , nf , px , py , pz , ps , edges , vx , vy , vz , iv , jv , kv )
-
-  USE io,          ONLY :  stdout
 
   implicit none
 

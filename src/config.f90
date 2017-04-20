@@ -33,6 +33,7 @@
 MODULE config
 
   USE constants,                ONLY :  dp 
+  USE io,                       ONLY :  ionode, stdout
   USE cell,                     ONLY :  celltype
   USE mpimdff,                  ONLY :  decomposition
 
@@ -51,9 +52,11 @@ MODULE config
   integer, dimension(0:ntypemax)               :: natmi              !< number of atoms (per type)
 
   TYPE ( celltype )                            :: simu_cell          !< simulation cell
+  real(kind=dp)                                :: tau      ( 3 , 3 ) !< total stress tensor ( lennard-jones , morse ... )
   real(kind=dp)                                :: tau_nonb ( 3 , 3 ) !< stress tensor ( lennard-jones , morse ... )
   real(kind=dp)                                :: tau_coul ( 3 , 3 ) !< stress tensor coulombic
-  real(kind=dp)                                :: rho                !< density  
+  real(kind=dp)                                :: rhoN               !< number density N / V  (no units)
+  real(kind=dp)                                :: rho                !< mass density M / V  (g/cm^3)
 
   real(kind=dp), dimension(:)    , allocatable :: rx  , ry  , rz     !< positions
   real(kind=dp), dimension(:)    , allocatable :: vx  , vy  , vz     !< velocities
@@ -109,7 +112,6 @@ CONTAINS
 SUBROUTINE config_init 
 
   USE control,  ONLY :  calc , cutshortrange , cutlongrange
-  USE io,       ONLY :  stdin, stdout 
 
   implicit none
 
@@ -142,8 +144,6 @@ END SUBROUTINE config_init
 ! ******************************************************************************
 SUBROUTINE config_print_info(kunit)
 
-  USE io,  ONLY :  ionode 
-
   implicit none
 
   ! global 
@@ -163,7 +163,7 @@ SUBROUTINE config_print_info(kunit)
     WRITE ( kunit ,'(a,i16)')        'ntype                 = ',ntype
     do it = 1 , ntype     
       WRITE ( kunit ,'(a,a,a,i16,f8.2,a1)') &
-                          'n',atypei(it),'                  = ',natmi(it),DBLE(natmi(it))/DBLE(natm) * 100.0_dp,'%'
+                          'n',atypei(it),'                  = ',natmi(it),REAL(natmi(it),kind=dp )/REAL(natm,kind=dp ) * 100.0_dp,'%'
     enddo
     blankline(kunit)
     lseparator(kunit)
@@ -207,7 +207,7 @@ END SUBROUTINE config_print_info
 ! ******************************************************************************
 SUBROUTINE write_CONTFF
 
-  USE io,                       ONLY :  kunit_CONTFF, ionode
+  USE io,                       ONLY :  kunit_CONTFF
   USE cell,                     ONLY :  kardir , periodicbc , dirkar
 
   implicit none
@@ -257,8 +257,6 @@ END SUBROUTINE write_CONTFF
 !> allocation of principal arrays of the calculation
 ! ******************************************************************************
 SUBROUTINE config_alloc
-
-  USE control,  ONLY :  calc , lvnlist
 
   implicit none
 
@@ -330,7 +328,7 @@ END SUBROUTINE config_alloc
 ! ******************************************************************************
 SUBROUTINE config_dealloc
 
-  USE control, ONLY : lvnlist , calc
+  USE control, ONLY : calc
 
   implicit none 
        
@@ -400,9 +398,9 @@ SUBROUTINE center_of_mass ( ax , ay , az , com )
   enddo
 
   do it = 0 , ntype
-    com ( it , 1 )  = com ( it , 1 ) / DBLE ( natmi ( it ) )
-    com ( it , 2 )  = com ( it , 2 ) / DBLE ( natmi ( it ) )
-    com ( it , 3 )  = com ( it , 3 ) / DBLE ( natmi ( it ) )
+    com ( it , 1 )  = com ( it , 1 ) / REAL ( natmi ( it ) ,kind=dp )
+    com ( it , 2 )  = com ( it , 2 ) / REAL ( natmi ( it ) ,kind=dp )
+    com ( it , 3 )  = com ( it , 3 ) / REAL ( natmi ( it ) ,kind=dp )
   enddo
 
   return
@@ -531,7 +529,7 @@ SUBROUTINE ions_displacement( dis, ax , ay , az )
                 ( rdist( 2 ) - riy(isa) )**2 + &
                 ( rdist( 3 ) - riz(isa) )**2 
     enddo 
-    dis(it) = dis(it) + r2 / DBLE(natmi(it))
+    dis(it) = dis(it) + r2 / REAL(natmi(it),kind=dp )
   enddo
   
   return
@@ -545,7 +543,7 @@ END SUBROUTINE ions_displacement
 SUBROUTINE write_trajff_xyz
 
   USE control,                  ONLY :  itraj_format , trajff_data
-  USE io,                       ONLY :  ionode , kunit_TRAJFF , stdout
+  USE io,                       ONLY :  kunit_TRAJFF
   USE cell,                     ONLY :  periodicbc , kardir , dirkar
 
   implicit none
@@ -633,13 +631,10 @@ END SUBROUTINE write_trajff_xyz
 
 SUBROUTINE read_traj_header ( kunit , iformat ) 
 
-  USE io,          ONLY :  ionode , stdout
-
   implicit none
 
   integer, intent(in) :: kunit , iformat 
   integer            :: i , it
-  logical            :: allowed
   character(len=60)  :: coord_format
   character(len=60)  :: coord_format1
   character(len=1)   :: coord_format2
@@ -670,16 +665,13 @@ SUBROUTINE read_traj_header ( kunit , iformat )
   endif
   if ( ionode ) WRITE ( stdout ,'(A,20A3)' ) 'found type information on TRAJFF : ', atypei ( 1:ntype )
 
+
+
   ! ===================
   !  coord_format test
   ! ===================
-  do i = 1 , size( coord_format_allowed )
-    if ( trim(coord_format) .eq. coord_format_allowed(i))  allowed = .true.
-  enddo
-  if ( .not. allowed ) then
-    if ( ionode )  WRITE ( stdout , '(a)' ) 'ERROR in TRAJFF at line 9 should be ', coord_format_allowed , coord_format1
-    STOP
-  endif
+  CALL check_allowed_tags ( size( coord_format_allowed ) , coord_format_allowed , coord_format , ' in  TRAJFF at line 9' , 'coord_format' )
+
   if ( ionode .and. &
        ( coord_format .eq. 'Direct' .or. coord_format .eq. 'D' ) ) &
        WRITE ( stdout      ,'(A,20A3)' ) 'atomic positions in direct coordinates in TRAJFF'
@@ -698,7 +690,6 @@ END SUBROUTINE read_traj_header
 
 SUBROUTINE read_traj ( kunit , iformat , csave ) 
 
-  USE io,          ONLY :  ionode , stdout
   USE cell,             ONLY :  dirkar
 
   implicit none
@@ -706,7 +697,6 @@ SUBROUTINE read_traj ( kunit , iformat , csave )
   integer, intent(in) :: kunit , iformat
   character(len=3)    :: csave
   integer             :: ia , i , it
-  logical             :: allowed
   character(len=60)   :: coord_format
   character(len=60)   :: coord_format1
   character(len=1)    :: coord_format2
@@ -768,16 +758,10 @@ SUBROUTINE read_traj ( kunit , iformat , csave )
     endif
   endif
 
-  ! ====================
+  ! ===================
   !  coord_format test
-  ! ====================
-  do i = 1 , size( coord_format_allowed )
-    if ( trim(coord_format) .eq. coord_format_allowed(i))  allowed = .true.
-  enddo
-  if ( .not. allowed ) then
-    if ( ionode )  WRITE ( stdout , '(a)' ) 'ERROR in POSFF at line 9 should be ', coord_format_allowed , coord_format
-    STOP
-  endif
+  ! ===================
+  CALL check_allowed_tags ( size ( coord_format_allowed ), coord_format_allowed, coord_format , ' in POSFF at line 9' , 'coord_format' )
 
   ! ======================================
   !         direct to cartesian

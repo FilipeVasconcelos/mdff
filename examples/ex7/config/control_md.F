@@ -2,9 +2,9 @@
         calc          = 'md'
         cutshortrange = 8.5d0
         skindiff      = 1.0d0
-        restart_data  = 'rnn'
+        posff_data    = 'rnn'
         lreduced      = .false.
-        lrestart      = .false.
+        lwrite_restart= .false.
         lnmlj         = .true.
         lvnlist       = .true.
         ltraj         = .true.

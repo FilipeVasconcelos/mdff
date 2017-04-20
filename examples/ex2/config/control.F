@@ -20,12 +20,9 @@
 ! force-field parameters
 ! ======================================================================
 &fieldtag
+&end
+&non_bondedtag
         ctrunc='linear'
         epslj(1,1)        = 1.0d0     ! espilon in the lennard jones 
         sigmalj(1,1)      = 1.0d0     ! sigma in the lennard jones
-&end
-! ======================================================================
-! properties 
-! ======================================================================
-&proptag 
 &end

@@ -36,11 +36,13 @@
 SUBROUTINE read_pos 
  
   USE constants,                ONLY :  dp 
-  USE control,                  ONLY :  calc , lrestart, restart_data
+  USE control,                  ONLY :  calc , posff_data
   USE config,                   ONLY :  rx , ry , rz , vx , vy , vz , fx , fy , fz , atype , atypei , itype , &
-                                        natmi , natm , dipia , qia , ipolar , rho , system , ntype , config_alloc , &
+                                        natmi , natm , dipia , qia , ipolar , rhoN , system , ntype , config_alloc , &
                                         simu_cell , config_print_info , coord_format_allowed , write_CONTFF
-  USE field,                    ONLY :  qch , dip , quad, ldip_polar , field_init
+  USE field,                    ONLY :  field_init
+  USE coulomb,                  ONLY :  qch , dip , quad
+  USE pim,                      ONLY :  ldip_polar
   USE io,                       ONLY :  ionode , stdout , kunit_POSFF
   USE cell,                     ONLY :  lattice, periodicbc , dirkar, kardir
 
@@ -48,7 +50,6 @@ SUBROUTINE read_pos
 
   ! local
   integer           :: it , ia , i
-  logical           :: allowed
   character(len=60) :: cpos
 
   separator(stdout) 
@@ -72,13 +73,8 @@ SUBROUTINE read_pos
   ! ======
   !  cpos
   ! ======
-  do i = 1 , size( coord_format_allowed )
-   if ( trim(cpos) .eq. coord_format_allowed(i))  allowed = .true.
-  enddo
-  if ( .not. allowed ) then
-    if ( ionode )  WRITE ( stdout , '(a)' ) 'ERROR in POSFF at line 9 should be ', coord_format_allowed
-    STOP
-  endif
+  CALL check_allowed_tags ( size( coord_format_allowed ), coord_format_allowed, cpos, 'in POSFF at line 9','' ) 
+
   if ( cpos .eq. 'Direct' .or. cpos .eq. 'D' ) then
     io_node WRITE ( stdout      ,'(A,20A3)' ) 'atomic positions in direct coordinates in POSFF'
   else if ( cpos .eq. 'Cartesian' .or. cpos .eq. 'C' ) then
@@ -87,7 +83,7 @@ SUBROUTINE read_pos
 
  
   CALL lattice ( simu_cell )
-  rho = DBLE ( natm ) / simu_cell%omega
+  rhoN = REAL ( natm ,kind=dp ) / simu_cell%omega
 
   CALL config_alloc 
 
@@ -99,27 +95,28 @@ SUBROUTINE read_pos
   ! =========================================      
   ! read positions, velocities, forces from disk 
   ! =========================================      
-  if ( restart_data == "rnn" ) then
+  if ( posff_data == "rnn" ) then
     READ  ( kunit_POSFF , * ) ( atype ( ia ) , rx ( ia ) , ry ( ia ) , rz ( ia ) , ia = 1 , natm )
     
-  else if ( restart_data == "rvn" ) then
+  else if ( posff_data == "rvn" ) then
     READ  ( kunit_POSFF , * ) ( atype ( ia ) , rx ( ia ) , ry ( ia ) , rz ( ia ) , &
                                                vx ( ia ) , vy ( ia ) , vz ( ia ) , ia = 1 , natm ) 
-  else if ( restart_data == "rvf" ) then  
+  else if ( posff_data == "rvf" ) then  
     READ  ( kunit_POSFF , * ) ( atype ( ia ) , rx ( ia ) , ry ( ia ) , rz ( ia ) , &
                                                vx ( ia ) , vy ( ia ) , vz ( ia ) , &
                                                fx ( ia ) , fy ( ia ) , fz ( ia ) , ia = 1 , natm )
   endif
-  if ( .not. lrestart ) then  
-    if ( ionode .and. (( restart_data == "rvn" ) .or. ( restart_data == "rvf" )) ) WRITE ( stdout ,'(A,20A3)' ) &
-    'WARNING in non restart mode velocities and forces are not considered even present in the input file POSFF'
-    vx=0.0_dp
-    vy=0.0_dp
-    vz=0.0_dp
-    fx=0.0_dp
-    fy=0.0_dp
-    fz=0.0_dp
-  endif
+  !27-11-16 a-t-on besoin de ca ?
+  !if ( .not. lwrite_restart ) then  
+  !  if ( ionode .and. (( posff_data == "rvn" ) .or. ( posff_data == "rvf" )) ) WRITE ( stdout ,'(A,20A3)' ) &
+  !  'WARNING in non restart mode velocities and forces are not considered even present in the input file POSFF'
+  !  vx=0.0_dp
+  !  vy=0.0_dp
+  !  vz=0.0_dp
+  !  fx=0.0_dp
+  !  fy=0.0_dp
+  !  fz=0.0_dp
+  !endif
   ! ===============================
   ! init force_field 
   ! ===============================
@@ -162,11 +159,13 @@ END SUBROUTINE read_pos
 ! ******************************************************************************
 SUBROUTINE typeinfo_init
 
-  USE constants, ONLY :  dp
-  USE config ,  ONLY :  atype , atypei , itype , natmi , natm , ntype , massia, dipia , quadia, qia , &
+  USE constants,        ONLY :  dp
+  USE config,           ONLY :  atype , atypei , itype , natmi , natm , ntype , massia, dipia , quadia, qia , &
                         quadia_nuc , ipolar , poldipia , polquadia, invpoldipia 
-  USE field ,   ONLY :  mass, qch , quad_nuc , dip , quad , ldip_polar , poldip , polquad
-  USE io,       ONLY :  stdout
+  USE field,            ONLY :  mass
+  USE coulomb,          ONLY :  qch , quad_nuc , dip , quad 
+  USE pim,              ONLY :  ldip_polar , poldip , polquad
+  USE io,               ONLY :  stdout
   
   implicit none
 

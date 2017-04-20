@@ -29,6 +29,7 @@
 ! ******************************************************************************
 MODULE kspace 
 
+  USE io,               ONLY :  ionode, stdout      
   USE constants ,       ONLY :  dp 
   USE mpimdff,          ONLY :  decomposition        
 
@@ -74,7 +75,6 @@ CONTAINS
 ! ******************************************************************************
 SUBROUTINE get_kpath ( ks , ke , nk , path , kp )
 
-  USE io,               ONLY :  ionode , stdout
   USE cell,             ONLY :  dirkar
 
   implicit none
@@ -143,7 +143,6 @@ END SUBROUTINE get_kpath
 SUBROUTINE kpoint_sum_init( km , alpha ) 
 
   USE config,           ONLY :  simu_cell 
-  USE io,               ONLY :  ionode, stdout
   USE constants,        ONLY :  tpi
 
   implicit none
@@ -224,7 +223,6 @@ END SUBROUTINE kpoint_sum_init
 SUBROUTINE kpoint_sum_init_BZ ( km , alpha )
 
   USE config,           ONLY :  simu_cell 
-  USE io,               ONLY :  ionode , stdout
   USE constants,        ONLY :  tpi
 
   implicit none
@@ -286,8 +284,6 @@ END SUBROUTINE kpoint_sum_init_BZ
 !! FMV
 ! ******************************************************************************
 SUBROUTINE reorder_kpt ( km )
-
-  USE io,  ONLY :  stdout 
 
   implicit none
 

@@ -57,8 +57,6 @@ if options.verbose :
     print "random_struct in box"
     print "author : fmv"
     print "email  : filipe.manuel.vasconcelos@gmail.com"
-    print "email  : filipe.vasconcelos@cea.fr"
-    print "date   : mars 2013 "
     print 60*"="
 
 atype=options.satype.split()

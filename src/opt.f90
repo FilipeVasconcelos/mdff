@@ -38,12 +38,13 @@
 ! ******************************************************************************
 MODULE opt
 
+  USE io,                       ONLY :  stdin , stdout , ionode, ioprint, ioprintnode
   USE constants,                ONLY :  dp
   USE mpimdff
 
   implicit none
 
-  logical :: lforce              !< calculate force of the optimise configuration
+  logical :: lforce              !< calculate force of the optimized configuration
 
   integer :: nconf               !< number of configurations in TRAJFF  
   integer :: nmaxopt             !< number of configurations optimized  
@@ -59,6 +60,11 @@ MODULE opt
   character(len=60) :: optalgo    !< algorithm used during optimization 
   character(len=60) :: optalgo_allowed(3)
   data                 optalgo_allowed  / 'sastry' , 'lbfgs' , 'm1qn3' /
+
+
+  character(len=3) :: optvar    !< 
+  character(len=3) :: optvar_allowed(3)
+  data                 optvar_allowed  / 'pos' , 'cel' , 'all'/
   
 
 CONTAINS
@@ -71,8 +77,6 @@ CONTAINS
 ! ******************************************************************************
 SUBROUTINE opt_init
 
-  USE io,                  ONLY :  stdin , stdout , ionode
-
   implicit none
  
   integer            :: ioerr 
@@ -84,6 +88,7 @@ SUBROUTINE opt_init
                     epsrel_m1qn3  , & 
                     epsrel_lbfgs  , & 
                     lforce        , &
+                    optvar        , &
                     nmaxopt       
 
   ! ===============================
@@ -140,6 +145,7 @@ SUBROUTINE opt_default_tag
   epsrel_lbfgs = 1.0e-5
   lforce       = .true.
   nopt_print   = 2
+  optvar       = 'pos'
 
   return 
  
@@ -154,21 +160,11 @@ END SUBROUTINE opt_default_tag
 ! ******************************************************************************
 SUBROUTINE opt_check_tag
 
-  USE io,                  ONLY :  ionode , stdout
-
   implicit none
 
-  ! local
-  logical :: allowed
-  integer :: i
+  CALL check_allowed_tags( size( optalgo_allowed ), optalgo_allowed, optalgo, 'in optag','optalgo' ) 
 
-  do i = 1 , size ( optalgo_allowed )
-    if ( TRIM(optalgo) == optalgo_allowed(i) ) allowed = .TRUE.
-  enddo
-  if ( .not. allowed ) then
-    io_node WRITE ( stdout ,'(a,a)') 'ERROR optag: optalgo should be ',optalgo_allowed
-    STOP 
-  endif
+  CALL check_allowed_tags( size( optvar_allowed ), optvar_allowed, optvar, 'in optag','optvar' ) 
 
   nperiodopt = nconf/nmaxopt
   if ( nperiodopt .lt. 1) nperiodopt = 1
@@ -184,8 +180,6 @@ END SUBROUTINE opt_check_tag
 !
 ! ******************************************************************************
 SUBROUTINE opt_print_info(kunit) 
-
-  USE io,                  ONLY :  ionode 
 
   implicit none
  
@@ -251,20 +245,21 @@ END SUBROUTINE opt_print_info
 SUBROUTINE opt_main 
 
   USE config,           ONLY :  system , natm , ntype , rx , ry , rz , vx , vy ,vz , fx , fy , fz , &
-                                atype  , rho , config_alloc , simu_cell , &
+                                atype  , rhoN , config_alloc , simu_cell , &
                                 atypei , itype, natmi , qia , dipia , ipolar, coord_format_allowed , atom_dec, read_traj , read_traj_header , verlet_coul , verlet_vdw, write_CONTFF
   USE control,          ONLY :  myrank , numprocs , lcoulomb , iscff_format , itraj_format , trajff_data,cutlongrange,cutshortrange , lvnlist
-  USE io,               ONLY :  ionode , ioprint, ioprintnode, stdout , kunit_TRAJFF , kunit_ISTHFF , kunit_ISCFF
+  USE io,               ONLY :  kunit_TRAJFF , kunit_ISTHFF , kunit_ISCFF
   USE thermodynamic,    ONLY :  u_tot , pressure_tot , calc_thermo
   USE constants,        ONLY :  dzero
   USE cell,             ONLY :  lattice , dirkar
-  USE field,            ONLY :  field_init , engforce_driver , km_coul
+  USE field,            ONLY :  field_init !, km_coul
+  USE engforce_driver,  ONLY :  engforce
   USE time,             ONLY :  opttimetot
 
   implicit none
 
   ! local 
-  integer           :: ia , it , ic, neng, iter, nopt , ierr
+  integer           :: ia , it , ic, neng, iter, nopt , ierr, ii 
   real(kind=dp)     :: phigrad, pressure0, pot0, Eis
   real(kind=dp)     :: ttt1,ttt2
   real(kind=dp)     :: ttt1p,ttt2p
@@ -290,7 +285,7 @@ SUBROUTINE opt_main
   if ( itraj_format .eq. 0 ) OPEN ( UNIT = kunit_TRAJFF  , FILE = 'TRAJFF' , form = 'unformatted')
      
   CALL lattice (simu_cell)
-  rho = DBLE ( natm )  / simu_cell%omega 
+  rhoN = REAL ( natm , kind = dp )  / simu_cell%omega 
 
   CALL print_general_info( stdout )
 
@@ -301,7 +296,7 @@ SUBROUTINE opt_main
   CALL config_alloc 
   CALL field_init
                   CALL do_split ( natm       , myrank , numprocs , atom_dec        , 'atoms' )
-  if ( lcoulomb ) CALL do_split ( km_coul%nk , myrank , numprocs , km_coul%kpt_dec ,'kpts-dec' )
+!  if ( lcoulomb ) CALL do_split ( km_coul%nk , myrank , numprocs , km_coul%kpt_dec ,'kpts-dec' )
 
   conf : do ic = 1, nconf
     ioprint = .true.
@@ -316,7 +311,7 @@ SUBROUTINE opt_main
     CALL read_traj ( kunit_TRAJFF , itraj_format , trajff_data ) 
 
     CALL lattice (simu_cell)
-    rho = DBLE ( natm )  / simu_cell%omega
+    rhoN = REAL ( natm , kind = dp )  / simu_cell%omega
 
     CALL typeinfo_init  
     verlet_vdw%listname='vdw'
@@ -331,7 +326,7 @@ SUBROUTINE opt_main
       !  calc initial thermo  
       ! =======================  
       neng = 0
-      CALL engforce_driver 
+      CALL engforce
       CALL calc_thermo
       pot0 = u_tot 
       pressure0 = pressure_tot
@@ -367,8 +362,18 @@ SUBROUTINE opt_main
           WRITE ( stdout ,'(a)')             '    its       grad              ener'
         endif
         CALL write_CONTFF 
-        CALL m1qn3_driver ( iter, Eis , phigrad )
+        if  ( optvar == 'pos' ) then
+          CALL m1qn3_driver ( iter, Eis , phigrad , 'pos' )
+        else if ( optvar == 'cel' ) then
+          CALL m1qn3_driver ( iter, Eis , phigrad , 'cel' )
+        else if ( optvar == 'all' ) then
+                do ii=1,5      
+          CALL m1qn3_driver ( iter, Eis , phigrad , 'pos' )      
+          CALL m1qn3_driver ( iter, Eis , phigrad , 'cel' )
+          enddo
+        endif
         neng = iter ! the number of function call is iter
+
       endif
 
       CALL calc_thermo  
@@ -376,7 +381,7 @@ SUBROUTINE opt_main
       !  write final thermodynamic info 
       ! ================================
       if ( ionode ) then
-        WRITE ( stdout , '(a,2f16.8)' )      '   final energy&pressure = ',Eis,pressure_tot
+        WRITE ( stdout , '(a,2e20.8)' )      '   final energy&pressure = ',Eis,pressure_tot
         WRITE ( kunit_ISTHFF , '(i8,3f20.12,2i8,2f20.12)' ) &
         ic , Eis , phigrad , pressure_tot , iter , neng , pot0 , pressure0
         blankline(stdout)
@@ -386,7 +391,7 @@ SUBROUTINE opt_main
       ! ===========================================
       !  calculated forces (they should be small) 
       ! ===========================================
-      if ( lforce ) CALL engforce_driver 
+      if ( lforce ) CALL engforce
       ! =============================================
       !  write IS structures
       !  new configurations are stored in rx ,ry ,rz, fx , fy ,fz
@@ -460,9 +465,8 @@ END SUBROUTINE opt_main
 SUBROUTINE sastry ( iter , Eis , phigrad , neng )
 
   USE config,                   ONLY :  natm , rx , ry , rz , fx , fy , fz , write_trajff_xyz
-  USE io,                       ONLY :  ionode , stdout , ioprint, ioprintnode
   USE thermodynamic,            ONLY :  u_tot      
-  USE field,                    ONLY :  engforce_driver 
+  USE engforce_driver,          ONLY :  engforce
 
   implicit none
 
@@ -501,7 +505,7 @@ SUBROUTINE sastry ( iter , Eis , phigrad , neng )
   itmax = 10000
   nskp = 1
   nstep = 0
-  CALL engforce_driver 
+  CALL engforce
   neng = neng + 1
 
   umag = 0.0_dp
@@ -781,7 +785,7 @@ SUBROUTINE sastry ( iter , Eis , phigrad , neng )
     DD2 = ftol * ( ABS ( ukeep) + ABS ( u_tot ) + epsilon)
 
     if ( DD1 .LE. DD2) then 
-      CALL engforce_driver 
+      CALL engforce
       neng = neng + 1
 
       Eis = u_tot
@@ -873,7 +877,7 @@ SUBROUTINE eforce1d( x , pot , vir , f1d , xix , xiy , xiz , neng )
 
   USE config,                   ONLY :  natm, rx, ry, rz, fx, fy, fz
   USE thermodynamic,            ONLY :  vir_tot , u_tot , calc_thermo
-  USE field,                    ONLY :  engforce_driver
+  USE engforce_driver,          ONLY :  engforce
 
   implicit none
 
@@ -921,7 +925,7 @@ SUBROUTINE eforce1d( x , pot , vir , f1d , xix , xiy , xiz , neng )
   ! ====================
   !  warning ! only pbc
   ! ====================
-  CALL engforce_driver 
+  CALL engforce
   CALL calc_thermo
   vir = vir_tot
   pot = u_tot  
@@ -981,8 +985,7 @@ SUBROUTINE lbfgs_driver ( icall, Eis , phigrad )
 
   USE config,                   ONLY :  natm, rx, ry, rz , fx , fy , fz 
   USE thermodynamic,            ONLY :  u_tot , u_lj_r , calc_thermo
-  USE field,                    ONLY :  engforce_driver
-  USE io,                       ONLY :  ionode , stdout, ioprintnode, ioprint
+  USE engforce_driver,          ONLY :  engforce
 
   implicit none
 
@@ -1042,7 +1045,7 @@ SUBROUTINE lbfgs_driver ( icall, Eis , phigrad )
   !                IPRINT(2) = 3 : same as IPRINT(2)=2, plus gradient vector.
   !=================================================================================
   IPRINT(1)= -1 
-  IPRINT(2)= 0 
+  IPRINT(2)= 3 
 
   !=================================================================================
   ! We do not wish to provide the diagonal matrices Hk0, and 
@@ -1131,14 +1134,14 @@ SUBROUTINE lbfgs_driver ( icall, Eis , phigrad )
 
 #ifdef debug
      call print_config_sample(icall,0)
-     WRITE ( stdout , '(a)') 'print before first engforce_driver in opt'
+     WRITE ( stdout , '(a)') 'print before first engforce in opt'
 #endif
-    CALL engforce_driver 
+    CALL engforce
     CALL calc_thermo
 
 #ifdef debug
      call print_config_sample(icall,0)
-     WRITE ( stdout , '(a)') 'print after first engforce_driver in opt'
+     WRITE ( stdout , '(a)') 'print after first engforce in opt'
 #endif
 
     ! ===============================
@@ -1208,19 +1211,20 @@ END SUBROUTINE lbfgs_driver
 !! driver routine for the optimsation algorithm m1qn3 (see m1qn3.f90)
 !
 ! ******************************************************************************
-SUBROUTINE m1qn3_driver ( icall, Eis , phigrad )
+SUBROUTINE m1qn3_driver ( icall, Eis , phigrad ,optvar_lc)
 
   USE control,                  ONLY :  myrank , numprocs
-  USE config,                   ONLY :  natm , rx , ry , rz, fx ,fy ,fz , write_CONTFF
-  USE io,                       ONLY :  stdout, ionode, ioprintnode, ioprint
+  USE config,                   ONLY :  natm , rx , ry , rz, fx ,fy ,fz , write_CONTFF, simu_cell , tau
   USE thermodynamic,            ONLY :  u_tot , u_lj_r , calc_thermo
-  USE field,                    ONLY :  engforce_driver
+  USE engforce_driver,          ONLY :  engforce
+  USE cell,                     ONLY :  lattice
 
   implicit none
 
   ! global
   integer          :: icall
   real(kind=dp)    :: Eis , phigrad
+  character(len=3)                         :: optvar_lc
 
   !local
   integer                                   :: ia , n , kl 
@@ -1230,6 +1234,7 @@ SUBROUTINE m1qn3_driver ( icall, Eis , phigrad )
   character(len=3)                          :: normtype
   real                                      :: rzs(1)
   real(kind=dp)                             :: f , dxmin , df1 , epsrel , dzs(1)
+  real(kind=dp)                             :: strain(3,3) 
   real(kind=dp), dimension (:), allocatable :: x , g , dz
 
   ! external 
@@ -1238,7 +1243,13 @@ SUBROUTINE m1qn3_driver ( icall, Eis , phigrad )
   ! =====================
   !   initialization
   ! =====================
-  n=3*natm
+  if   (optvar_lc == 'pos' ) then
+    n = 3*natm
+  else if (optvar_lc == 'cel' ) then
+    n = 9
+    strain = 0.0_dp
+  endif
+
   ndz=4*n+5*(2*n+1)
   icall = 0
   kl = 1
@@ -1246,6 +1257,8 @@ SUBROUTINE m1qn3_driver ( icall, Eis , phigrad )
   ALLOCATE ( g (N) )
   ALLOCATE ( dz (ndz) )
 
+
+  if ( optvar_lc == 'pos' ) then
   ! ========================================
   !  set X ( 3 *natm ) to rx , ry , rz
   ! ========================================
@@ -1254,18 +1267,42 @@ SUBROUTINE m1qn3_driver ( icall, Eis , phigrad )
     X( natm + ia )     = ry( ia )
     X( 2 * natm + ia ) = rz( ia )
   enddo
+  else if (optvar_lc == 'cel' ) then
+  ! ======
+  ! cell parameters
+  ! 
+!  X ( 1 ) = strain(1,1)
+!  X ( 2 ) = strain(2,2) 
+!  X ( 3 ) = strain(3,3) 
+!  X ( 4 ) = strain(2,1) 
+!  X ( 5 ) = strain(2,2) 
+!  X ( 6 ) = strain(2,3) 
+!  X ( 7 ) = strain(3,1) 
+!  X ( 8 ) = strain(3,2) 
+!  X ( 9 ) = strain(3,3) 
+  X ( 1 ) =  simu_cell%A(1,1) 
+  X ( 2 ) =  simu_cell%A(1,2) 
+  X ( 3 ) =  simu_cell%A(1,3) 
+  X ( 4 ) =  simu_cell%A(2,1) 
+  X ( 5 ) =  simu_cell%A(2,2) 
+  X ( 6 ) =  simu_cell%A(2,3) 
+  X ( 7 ) =  simu_cell%A(3,1) 
+  X ( 8 ) =  simu_cell%A(3,2) 
+  X ( 9 ) =  simu_cell%A(3,3) 
+  endif
+
 
 #ifdef debug
      call print_config_sample(icall,0)
-     WRITE ( stdout , '(a)') 'print before first engforce_driver in opt'
+     WRITE ( stdout , '(a)') 'print before first engforce in opt'
 #endif
 
-  CALL engforce_driver 
+  CALL engforce
   CALL calc_thermo
 
 #ifdef debug
      call print_config_sample(icall,0)
-     WRITE ( stdout , '(a)') 'print after first engforce_driver in opt'
+     WRITE ( stdout , '(a)') 'print after first engforce in opt'
 #endif
 
   f=u_tot
@@ -1273,7 +1310,7 @@ SUBROUTINE m1qn3_driver ( icall, Eis , phigrad )
   !CALL write_CONTFF
   !stop
 
-
+  if ( optvar_lc == 'pos' ) then
   ! ===============================
   !  set the gradient to fx,fy,fz
   ! ===============================
@@ -1282,6 +1319,19 @@ SUBROUTINE m1qn3_driver ( icall, Eis , phigrad )
     G( natm + ia    ) =  - fy( ia )
     G( 2* natm + ia ) =  - fz( ia )
   ENDDO
+  else if (optvar_lc == 'cel' ) then
+  G ( 1 ) = tau(1,1) !* simu_cell%omega
+  G ( 2 ) = tau(1,2) !* simu_cell%omega
+  G ( 3 ) = tau(1,3) !* simu_cell%omega
+  G ( 4 ) = tau(2,1) !* simu_cell%omega
+  G ( 5 ) = tau(2,2) !* simu_cell%omega
+  G ( 6 ) = tau(2,3) !* simu_cell%omega
+  G ( 7 ) = tau(3,1) !* simu_cell%omega
+  G ( 8 ) = tau(3,2) !* simu_cell%omega
+  G ( 9 ) = tau(3,3) !* simu_cell%omega
+  endif
+
+
 
   ! =========================================================
   !  call the optimization code
@@ -1294,7 +1344,8 @@ SUBROUTINE m1qn3_driver ( icall, Eis , phigrad )
   epsrel   = epsrel_m1qn3 
   niter    = 6000     
   nsim     = 6000     
-  normtype = 'dfn'       
+!  normtype = 'dfn'       
+  normtype = 'two'       
   iom      = stdout    ! io output
   imp      = 0         ! impress  no print
   imode(1) = 0         ! imode(1) = 0 DIS  
@@ -1314,6 +1365,8 @@ SUBROUTINE m1qn3_driver ( icall, Eis , phigrad )
     call m1qn3 (simul_rc,euclid,ctonbe,ctcabe,n,x,f,g,dxmin,df1, &
                 epsrel,normtype,imp,iom,imode,omode,niter,nsim,iz, & 
                 dz,ndz,reverse,indic,izs,rzs,dzs)
+
+    if (optvar_lc == 'pos' ) then
     ! ===============================================
     !  reset positions for energy/forces calculation
     ! ==============================================
@@ -1322,12 +1375,40 @@ SUBROUTINE m1qn3_driver ( icall, Eis , phigrad )
       ry( ia )   = X ( natm + ia )
       rz( ia )   = X ( 2* natm + ia )
     enddo
+    else if (optvar_lc == 'cel' ) then
+    !strain(1,1) = X ( 1 )
+    !strain(1,2) = X ( 2 )
+    !strain(1,3) = X ( 3 )
+    !strain(2,1) = X ( 4 )
+    !strain(2,2) = X ( 5 )
+    !strain(2,3) = X ( 6 )
+    !strain(3,1) = X ( 7 )
+    !strain(3,2) = X ( 8 )
+    !strain(3,3) = X ( 9 )
+
+    simu_cell%A(1,1) = X ( 1 )
+    simu_cell%A(1,2) = X ( 2 )
+    simu_cell%A(1,3) = X ( 3 )
+    simu_cell%A(2,1) = X ( 4 )
+    simu_cell%A(2,2) = X ( 5 )
+    simu_cell%A(2,3) = X ( 6 )
+    simu_cell%A(3,1) = X ( 7 )
+    simu_cell%A(3,2) = X ( 8 )
+    simu_cell%A(3,3) = X ( 9 )
+
+    !simu_cell%A = simu_cell%A +  strain
+    !simu_cell%A(1,1) = simu_cell%A(1,1)  + strain(1,1) 
+    !simu_cell%A(2,2) = simu_cell%A(2,2)  + strain(2,2) 
+    !simu_cell%A(3,3) = simu_cell%A(3,3)  + strain(3,3) 
+    CALL lattice ( simu_cell )
+    !print*,strain(1,1)
+    endif
 
 #ifdef debug
      call print_config_sample(icall,0)
      WRITE ( stdout , '(a,i5)') 'print before in opt loop',icall
 #endif
-    CALL engforce_driver 
+    CALL engforce
     CALL calc_thermo
 #ifdef debug
      call print_config_sample(icall,0)
@@ -1339,7 +1420,8 @@ SUBROUTINE m1qn3_driver ( icall, Eis , phigrad )
 #ifdef debug
      call print_config_sample(icall,0)
 #endif
- 
+
+    if (optvar_lc == 'pos' ) then
     ! ===============================
     !  set the gradient to fx,fy,fz
     ! ===============================
@@ -1352,9 +1434,28 @@ SUBROUTINE m1qn3_driver ( icall, Eis , phigrad )
       G ( ia ) * G( ia ) + G( natm + ia ) * G( natm + ia )  + G( 2* natm + ia ) * G( 2* natm + ia )
     ENDDO
 
+    else if (optvar_lc == 'cel' ) then
+    G ( 1 ) = tau(1,1) !* simu_cell%omega
+    G ( 2 ) = tau(1,2) !* simu_cell%omega 
+    G ( 3 ) = tau(1,3) !* simu_cell%omega
+    G ( 4 ) = tau(2,1) !* simu_cell%omega
+    G ( 5 ) = tau(2,2) !* simu_cell%omega
+    G ( 6 ) = tau(2,3) !* simu_cell%omega
+    G ( 7 ) = tau(3,1) !* simu_cell%omega
+    G ( 8 ) = tau(3,2) !* simu_cell%omega
+    G ( 9 ) = tau(3,3) !* simu_cell%omega
+
+    phigrad=0.0_dp
+    do ia = 1, 9
+      phigrad = phigrad + &
+                    G ( ia ) * G( ia )
+    enddo
+
+    endif
+
     ! write step information
     if ( ionode .and. MOD ( icall , kl ) .eq. 0 ) then
-      WRITE (stdout,'(i6,2E24.16)') icall , phigrad , u_tot
+      WRITE (stdout,'(i6,4E24.16)') icall , phigrad , u_tot , simu_cell%omega, epsrel 
       kl = nopt_print * kl
       ! ioprint condition
       ioprint = .true.

@@ -2,7 +2,7 @@
         calc          = 'md'
         cutshortrange = 8.5d0
         skindiff      = 1.0d0
-        restart_data  = 'rnn'
+        posff_data    = 'rnn'
         lnmlj         = .true.
         lvnlist       = .false.
         ltraj         = .true.
@@ -23,8 +23,10 @@
         timesca_thermo= 2.0 
 &end
 &fieldtag
+        mass=39.95d0
+&end
+&non_bondedtag
         ctrunc = 'notrunc'
         epslj(1,1)  = 0.010323576 
         sigmalj(1,1)= 3.405d0
-        mass=39.95d0
 &end

@@ -42,6 +42,12 @@ file=$(basename "$xyzpos")
 seed="${file%.*}"
 cell=$seed.cell
 
+if [ ! -f $cell ] 
+then
+  echo "$cell does not not exist"
+  exit 1
+fi
+
 echo "WARNING cell info from local $seed.cell file : make sure it is OK"
 nconf=`grep "i =" $xyzpos | wc | awk '{print $1}'`
 natm=`head -n 1 $xyzpos`

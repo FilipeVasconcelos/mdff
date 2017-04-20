@@ -28,7 +28,8 @@
 ! ******************************************************************************
 MODULE radial_distrib 
 
-  USE constants,                ONLY :  dp
+  USE io,               ONLY :  ionode, stdout, stdin, stderr
+  USE constants,        ONLY :  dp
   USE mpimdff
 
   implicit none
@@ -53,7 +54,6 @@ SUBROUTINE gr_init
 
   USE config,                   ONLY :  simu_cell
   USE control,                  ONLY :  calc
-  USE io,                  ONLY :  stdin , stdout , ionode
 
   implicit none
 
@@ -89,14 +89,14 @@ SUBROUTINE gr_init
   ! define a new resolution to be 2^N points
   ! ==========================================
  nbins=int(cutgr/resg)+1
- print*,cutgr,resg,nbins
+! print*,cutgr,resg,nbins
 !28/05/13 ! i = 1
 !28/05/13 ! do while ( 2**i .lt. nbins )
 !28/05/13 !    i = i + 1
 !28/05/13 ! enddo
 !28/05/13 ! npangr = i
 !28/05/13 ! nbins = 2** npangr
-!28/05/13 ! resg = cutgr / DBLE ( nbins  )
+!28/05/13 ! resg = cutgr / REAL ( nbins  )
 
   CALL gr_print_info(stdout)
 
@@ -180,7 +180,6 @@ END SUBROUTINE gr_default_tag
 SUBROUTINE gr_print_info(kunit)
 
   USe control,                  ONLY :  calc
-  USE io,                  ONLY :  ionode 
 
   implicit none
  
@@ -213,9 +212,9 @@ SUBROUTINE grcalc
 
   USE control,                  ONLY :  itraj_format , trajff_data
   USE config,                   ONLY :  system , natm , ntype , rx , ry , rz , atype , &
-                                        rho , config_alloc , simu_cell , atypei , itype, natmi, &
+                                        rhoN , config_alloc , simu_cell , atypei , itype, natmi, &
                                         coord_format_allowed , atom_dec , read_traj , read_traj_header
-  USE io,                       ONLY :  ionode , stdout , stderr , kunit_TRAJFF , kunit_GRTFF , kunit_NRTFF
+  USE io,                       ONLY :  kunit_TRAJFF , kunit_GRTFF , kunit_NRTFF
   USE constants,                ONLY :  pi 
   USE cell,                     ONLY :  lattice , dirkar , periodicbc, kardir
   USE time,                     ONLY :  grtimetot_comm
@@ -231,10 +230,10 @@ SUBROUTINE grcalc
   real(kind=dp)                                        :: rr , vol
   real(kind=dp)                                        :: ttt1 , ttt2      
   real(kind=dp)                                        :: average_volume
-  real(kind=dp)                                        :: rho_av 
+  real(kind=dp)                                        :: rhoN_av 
 
 
-  rho_av = 0.0_dp
+  rhoN_av = 0.0_dp
   average_volume = 0.0_dp      
 
   OPEN ( kunit_GRTFF , file = 'GRTFF' )
@@ -247,7 +246,7 @@ SUBROUTINE grcalc
   if ( itraj_format .eq. 0 ) OPEN ( UNIT = kunit_TRAJFF  , FILE = 'TRAJFF' , form = 'unformatted')
 
   CALL lattice ( simu_cell ) 
-  rho = DBLE ( natm )  / simu_cell%omega 
+  rhoN = REAL ( natm , kind = dp )  / simu_cell%omega 
 
 #ifdef debug
   write(*,*) simu_cell%A
@@ -294,7 +293,7 @@ SUBROUTINE grcalc
     CALL read_traj ( kunit_TRAJFF , itraj_format , trajff_data ) 
 
     CALL lattice ( simu_cell )
-    rho_av = rho_av + ( REAL ( natm ,kind=dp )  / simu_cell%omega )
+    rhoN_av = rhoN_av + ( REAL ( natm ,kind=dp )  / simu_cell%omega )
     average_volume = average_volume + simu_cell%omega    
     io_node WRITE ( stdout , '(a,i6,a,i6,a,f12.3)' ) 'config : [ ',ic,' / ',nconf,' ]   vol : ',simu_cell%omega
 #ifdef debug
@@ -316,7 +315,7 @@ SUBROUTINE grcalc
     call gr_main 
 
   enddo !nconf 
-  rho_av = rho_av / REAL(nconf,kind=dp)      
+  rhoN_av = rhoN_av / REAL(nconf,kind=dp)      
   average_volume = average_volume / REAL(nconf,kind=dp)
   if ( ionode .and. average_volume .ne. simu_cell%omega ) write(stdout,'(a,e16.8)') 'average volume : ',average_volume
 
@@ -372,8 +371,8 @@ SUBROUTINE grcalc
     vol = 4.d0 * pi * ( resg * rr* rr + ( resg**3 ) / 12.d0 )
     vol = vol / average_volume  ! only  make sense for trajectory in NPT otherwise the average volume is the current volume ) 
     ! all - all pairs 
-    grr ( 0 , igr ) = DBLE ( gr ( igr , 0 , 0 ) ) / ( ngr * vol * natm * natm )
-!    grr ( 0 , igr ) = DBLE ( gr ( 0 , 0 , igr ) ) / ( ngr * vol * natm * natm )
+    grr ( 0 , igr ) = REAL ( gr ( igr , 0 , 0 ) , kind = dp ) / ( ngr * vol * natm * natm )
+!    grr ( 0 , igr ) = REAL ( gr ( 0 , 0 , igr ) ) / ( ngr * vol * natm * natm )
     ! type pairs
     mp = 1
     do it1 = 1 , ntype
@@ -386,18 +385,18 @@ SUBROUTINE grcalc
           STOP
         endif 
         nr ( mp ) = it1          
-        grr ( mp , igr ) = DBLE ( gr ( igr , it1 , it2 ) ) / DBLE ( ngr * vol * natmi ( it1 ) * natmi ( it2 ) )  
-!        grr ( mp , igr ) = DBLE ( gr ( it1 , it2 , igr ) ) / DBLE ( ngr * vol * natmi ( it1 ) * natmi ( it2 ) )  
+        grr ( mp , igr ) = REAL ( gr ( igr , it1 , it2 ) , kind = dp) / REAL ( ngr * vol * natmi ( it1 ) * natmi ( it2 ) , kind = dp )  
+!        grr ( mp , igr ) = REAL ( gr ( it1 , it2 , igr ) ) / REAL ( ngr * vol * natmi ( it1 ) * natmi ( it2 ) )  
         mp = mp + 1
       enddo
     enddo
       if ( ionode ) then
 #ifdef GFORTRAN
         WRITE ( kunit_GRTFF ,'(8e20.10)') rr , ( grr ( mp , igr ) , mp = 0 , npairs ) 
-        WRITE ( kunit_NRTFF ,'(8e20.10)') rr , ( DBLE ( grr ( mp , igr ) ) * 4.0_dp * pi * rr * rr * DBLE ( natmi(nr(mp)) * vol ) , mp = 0 , npairs )
+        WRITE ( kunit_NRTFF ,'(8e20.10)') rr , ( REAL ( grr ( mp , igr ) , kind = dp ) * 4.0_dp * pi * rr * rr * REAL ( natmi(nr(mp)) * vol , kind = dp ) , mp = 0 , npairs )
 #else
         WRITE ( kunit_GRTFF ,'(<npairs+2>e20.10)') rr , ( grr ( mp , igr ) , mp = 0 , npairs ) 
-        WRITE ( kunit_NRTFF ,'(<npairs+2>e20.10)') rr , ( DBLE ( grr ( mp , igr ) ) * 4.0_dp * pi * rr * rr * DBLE ( natmi(nr(mp)) * vol ) , mp = 0 , npairs )
+        WRITE ( kunit_NRTFF ,'(<npairs+2>e20.10)') rr , ( REAL ( grr ( mp , igr ) , kind = dp ) * 4.0_dp * pi * rr * rr * REAL ( natmi(nr(mp)) * vol , kind = dp) , mp = 0 , npairs )
 #endif
       endif
   enddo
@@ -427,7 +426,6 @@ SUBROUTINE gr_main
 
   USE control,                  ONLY :  myrank
   USE config,                   ONLY :  natm , natmi , rx , ry , rz , atype , simu_cell , ntype , itype, atom_dec
-  USE io,                       ONLY :  ionode , stdout  , stderr
   USE time,                     ONLY :  grtimetot
   USE cell,                     ONLY :  kardir , dirkar
 
@@ -516,7 +514,7 @@ END SUBROUTINE gr_main
 !SUBROUTINE static_struc_fac ( gr , nbins , npairs )
 
 !  USE io,                       ONLY :  ionode , kunit_STRFACFF , stdout 
-!  USE config,                   ONLY :  rho
+!  USE config,                   ONLY :  rhoN
 !  USE constants,                ONLY :  pi , tpi , imag
 
 !  implicit none
@@ -552,8 +550,8 @@ END SUBROUTINE gr_main
 !  CALL fft_1D_real(in,out,nbins)
 !
 !  do i= 1 , nbins/2+1
-!    q = ( dble ( i )  + 0.5_dp ) / DBLE ( nbins ) / resg
-!    Sk = 1.0_dp + rho * out( i + 1 )  
+!    q = ( dble ( i )  + 0.5_dp ) / REAL ( nbins ) / resg
+!    Sk = 1.0_dp + rhoN * out( i + 1 )  
 !    io_node WRITE ( 20000 , '(3e16.8)' )  q , Sk  
 !  enddo
 !
@@ -567,7 +565,7 @@ END SUBROUTINE gr_main
 !!    ri  = ( dble ( i )  + 0.5_dp )  * res
 !    rip = ( dble ( i + 1 )  + 0.5_dp )  * res
 !!    do j = 1 , nbins
-!      qj = tpi * DBLE ( j ) + 0.5_dp / DBLE ( nbins / 2 + 1 ) / resg
+!      qj = tpi * REAL ( j ) + 0.5_dp / REAL ( nbins / 2 + 1 ) / resg
 !      Uji ( j , i ) = SR ( ri , qj ) - SR ( rip , qj ) 
 ! !     Uji ( j , i ) = Uji ( j , i ) / qj  
 !    enddo
@@ -575,7 +573,7 @@ END SUBROUTINE gr_main
 !  Uji = 2.0_dp * tpi * Uji
 !!
 !  do i= 1 , nbins/2+1
-!    q = tpi * ( dble ( i )  + 0.5_dp ) / DBLE ( nbins / 2 + 1) / resg
+!    q = tpi * ( dble ( i )  + 0.5_dp ) / REAL ( nbins / 2 + 1) / resg
 !!    do j = 1 , nbins
 !      Sk =  Sk + Uji ( j , i ) * ( gr ( j , 0 ) -1.0_dp )  
 !    enddo
@@ -603,9 +601,9 @@ END SUBROUTINE gr_main
 !  shift= (is-1) * res
 !  write( stdout , '(8a)' ) '            x       Re in(i)        Im in(i)            k          Re out(i)       Im out(i)        Re phase        Im phase'
 !  do i=1,NN
-!    x = DBLE(i-1)*res
-!    k = DBLE(i-1) / DBLE ( NN ) 
-!    q = DBLE(i-1) / DBLE ( NN ) / res
+!    x = REAL(i-1)*res
+!    k = REAL(i-1) / REAL ( NN ) 
+!    q = REAL(i-1) / REAL ( NN ) / res
 !    write( stdout , '(8e16.8)' ) x , in(i) , k , out(i) , exp ( -imag * tpi * k * (is-1) )
 !    write( stdout , '(8e16.8)' ) x , in(i) , q , out(i) , exp ( -imag * tpi * q * shift )
 !  enddo

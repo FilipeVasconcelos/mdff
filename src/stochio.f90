@@ -28,9 +28,9 @@
 ! ******************************************************************************
 MODULE stochio
 
-  USE constants,        ONLY :  dp, g_to_am
+  USE constants,        ONLY :  dp, rho_unit 
+  USE io,               ONLY :  ionode, stdin, stdout
   USE oxyde
-  USE io
 
   implicit none
   
@@ -56,7 +56,6 @@ MODULE stochio
   real(kind=dp)       :: sumox , charg , density , a_o_b , a_o_c 
   real(kind=dp)       :: volume , totmass , acell , bcell , ccell , volume2
   character(len=135)  :: filename
-  logical             :: allowed
   logical             :: lexact , lcubic
   integer             :: sum_sto, numbands
   character(len=2)    :: atoms_in  (nelem)
@@ -66,8 +65,6 @@ MODULE stochio
 CONTAINS
 
 SUBROUTINE stochio_main
-
-  USE io,       ONLY :  stdout
 
   implicit none
 
@@ -115,7 +112,7 @@ SUBROUTINE stochio_atomic_calc
       endif
     enddo
     blankline(stdout)
-    volume = totmass /  density * g_to_am
+    volume = rho_unit * ( totmass /   density ) 
     acell =( volume /  REAL(a_o_b,kind=dp) / REAL(a_o_c,kind=dp) )**(1._dp/3._dp)
     WRITE(stdout , '(a,i12)' )       'NBANDS        = ',numbands/2
     WRITE(stdout , '(a,f12.4,a)' )   'density       = ',density,' g/cm^3 '
@@ -348,7 +345,7 @@ SUBROUTINE stochio_oxydes_calc
       endif
     enddo
     blankline(stdout)
-    volume = totmass /  density * g_to_am   
+    volume = totmass /  density * rho_unit   
     acell =( volume /  REAL(a_o_b,kind=dp) / REAL(a_o_c,kind=dp) )**(1._dp/3._dp) 
     WRITE(stdout , '(a,i12)' )       'NBANDS        = ',numbands/2
     WRITE(stdout , '(a,f12.4,a)' )   'density       = ',density,' g/cm^3 '
@@ -382,7 +379,6 @@ END SUBROUTINE stochio_oxydes_calc
 SUBROUTINE stochio_init
 
   USE control,          ONLY :  calc
-  USE io,               ONLY :  stdin, stdout
 
   implicit none
 
@@ -499,26 +495,12 @@ SUBROUTINE stochio_check_tag
   ! =================
   !  check def param
   ! =================
-  allowed = .false.
-  do i = 1 , size( def_allowed )
-   if ( trim(def) .eq. def_allowed(i))  allowed = .true.
-  enddo
-  if ( .not. allowed ) then
-      WRITE ( stdout , '(a)' ) 'ERROR in stochiotag: def should be ', def_allowed
-      STOP
-  endif
+  CALL check_allowed_tags( size( def_allowed ), def_allowed, def, 'in stochiotag','def' ) 
   
   ! =================
   !  check typedef 
   ! =================
-  allowed = .false.
-  do i = 1 , size( typedef_allowed )
-   if ( trim(typedef) .eq. typedef_allowed(i))  allowed = .true.
-  enddo
-  if ( .not. allowed ) then
-      WRITE ( stdout , '(a)' ) 'ERROR in stochiotag: typedef should be ', typedef_allowed
-      STOP
-  endif
+  CALL check_allowed_tags( size( typedef_allowed ), typedef_allowed, typedef, 'in stochiotag', 'typedef' ) 
 
   return
 

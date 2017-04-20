@@ -4,7 +4,7 @@ ex1  : MD LJ FCC (argon) at low temperature (90K)
 
 ex2  : calculation of total energy of LJ clusters reference structures and energies from : The Cambridge Cluster Database http://www-wales.ch.cam.ac.uk/CCD.html
 
-ex3  :  ...
+ex3  :  "Global optimization" LJ clusters
 
 ex4  : EFG ewald sum, direct sum on two charges and cluster ( comp to Nymand and Linse anf GULP ) not working anymore
 
@@ -26,4 +26,10 @@ ex11 : Generating 5 random configuration of SiO2 with
        run for each of them.
        (NVE ~ 2 ps Rigid Ions and Polarizable Ions models)
  
+ex12 : PIM MD 102  atoms SiO2 (against cp2k)
 
+ex13 : mdff_gui.py 
+
+ex14: restart  (NVT,NVE lennard jones argon, PIM SiO2 )
+
+ex15: water molecules

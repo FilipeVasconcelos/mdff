@@ -39,7 +39,6 @@
 SUBROUTINE estimate_alpha(alpha,epsw,rcut)
   
   USE constants,                ONLY :  dp
-  USE config,                   ONLY :  simu_cell 
 
   implicit none
 
@@ -89,7 +88,7 @@ SUBROUTINE accur_ES_frenkel_smit ( epsw , alpha , rc , nc )
 
   USE constants,                ONLY :  dp , pi
   USE config,                   ONLY :  simu_cell 
-  USE io,                  ONLY :  stderr
+  USE io,                       ONLY :  stderr
 
   implicit none
 
@@ -144,7 +143,7 @@ SUBROUTINE distance_tab
   USE control,                  ONLY :  calc
   USE constants,                ONLY :  dp
   USE config,                   ONLY :  natm , rx , ry , rz , simu_cell , itype, atype
-  USE field,                    ONLY :  sigmalj , lwfc
+  USE non_bonded,               ONLY :  sigmalj 
   USE io,                       ONLY :  ionode , stdout, stderr
   USE cell,                     ONLY :  kardir , dirkar 
 
@@ -219,9 +218,9 @@ SUBROUTINE distance_tab
   if ( ionode ) then
     WRITE ( stderr ,'(a)')       'distance check subroutine'
     WRITE ( stderr ,'(a,f13.5,2i6,2a6)') 'smallest distance = ',mindis,indxmin(1),indxmin(2),atype(indxmin(1)),atype(indxmin(2))
-    if  ( any(lwfc .eq. -1) )  then
-    WRITE ( stderr ,'(a)')       'WARNING : we do not check distance to wannier centers'
-    endif
+    !if  ( any(lwfc .eq. -1) )  then
+    !WRITE ( stderr ,'(a)')       'WARNING : we do not check distance to wannier centers'
+    !endif
     blankline(stderr)
   endif
 
@@ -273,9 +272,8 @@ END SUBROUTINE distance_tab
 ! ******************************************************************************
 SUBROUTINE vnlist_pbc  
 
-  USE md,                       ONLY :  itime
   USE constants,                ONLY :  dp
-  USE config,                   ONLY :  natm , natmi , rx , ry , rz , itype, ntype , simu_cell , vnlmax , atom_dec, verlet_vdw , verlet_coul
+  USE config,                   ONLY :  natm , rx , ry , rz , itype, ntype , simu_cell , vnlmax , atom_dec, verlet_vdw , verlet_coul
   USE control,                  ONLY :  skindiff 
   USE cell,                     ONLY :  kardir , dirkar
   USE io,                       ONLY :  ionode , stdout , stderr
@@ -379,7 +377,7 @@ END SUBROUTINE vnlist_pbc
 SUBROUTINE vnlist_nopbc ( vlist )
 
   USE constants, ONLY : dp
-  USE config,    ONLY :  natm , natmi , rx , ry , rz , itype , verlet_list , ntype , atom_dec
+  USE config,    ONLY :  natm ,  rx , ry , rz , itype , verlet_list , ntype , atom_dec
   USE control,   ONLY :  skindiff
 
   implicit none
@@ -586,9 +584,9 @@ END SUBROUTINE print_tensor_n
 ! ******************************************************************************
 SUBROUTINE print_tensor( tens , key )
 
-  USE constants, ONLY : dp
-  USE config,   ONLY :  natm
-  USE io,  ONLY :  ionode , stdout
+  USE constants,        ONLY :  dp
+  USE config,           ONLY :  natm
+  USE io,               ONLY :  ionode , stdout
 
   implicit none
 
@@ -623,7 +621,7 @@ SUBROUTINE print_tensor_nxn ( tens , key , n )
 
   USE constants,                ONLY :  dp
   USE config,                   ONLY :  natm
-  USE io,                  ONLY :  ionode , stdout
+  USE io,                       ONLY :  ionode , stdout
 
   implicit none
 
@@ -812,6 +810,7 @@ END SUBROUTINE
 SUBROUTINE print_config_sample ( time , rank )
 
   USE config,   ONLY :  natm , atype , itype , rx , vx , fx , qia , dipia , ipolar , massia
+  USE coulomb,  ONLY :  mu_t,theta_t
   USE mpimdff,  ONLY :  myrank
   USE io,       ONLY :  stdout
 
@@ -828,19 +827,19 @@ SUBROUTINE print_config_sample ( time , rank )
        WRITE ( stdout ,'(a)') 'debug :  SAMPLE OF THE CONFIGIURATION '
        WRITE ( stdout ,'(a5,i10)') 'time = ',time
        WRITE ( stdout ,'(a5,i10)') 'rank = ',rank
-       WRITE ( stdout ,'(a)') '     i    atype       itype      ipolar      q      mass    mu_x    mu_y    mu_z             rx                 vx                  fx'
+       WRITE ( stdout ,'(a)') '     i    atype       itype      ipolar      q      mass    d_x    d_y    d_z             rx                vx                  fx                 mu_x         theta_xx'
     if ( natm .ge. 32)   &
-       WRITE ( stdout ,'(i6,a10,2i10,4x,5f8.3,3f20.10)') &
-       ( ia , atype ( ia ) , itype ( ia ) , ipolar ( ia ) , qia ( ia ) , massia(ia), dipia ( ia , 1 ), dipia ( ia , 2) ,dipia ( ia , 3 ), &
-        rx ( ia ) , vx ( ia ) , fx ( ia ) , ia = 1 , 16 )
+       WRITE ( stdout ,'(i6,a10,i10,l10,4x,5f8.3,5f20.10)') &
+       ( ia , atype ( ia ) , itype ( ia ) , ipolar ( ia ) , qia ( ia ) , massia(ia), dipia ( 1 , ia ), dipia ( 2 , ia ) ,dipia ( 3 , ia ), &
+        rx ( ia ) , vx ( ia ) , fx ( ia ) , mu_t( 1 , ia ) , theta_t(1,1,ia) , ia = 1 , 16 )
     if ( natm .ge. 32)   &
-       WRITE ( stdout ,'(i6,a10,2i10,4x,5f8.3,3f20.10)') &
-       ( ia , atype ( ia ) , itype ( ia ) , ipolar ( ia ) , qia ( ia ) , massia(ia), dipia ( ia , 1 ), dipia ( ia , 2) ,dipia ( ia , 3 ), &
-        rx ( ia ) , vx ( ia ) , fx ( ia ) , ia = natm - 16  , natm )
+       WRITE ( stdout ,'(i6,a10,i10,l10,4x,5f8.3,5f20.10)') &
+       ( ia , atype ( ia ) , itype ( ia ) , ipolar ( ia ) , qia ( ia ) , massia(ia), dipia ( 1, ia  ), dipia ( 2, ia ) ,dipia ( 3, ia  ), &
+        rx ( ia ) , vx ( ia ) , fx ( ia ) , mu_t( 1 , ia ), theta_t(1,1,ia) , ia = natm - 16  , natm )
     if ( natm .lt. 32)   &
-       WRITE ( stdout ,'(i6,a10,2i10,4x,5f8.3,3f20.10)') &
-       ( ia , atype ( ia ) , itype ( ia ) , ipolar ( ia ) , qia ( ia ) , massia(ia), dipia ( ia , 1 ), dipia ( ia , 2) ,dipia ( ia , 3 ), &
-        rx ( ia ) , vx ( ia ) , fx ( ia ) , ia = 1 , natm )
+       WRITE ( stdout ,'(i6,a10,i10,l10,4x,5f8.3,5f20.10)') &
+       ( ia , atype ( ia ) , itype ( ia ) , ipolar ( ia ) , qia ( ia ) , massia(ia), dipia ( 1, ia ), dipia ( 2, ia ) ,dipia ( 3, ia  ), &
+        rx ( ia ) , vx ( ia ) , fx ( ia ) , mu_t( 1 , ia ),  theta_t(1,1,ia) , ia = 1 , natm )
        blankline(stdout) 
        bigseparator_noionode(stdout) 
   endif
@@ -855,8 +854,10 @@ END SUBROUTINE print_config_sample
 ! ******************************************************************************
 SUBROUTINE print_general_info (kunit)
 
-  USE io,  ONLY :  ionode 
-  USE config,   ONLY : natm , ntype , rho , simu_cell
+  USE io,               ONLY :  ionode 
+  USE constants,        ONLY :  rho_unit
+  USE config,           ONLY :  natm , ntype , rho , rhoN, simu_cell
+
 
   implicit none
 
@@ -870,7 +871,7 @@ SUBROUTINE print_general_info (kunit)
     WRITE ( kunit ,'(a)')          'Remind some parameters of the system:'
     WRITE ( kunit ,'(a,i5)')       'natm            = ', natm
     WRITE ( kunit ,'(a,i5)')       'ntype           = ', ntype
-    WRITE ( kunit ,'(a,f10.3)')    'density         = ', rho
+    WRITE ( kunit ,'(a,2f10.6,a)') 'density         = ', rhoN , rho / rho_unit ,' g/cm^3'
     WRITE ( kunit ,'(a,3f10.3)')   'cell parameters = ', (simu_cell%ANORM(i),i=1,3)
     WRITE ( kunit ,'(a,f10.3)')    'volume          = ', simu_cell%omega
   endif
@@ -955,5 +956,45 @@ SUBROUTINE dumb_guy(kunit)
   return
 
 END SUBROUTINE dumb_guy
+
+
+! *********************** SUBROUTINE check_allowed_tags **********************************
+!
+!> \brief
+!!  This subroutine check if a specific character tag is allowed
+!
+! ******************************************************************************
+SUBROUTINE check_allowed_tags( size_allowed , allowed_values , tag , tagsection , tagname )
+
+  USE io,       ONLY :  ionode, stderr
+
+  implicit none
+
+  ! global
+  integer      :: size_allowed
+  character(*) :: allowed_values(size_allowed)
+  character(*) :: tag
+  character(*) :: tagsection
+  character(*) :: tagname
+  !
+  ! local
+  integer :: i
+  logical :: allowed
+
+  allowed = .false.
+  do i = 1 , size_allowed 
+    if ( trim ( tag ) .eq. allowed_values ( i ) )  allowed = .true.
+  enddo
+  if ( .not. allowed ) then
+    if ( ionode )  WRITE ( stderr , '(a,a,a,a,a,<size_allowed>a)' ) 'ERROR ',tagsection,': ',tagname,' should be :'
+    do i = 1 , size_allowed 
+      if ( ionode )  WRITE ( stderr ,'(a)') allowed_values(i)
+    enddo
+    STOP
+  endif
+
+  return
+
+END SUBROUTINE check_allowed_tags
 
 ! ===== fmV =====

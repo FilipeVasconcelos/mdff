@@ -17,9 +17,10 @@
 ! parameters for the force-field 
 ! ======================================================================
 &fieldtag
+        mass = 1.0d0
+&end
+&non_bondedtag
         ctrunc='notrunc'
-        !ctrunc='linear'
-        !ctrunc='quadratic'
         epslj(1,1)=0.010323576 !119.8d0 K in eV 
         sigmalj(1,1)=3.405d0
 &end

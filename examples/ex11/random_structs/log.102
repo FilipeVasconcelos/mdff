@@ -11,26 +11,29 @@
 =============================================================
 
 MOLECULAR DYNAMICS ...for fun                 
-mdff.master  (build Oct 24 2015 01:51:05) parallel                              
+mdff.master  (build Nov 28 2016 22:58:31) parallel                              
 filipe.manuel.vasconcelos@gmail.com  
 Running on  :    1 nodes                  
 by user     : filipe                        
 host        : charrue
-date        : 2015/10/24    01:59:23
+date        : 2016/11/28    23:01:30
 
 CONTROL MODULE ... WELCOME
 
-calc        =  stochio                                                     
-lnmlj       =  F
-lbmhft      =  F
-lbmhftd     =  F
-lmorse      =  F
-lcoulomb    =  F
-lsurf       =  F
-lvnlist     =  T
-lstatic     =  F
-lreduced    =  F
-lrestart    =  F
+calc           =  stochio                                                     
+lnmlj          =  F
+lbmhft         =  F
+lbmhftd        =  F
+lmorse         =  F
+lcoulomb       =  F
+lsurf          =  F
+lvnlist        =  T
+lstatic        =  F
+lreduced       =  F
+lreducedN      =  F
+lwrite_restart =  F
+full_restart   =  F
+restart from positions and velocities only ( partial restart )
 periodic table generated
 stochio from oxydes input
 =============================================================

@@ -56,15 +56,16 @@ SUBROUTINE md_run
   USE config,                   ONLY :  natm , natmi , ntype , atype , atypei , itype , rx , ry , rz , rxs , rys , rzs , vx , vy , vz , fx, fy , fz , &
                                         write_CONTFF , center_of_mass , ntypemax , tau_nonb , tau_coul , write_trajff_xyz , simu_cell , system
   USE control,                  ONLY :  ltraj , longrange , calc , lstatic , lvnlist , lnmlj , lcoulomb , lmorse , &
-                                        non_bonded, numprocs, myrank , itraj_period , itraj_start , itraj_format, iefgall_format , iefall_format , idipall_format , lmsd, lvacf
+                                        lnon_bonded, numprocs, myrank , itraj_period , itraj_start , itraj_format, iefgall_format , iefall_format , idipall_format , lmsd, lvacf
   USE io,                       ONLY :  ionode , stdout, kunit_OSZIFF, kunit_TRAJFF,  kunit_EFGALL , kunit_EFALL , kunit_EQUILFF, ioprint , ioprintnode, kunit_DIPFF
   USE md,                       ONLY :  npas , lleapequi , nequil , nequil_period , nprint, &
-                                        fprint, spas , dt,  temp , updatevnl , integrator , itime, xi ,vxi, nhc_n, npropr,npropr_start
+                                        fprint, spas , dt,  temp , updatevnl , integrator , itime, itime0, itime1, xi ,vxi, nhc_n, npropr,npropr_start
 
   USE thermodynamic,            ONLY :  e_tot, u_lj_r, h_tot, e_kin , temp_r , init_general_accumulator , write_thermo ,  write_average_thermo , calc_thermo
   USE time,                     ONLY :  mdsteptimetot
-  USE field,                    ONLY :  engforce_driver , doefg , doefield , ef_t , efg_t , mu_t , lwfc , lwrite_dip , lwrite_quad,  &
-                                        lwrite_ef , lwrite_efg , write_DIPFF , write_EFGALL , write_EFALL, write_QUADFF
+!  USE field,                    ONLY :  engforce_driver , doefg , doefield , ef_t , efg_t , mu_t , lwfc , lwrite_dip , lwrite_quad,  &
+!                                        lwrite_ef , lwrite_efg , write_DIPFF , write_EFGALL , write_EFALL, write_QUADFF
+  USE engforce_driver,          ONLY :  engforce
   USE mpimdff
   USE msd
   USE vacf
@@ -122,24 +123,24 @@ SUBROUTINE md_run
 
   separator(stdout)
 
-  io_node WRITE ( stdout , '(a)' )      'properties at t=0'
+  io_node WRITE ( stdout , '(a,i)' )      'properties at t=',itime0-1
  
   allocate( xtmp(natm), ytmp(natm), ztmp(natm) )
 
-  if ( lwrite_dip ) then
-    if ( idipall_format .ne. 0 ) OPEN (unit = kunit_DIPFF ,file = 'DIPFF', STATUS='REPLACE')
-    if ( idipall_format .eq. 0 ) OPEN (unit = kunit_DIPFF ,file = 'DIPFF', STATUS='REPLACE' , form ='unformatted')
-  endif 
+!  if ( lwrite_dip ) then
+!    if ( idipall_format .ne. 0 ) OPEN (unit = kunit_DIPFF ,file = 'DIPFF', STATUS='REPLACE')
+!    if ( idipall_format .eq. 0 ) OPEN (unit = kunit_DIPFF ,file = 'DIPFF', STATUS='REPLACE' , form ='unformatted')
+!  endif 
 
-  if ( doefield ) then
-    if ( iefall_format .ne. 0 ) OPEN (unit = kunit_EFALL  ,file = 'EFALL', STATUS='REPLACE')
-    if ( iefall_format .eq. 0 ) OPEN (unit = kunit_EFALL  ,file = 'EFALL', STATUS='REPLACE' , form ='unformatted')
-  endif
+!  if ( doefield ) then
+!    if ( iefall_format .ne. 0 ) OPEN (unit = kunit_EFALL  ,file = 'EFALL', STATUS='REPLACE')
+!    if ( iefall_format .eq. 0 ) OPEN (unit = kunit_EFALL  ,file = 'EFALL', STATUS='REPLACE' , form ='unformatted')
+!  endif
 
-  if ( doefg ) then
-    if ( iefgall_format .ne. 0 ) OPEN (unit = kunit_EFGALL  ,file = 'EFGALL', STATUS='REPLACE')
-    if ( iefgall_format .eq. 0 ) OPEN (unit = kunit_EFGALL  ,file = 'EFGALL', STATUS='REPLACE' , form ='unformatted')
-  endif
+!  if ( doefg ) then
+!    if ( iefgall_format .ne. 0 ) OPEN (unit = kunit_EFGALL  ,file = 'EFGALL', STATUS='REPLACE')
+!    if ( iefgall_format .eq. 0 ) OPEN (unit = kunit_EFGALL  ,file = 'EFGALL', STATUS='REPLACE' , form ='unformatted')
+!  endif
 
   OPEN (unit = kunit_OSZIFF ,file = 'OSZIFF',STATUS = 'UNKNOWN')
   if ( itraj_format .ne. 0 ) OPEN (unit = kunit_TRAJFF ,file = 'TRAJFF')
@@ -148,6 +149,9 @@ SUBROUTINE md_run
   OPEN (unit = kunit_EQUILFF,file = 'EQUILFF',STATUS = 'UNKNOWN')
 #endif
 
+#ifdef debug
+         CALL print_config_sample(itime0-2,0)
+#endif
   ! ===================================
   !  calc. kinetic temperature at t=0
   ! ===================================
@@ -163,14 +167,14 @@ SUBROUTINE md_run
     ! =========================
     ! force + potential at t=0
     ! =========================
-     CALL engforce_driver 
+     CALL engforce
 
     ! ==================================================
     ! write thermodynamic information of config at t=0
     ! ==================================================
     CALL calc_thermo
-    CALL write_thermo( 0 , stdout , 'std' )
-    CALL write_thermo( 0 , kunit_OSZIFF , 'osz' )
+    CALL write_thermo( itime0-1 , stdout , 'std' )
+    CALL write_thermo( itime0-1 , kunit_OSZIFF , 'osz' )
 
   else
   ! ===========================================================================
@@ -190,43 +194,43 @@ SUBROUTINE md_run
     ! ===================
     ! force + potential
     ! ===================
-    CALL engforce_driver 
+    CALL engforce
     ! =======================================================
     ! write thermodynamic information of the starting point
     ! =======================================================
     CALL calc_thermo
-    CALL write_thermo( 0 , stdout , 'std')
-    CALL write_thermo( 0 , kunit_OSZIFF , 'osz' )
+    CALL write_thermo( itime0-1 , stdout , 'std')
+    CALL write_thermo( itime0-1 , kunit_OSZIFF , 'osz' )
      rx = xtmp
      ry = ytmp
      rz = ztmp
   endif 
 
 #ifdef debug
-         CALL print_config_sample(0,0)
+         CALL print_config_sample(itime0-1,0)
 #endif
   ! =======================
   !  stress tensor at t=0
   ! =======================
   if ( .not. lstatic ) then
     io_node blankline(stdout)
-    io_node WRITE ( stdout , '(a)' ) 'stress tensor of initial configuration' 
+    io_node WRITE ( stdout , '(a)' ) '  stress tensor of initial configuration' 
     io_node blankline(stdout)
   else
     io_node blankline(stdout)
-    io_node WRITE ( stdout , '(a)' ) 'stress tensor :' 
+    io_node WRITE ( stdout , '(a)' ) '  stress tensor :' 
     io_node blankline(stdout)
   endif    
 
-  if ( non_bonded ) then 
-    io_node WRITE ( stdout , '(a)' )   "non_bonded stress tensor"
+  if ( lnon_bonded ) then 
+    io_node WRITE ( stdout , '(a)' )   "  non_bonded stress tensor"
     CALL print_tensor_n ( tau_nonb ) 
   endif
   if ( lcoulomb )   then
-    io_node WRITE ( stdout , '(a)' )    "coulombic stress tensor"
+    io_node WRITE ( stdout , '(a)' )    "  coulombic stress tensor"
     CALL print_tensor_n ( tau_coul  ) 
   endif
-  io_node WRITE ( stdout , '(a)' )    "total stress tensor"
+  io_node WRITE ( stdout , '(a)' )    "  total stress tensor"
   CALL print_tensor_n ( tau_coul+tau_nonb  )
 
   ! =========================
@@ -245,7 +249,7 @@ SUBROUTINE md_run
    statime
 #endif
 
-MAIN:  do itime = 1 , npas 
+MAIN:  do itime = itime0 , itime1
 
   ! ioprint condition
   if ( MOD ( itime , nprint ) .eq. 0.0_dp ) then
@@ -310,9 +314,9 @@ MAIN:  do itime = 1 , npas
          ! ================================
          if ( ( ANY ( integrator .eq. rescale_allowed ) ) .and.  &
                   ( ( itime .le. nequil .and. MOD ( itime , nequil_period ) .eq. 0 ) .and. &
-                    ( itime .ne. npas .and. itime .ne. 1 ) ) ) then
+                    ( itime .ne. itime0 .and. itime .ne. itime1 ) ) ) then
            io_printnode WRITE(stdout ,'(a)') ''
-           io_printnode WRITE(stdout ,'(a)') ' velocities are rescaled'
+           io_printnode WRITE(stdout ,'(a)') 'velocities are rescaled'
            CALL rescale_velocities(0)
          endif
          ! ================================
@@ -320,7 +324,7 @@ MAIN:  do itime = 1 , npas
          ! ================================
          if ( integrator .eq. 'npe-vv' .and.  &
                   ( ( itime .le. nequil.and.MOD ( itime , nequil_period ) .eq. 0 ) .and. &
-                    ( itime .ne. npas .and. itime .ne. 1 ) ) ) then
+                    ( itime .ne. itime0 .and. itime .ne. itime1 ) ) ) then
            CALL rescale_volume(0)
          endif
 
@@ -344,50 +348,50 @@ MAIN:  do itime = 1 , npas
            ! ================================
            !  write EFALL file (trajectory)
            ! ================================
-             if ( lwrite_ef ) then
-               CALL write_EFALL
-             endif
+           !  if ( lwrite_ef ) then
+           !    CALL write_EFALL
+           !  endif
 
            ! ================================
            !  write EFGALL file (trajectory)
            ! ================================
-             if ( lwrite_efg ) then
-                     write(*,*) 'in runmd write_efg'
-               CALL write_EFGALL
-             endif
+           !  if ( lwrite_efg ) then
+           !          write(*,*) 'in runmd write_efg'
+           !    CALL write_EFGALL
+           !  endif
 
            ! ================================
            !  write DIPFF file (trajectory)
            ! ================================
-             if ( lwrite_dip ) then
-               CALL write_DIPFF 
-             endif
+           !  if ( lwrite_dip ) then
+           !    CALL write_DIPFF 
+           !  endif
 
            ! ================================
            !  write DIPFF file (trajectory)
            ! ================================
-             if ( lwrite_quad ) then
-               CALL write_QUADFF 
-             endif
+           !  if ( lwrite_quad ) then
+           !    CALL write_QUADFF 
+           !  endif
 
          endif
 
 #ifdef stress_t
   io_printnode blankline(stdout)
   if ( ioprintnode ) then
-    if ( non_bonded ) then 
-      WRITE ( stdout , '(a)' )   "non_bonded stress tensor"
+    if ( lnon_bonded ) then 
+      WRITE ( stdout , '(a)' )   "  non_bonded stress tensor"
       CALL print_tensor_n ( tau_nonb ) 
     endif
     if ( lcoulomb )   then
-      WRITE ( stdout , '(a)' )    "coulombic stress tensor"
+      WRITE ( stdout , '(a)' )    "  coulombic stress tensor"
       CALL print_tensor_n ( tau_coul  ) 
     endif
   endif
 #endif
   if ( ioprintnode ) then
     blankline(stdout)
-    WRITE ( stdout , '(a)' )    'total stress tensor'
+    WRITE ( stdout , '(a)' )    '  total stress tensor'
     CALL print_tensor_n (tau_coul+tau_nonb) 
   endif
        
@@ -401,13 +405,13 @@ MAIN:  do itime = 1 , npas
        modcom1=com(1,1)*com(1,1)+com(1,2)*com(1,2)+com(1,3)*com(1,3) 
        modcom2=com(2,1)*com(2,1)+com(2,2)*com(2,2)+com(2,3)*com(2,3) 
        ! sum 
-       sumcom1   = sumcom1 + SQRT (modcom1)
-       sumcom2   = sumcom2 + SQRT (modcom2)
+       sumcom1   = sumcom1 + SQRT (modcom1,kind=dp)
+       sumcom2   = sumcom2 + SQRT (modcom2,kind=dp)
        ! sum od square
        sumcom1sq = sumcom1sq + modcom1
        sumcom2sq = sumcom2sq + modcom2
        ! counting  
-       ddtt      =1.0_dp / DBLE (comcount)
+       ddtt      =1.0_dp / REAL (comcount , kind = dp)
        ! average
        mcom1     = sumcom1*ddtt
        mcom2     = sumcom2*ddtt 
@@ -498,18 +502,18 @@ MAIN:  do itime = 1 , npas
     io_node WRITE ( stdout , '(a)' ) 'end of the main loop'
     io_node blankline(stdout)
     io_node blankline(stdout)
-    io_node WRITE ( stdout , '(a)' ) 'stress tensor of final configuration' 
+    io_node WRITE ( stdout , '(a)' ) '  stress tensor of final configuration' 
     if ( ionode ) then
-      if ( non_bonded ) then 
-        WRITE ( stdout , '(a)' )   "non_bonded stress tensor"
+      if ( lnon_bonded ) then 
+        WRITE ( stdout , '(a)' )   "  non_bonded stress tensor"
         CALL print_tensor_n ( tau_nonb ) 
       endif
       if ( lcoulomb )   then
-        WRITE ( stdout , '(a)' )    "coulombic stress tensor"
+        WRITE ( stdout , '(a)' )    "  coulombic stress tensor"
         CALL print_tensor_n ( tau_coul  ) 
       endif
     endif
-    io_node WRITE ( stdout , '(a)' )    "total stress tensor"
+    io_node WRITE ( stdout , '(a)' )    "  total stress tensor"
     CALL print_tensor_n ( tau_coul+tau_nonb  ) 
     if ( ionode .and. lvnlist .and. updatevnl .ne. 0 ) WRITE ( stdout , '(a,i10,e17.8)' ) 'verlet list update frequency',updatevnl,REAL(npas,kind=dp)/REAL(updatevnl,kind=dp)
 
@@ -546,12 +550,16 @@ MAIN:  do itime = 1 , npas
 !    call dealloc 
 !#endif
 
+#ifdef debug
+         CALL print_config_sample(0,0)
+#endif
+
 #ifdef block
   CLOSE ( kunit_EQUILFF )
 #endif
-  if ( doefg ) then
-    CLOSE (kunit_EFGALL)
-  endif
+  !if ( doefg ) then
+  !  CLOSE (kunit_EFGALL)
+  !endif
   CLOSE ( kunit_TRAJFF )
   CLOSE ( kunit_OSZIFF )
   deallocate( xtmp, ytmp, ztmp )

@@ -29,7 +29,8 @@
 ! ******************************************************************************
 MODULE rspace
 
-  USE constants,                ONLY :  dp
+  USE io,               ONLY :  ionode, stdout 
+  USE constants,        ONLY :  dp
 
   implicit none      
 
@@ -63,7 +64,6 @@ CONTAINS
 ! ******************************************************************************
 SUBROUTINE direct_sum_init ( rm )
 
-  USE io,       ONLY : ionode , stdout 
 
   implicit none
  
@@ -83,9 +83,9 @@ SUBROUTINE direct_sum_init ( rm )
     do ncelly = -ncelldirect,ncelldirect
       do ncellz = -ncelldirect,ncelldirect
         nc = nc + 1
-        rm%boxxyz(1,nc) = DBLE (ncellx)
-        rm%boxxyz(2,nc) = DBLE (ncelly)
-        rm%boxxyz(3,nc) = DBLE (ncellz)
+        rm%boxxyz(1,nc) = REAL (ncellx,kind=dp)
+        rm%boxxyz(2,nc) = REAL (ncelly,kind=dp)
+        rm%boxxyz(3,nc) = REAL (ncellz,kind=dp)
         rm%rr(nc) = rm%boxxyz(1,nc) * rm%boxxyz(1,nc) + &
                 rm%boxxyz(2,nc) * rm%boxxyz(2,nc) + &
                 rm%boxxyz(3,nc) * rm%boxxyz(3,nc)  
@@ -119,8 +119,6 @@ END SUBROUTINE direct_sum_init
 ! ******************************************************************************
 
 SUBROUTINE reorder_rpt ( rm )
-
-  USE io,  ONLY :  stdout 
 
   implicit none
 

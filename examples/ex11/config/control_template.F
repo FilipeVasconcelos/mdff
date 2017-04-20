@@ -4,8 +4,8 @@
         cutlongrange  = __CUTOFF_LR__
         skindiff      = 1.0d0
         lvnlist       = .true.
-        lrestart      = __RESTART__
-        restart_data  = __DATA__ 
+        lwrite_restart= __RESTART__
+        posff_data  = __DATA__ 
         lbmhftd       = .true.
         lcoulomb      = .true.
         ltraj         = __LTRAJ__ 

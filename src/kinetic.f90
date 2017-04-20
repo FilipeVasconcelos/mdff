@@ -31,7 +31,7 @@ SUBROUTINE init_velocities
   USE config,           ONLY :  vx , vy , vz , natm , ntype , ntypemax , atypei , center_of_mass
   USE md,               ONLY :  nequil , setvel , temp
   USE io,               ONLY :  ionode , stdout
-  USE control,          ONLY :  lrestart
+  USE control,          ONLY :  full_restart
 
   implicit none
 
@@ -55,10 +55,7 @@ SUBROUTINE init_velocities
   ! ===============================================
   !  generate velocities from a given distribution
   ! ===============================================
-  ! very stupid bug found jeudi 27 mars 2014 
-  ! if nequil == 0 no velocity in NVT and NPT
-  !if ( (key .eq. 0 .or. .not. lrestart) .and. temp .ne. 0.0_dp .and. (nequil.ne.0) ) then
-  if ( (key .eq. 0 .or. .not. lrestart) .and. temp .ne. 0.0_dp ) then
+  if ( (key .eq. 0 .or. .not. full_restart) .and. temp .ne. 0.0_dp ) then
 
     separator(stdout)    
     io_node blankline(stdout)    
@@ -80,9 +77,9 @@ SUBROUTINE init_velocities
     if ( setvel.ne.'Uniform' )   CALL rescale_velocities(1)
 
   ! ===========
-  !  lrestart
+  ! non null velocities in input from POSFF 
   ! ===========
-  elseif ( key .eq. 1 .and. lrestart ) then
+  elseif ( key .eq. 1 ) then
 
     ! =======================
     !  input temperature  
@@ -120,7 +117,7 @@ END SUBROUTINE init_velocities
 !> \brief
 !! this subroutine rescale velocities with beredsen thermostat.
 !! If tauTberendsen = dt , this becomes a simple rescale procedure
-!> \param[in] quite make the subroutine quite
+!> \param[in] quite : make the subroutine quite
 ! ******************************************************************************
 SUBROUTINE rescale_velocities (quite)
 
@@ -173,9 +170,9 @@ SUBROUTINE rescale_velocities (quite)
       SUMY = SUMY + vy ( ia )
       SUMZ = SUMZ + vz ( ia )
     enddo
-    SUMX = SUMX / DBLE ( natm )
-    SUMY = SUMY / DBLE ( natm )
-    SUMZ = SUMZ / DBLE ( natm )
+    SUMX = SUMX / REAL ( natm , kind = dp )
+    SUMY = SUMY / REAL ( natm , kind = dp )
+    SUMZ = SUMZ / REAL ( natm , kind = dp )
     do ia = 1 , natm
        vx ( ia ) = vx ( ia ) - SUMX
        vy ( ia ) = vy ( ia ) - SUMY
@@ -377,7 +374,7 @@ SUBROUTINE uniform_random_velocities
   Vx0t = 0.0_dp
   Vy0t = 0.0_dp
   Vz0t = 0.0_dp
-  f = SQRT ( 3 * DBLE ( natm ) * temp / v2 )
+  f = SQRT ( 3 * REAL ( natm , kind = dp ) * temp / v2 )
   v2 = 0.0_dp
   DO i = 1, natm
     VX(i) = (VX(i)-vx0) * f
@@ -388,7 +385,7 @@ SUBROUTINE uniform_random_velocities
     Vz0t = Vz0t + VZ(i)
     v2 = v2 + VX(i) ** 2 + VY(i) ** 2 + VZ(i) ** 2
   ENDDO
-  v2 = v2 / DBLE(3 * natm)
+  v2 = v2 / REAL (3 * natm , kind = dp )
   Vx0t = Vx0t/natm
   Vy0t = Vy0t/natm
   Vz0t = Vz0t/natm
@@ -507,9 +504,9 @@ SUBROUTINE maxwellboltzmann_velocities
     SUMZ = SUMZ + vz ( ia )
   enddo
 
-  SUMX = SUMX / DBLE ( natm )
-  SUMY = SUMY / DBLE ( natm )
-  SUMZ = SUMZ / DBLE ( natm )
+  SUMX = SUMX / REAL ( natm ,kind=dp)
+  SUMY = SUMY / REAL ( natm ,kind=dp)
+  SUMZ = SUMZ / REAL ( natm ,kind=dp)
 
   do ia  = 1 , natm
      vx ( ia ) = vx ( ia ) - SUMX

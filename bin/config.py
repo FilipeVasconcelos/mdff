@@ -6,7 +6,7 @@ import time
 import random
 
 from lattice import Lattice
-from constants import float_format
+from constants import float_format,float_format_config
 from vesta import vesta_definitions
 # =====================================================================================
 
@@ -116,7 +116,7 @@ class Config(Lattice):
 	self.types              = types
 	self.natmpertype        = natmpertype
 	self.coord_format       = coord_format
-	self.dyn                = True
+	self.dyn                = False 
 	self.cartesian_allowed  = ['C', 'Cartesian' ]
 	self.direct_allowed     = ['D', 'Direct' ]
 	self.rcut_coeff         = rcut_coeff
@@ -323,18 +323,33 @@ class Config(Lattice):
 
         self.ntype        = int(lines[5])
         self.types        = [ item for item in lines[6].split() ]
-        self.natmpertype  = [ item for item in lines[7].split() ]
+        self.natmpertype  = [ int(item) for item in lines[7].split() ]
         self.coord_format = lines[8].strip()
 
         for i in range(9, 9+self.natm):
             line_list = [ item for item in lines[i].split()]
             self.ions.append (  Ion ( index_ion=i-8, type=line_list[0], pos = [ float(line_list[1]), float(line_list[2]) , float(line_list[3]) ] ) )
 
-        self.volume(u,v,w)
-        self.param (u,v,w)
-        self.recip (u,v,w)
+        self.typeinfo_init()		
+        self.lattice_reinit(u,v,w,1.0)
+        self.get_volume(u,v,w)
+        self.get_lattice_parameters (u,v,w)
+        self.get_reciprocal_basis (u,v,w)
 
         f.close()
+
+    # =====================================================================================
+    def read_CONFIG(self,filename):
+    
+        try:
+	    f = open(filename)
+        except IOError,e:
+            print "ERROR : ",e
+            print "#"+80*"="
+            sys.exit()
+        else:
+            lines       = f.readlines()
+
 
 
     # =====================================================================================
@@ -355,9 +370,9 @@ class Config(Lattice):
         u           = [ float(item) for item in lines[2].split() ]
         v           = [ float(item) for item in lines[3].split() ]
         w           = [ float(item) for item in lines[4].split() ]
-        assert len(u)==3 , "line 3 of POSFF should have only 3 elements"
-        assert len(v)==3 , "line 4 of POSFF should have only 3 elements"
-        assert len(w)==3 , "line 5 of POSFF should have only 3 elements"
+        assert len(u)==3 , "line 3 of POSCAR should have only 3 elements"
+        assert len(v)==3 , "line 4 of POSCAR should have only 3 elements"
+        assert len(w)==3 , "line 5 of POSCAR should have only 3 elements"
 
         self.types        = [ item for item in lines[5].split() ]
 #       print self.types
@@ -488,10 +503,24 @@ class Config(Lattice):
 	print >> f , '%5i'*self.ntype %  tuple(self.natmpertype)
         print >> f, self.coord_format
 	for ia in range(self.natm):
-	        form = "%5s"+3*float_format
-        	print >> f , form % ( self.ions[ia].type, self.ions[ia].r[0] , self.ions[ia].r[1], self.ions[ia].r[2] )
+	    form = "%5s"+3*float_format
+            print >> f , form % ( self.ions[ia].type, self.ions[ia].r[0] , self.ions[ia].r[1], self.ions[ia].r[2] )
 	f.close()
 				
+
+    # =====================================================================================
+    def write_CONFIG(self,filename):
+
+        f = open(filename,'w+')
+	print >> f , self.system
+        print >> f , "         0         1      ",self.natm,"0.0"
+	for i in range(3):	
+	    print >> f , float_format*len(self.direct[i]) % tuple(self.direct[i])
+        for ia in range(self.natm):
+	    form1 = "%2s%15i"
+	    form2 = float_format+2*float_format_config 
+            print >> f , form1 % ( self.ions[ia].type , ia )
+            print >> f , form2 % ( self.ions[ia].r[0] , self.ions[ia].r[1], self.ions[ia].r[2])
 
     # =====================================================================================
     def write_TRAJFF(self,filename,option):

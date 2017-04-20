@@ -45,8 +45,8 @@ MODULE control
   logical,           SAVE :: ltraj            !< save trajectory                                    
   logical,           SAVE :: lstatic          !< no MD                                                
   logical,           SAVE :: lvnlist          !< verlet list if .true.                            
-  logical,           SAVE :: lrestart         !< restart or not if true strart from the velocities read in POSFF
-  logical,           SAVE :: full_restart     !< restart or not if true strart from the velocities read in POSFF
+  logical,           SAVE :: lwrite_restart   !< control RESTART file
+  logical,           SAVE :: full_restart     !< full restart from RESTART file
   logical,           SAVE :: lreduced         !< print reduced units ( see reduced_units subroutine in constants.f90 )
   logical,           SAVE :: lreducedN        !< print reduced thermo quantites by the number of atoms (natm)
   logical,           SAVE :: lnmlj            !< n-m lennard-jones potential
@@ -95,7 +95,7 @@ MODULE control
   !  format of TRAJFF allowed  
   ! =====================================================
   character(len=3), SAVE :: trajff_data
-  character(len=3), SAVE :: restart_data
+  character(len=3), SAVE :: posff_data
   character(len=3), SAVE :: iscff_data
   character(len=3), SAVE :: data_allowed(4)
   data data_allowed / 'rvf' , 'rnn' , 'rnf' , 'rvn' /
@@ -103,7 +103,7 @@ MODULE control
   ! ==============================================================
   !  non-bonded potential if one of lnmlj, lbmhftd, lbmhftd,lmorse is true 
   ! ==============================================================
-  logical, SAVE           :: non_bonded 
+  logical, SAVE           :: lnon_bonded
    
 CONTAINS
 
@@ -141,7 +141,8 @@ SUBROUTINE control_init ( MDFF )
                          ltest          , &
                          lmsd           , &
                          lvacf          , &
-                         lrestart       , &
+                         lwrite_restart , &
+                         full_restart   , &
                          cutlongrange   , &
                          cutshortrange  , &
                          calc           , &
@@ -156,7 +157,7 @@ SUBROUTINE control_init ( MDFF )
                          iefall_format  , & 
                          iefgall_format , & 
                          idipall_format , & 
-                         restart_data   , & 
+                         posff_data   , & 
                          skindiff     
                
   ! ======================
@@ -220,7 +221,7 @@ SUBROUTINE control_default_tag
   ltest         = .false.
   lmsd          = .false.
   lvacf         = .false.
-  lrestart      = .false.
+  lwrite_restart= .false.
   full_restart  = .false.
   calc          = 'md'
   dgauss        = 'boxmuller_basic'
@@ -237,7 +238,7 @@ SUBROUTINE control_default_tag
   idipall_format= 1
   trajff_data   = 'rnn'
   iscff_data    = 'rnn'
-  restart_data  = 'rnn'
+  posff_data  = 'rnn'
 
   return 
  
@@ -252,76 +253,44 @@ END SUBROUTINE control_default_tag
 SUBROUTINE control_check_tag
 
   USE io,               ONLY :  stdout , ionode
-  USE constants,        ONLY : reduced_units 
+  USE constants,        ONLY :  reduced_units 
 
   implicit none
 
   ! local
   logical :: restart_file_exists
-  logical :: allowed
   integer :: i
-
 
   ! ======
   !  calc
   ! ======
-  do i = 1 , size( calc_allowed ) 
-   if ( trim(calc) .eq. calc_allowed(i))  allowed = .true.
-  enddo
-  if ( .not. allowed ) then
-      if ( ionode )  WRITE ( stdout , '(a)' ) 'ERROR controltag: calc should be ', calc_allowed
-      STOP 
-  endif
-  allowed = .false.
+  CALL check_allowed_tags( size( calc_allowed ) , calc_allowed, calc, 'in controltag','calc' )
   ! ===========
   !  longrange
   ! ===========
-  do i = 1 , size( longrange_allowed )
-   if ( trim(longrange) .eq. longrange_allowed(i))  allowed = .true.
-  enddo
-  if ( .not. allowed ) then
-    io_node WRITE ( stdout , '(a)' ) 'ERROR controltag: longrange should be ', longrange_allowed
-  endif
-  allowed = .false.
+  CALL check_allowed_tags( size ( longrange_allowed ) , longrange_allowed, longrange, 'in controltag','longrange' )
   ! =========
   !  dgauss
   ! =========
-  do i = 1 , size( dgauss_allowed )
-   if ( trim(dgauss) .eq. dgauss_allowed(i))  allowed = .true.
-  enddo
-  if ( .not. allowed ) then
-    io_node WRITE ( stdout , '(a)' ) 'ERROR controltag: dgauss should be ', dgauss_allowed
-  endif
-  ! =========
+  CALL check_allowed_tags( size( dgauss_allowed ), dgauss_allowed , dgauss, 'in controltag','dgauss' )
+  ! ===========
   ! trajff_data  
-  ! =========
-  allowed = .false.
-  do i = 1 , size( data_allowed )
-   if ( trim(trajff_data) .eq. data_allowed(i))  allowed = .true.
-  enddo
-  if ( .not. allowed ) then
-    io_node WRITE ( stdout , '(a)' ) 'ERROR controltag: trajf_data should be ', data_allowed
-  endif
-  allowed = .false.
-  do i = 1 , size( data_allowed )
-   if ( trim(iscff_data) .eq. data_allowed(i))  allowed = .true.
-  enddo
-  if ( .not. allowed ) then
-    io_node WRITE ( stdout , '(a)' ) 'ERROR controltag: iscff_data should be ', data_allowed
-  endif
-  allowed = .false.
-  do i = 1 , size( data_allowed )
-   if ( trim(restart_data) .eq. data_allowed(i))  allowed = .true.
-  enddo
-  if ( .not. allowed ) then
-    io_node WRITE ( stdout , '(a)' ) 'ERROR controltag: restart_data should be ', data_allowed
-  endif
+  ! ===========
+  CALL check_allowed_tags( size( data_allowed ), data_allowed, trajff_data, 'in controltag','trajff_data' )
+  ! ===========
+  ! iscff_data  
+  ! ===========
+  CALL check_allowed_tags( size( data_allowed ) , data_allowed, iscff_data, 'in controltag','iscff_data' )
+  ! ===========
+  ! posff_data  
+  ! ===========
+  CALL check_allowed_tags( size( data_allowed ), data_allowed , posff_data, 'in controltag','posff_data' )
 
   if ( lnmlj .or. lmorse .or. lbmhftd .or. lbmhft ) then
-    non_bonded = .true.
+    lnon_bonded = .true.
   endif
 
-  if ( non_bonded .and. cutshortrange .eq. 0.0_dp ) then
+  if ( lnon_bonded .and. cutshortrange .eq. 0.0_dp ) then
     io_node WRITE ( stdout , '(a)' ) 'controltag: cutshortrange is null', cutshortrange
     STOP
   endif
@@ -338,15 +307,16 @@ SUBROUTINE control_check_tag
   if ( calc .ne. 'md' ) return 
 
   if ( .not. lnmlj .and. .not. lcoulomb .and. .not. lmorse .and. .not. lharm .and. .not. lbmhftd .and. .not. lbmhft ) then
-   if ( ionode )  WRITE ( stdout , '(a)' ) 'ERROR controltag: nmlj, harm , morse, bmhftd or coulomb or all of them . Anyway make a choice !! '
+   if ( ionode )  WRITE ( stdout , '(a)' ) 'ERROR controltag: nmlj, harm , morse, bmhftd or coulomb or all of them not defined. Make a choice !! '
    STOP
   endif
 
   ! full restart
-  INQUIRE(FILE="RESTART", EXIST=restart_file_exists)
-  if ( lrestart .and. restart_file_exists ) then
-    full_restart = .true.
-  endif
+  !to be removed nov 2016
+ ! INQUIRE(FILE="RESTART", EXIST=restart_file_exists)
+ ! if ( lwrite_restart .and. restart_file_exists ) then
+ !   full_restart = .true.
+ ! endif
 
 
   return
@@ -435,21 +405,22 @@ SUBROUTINE control_print_info( kunit , MDFF )
      blankline(kunit)
      WRITE ( kunit ,'(a)'  )     'CONTROL MODULE ... WELCOME'
      blankline(kunit)
-     WRITE ( kunit ,'(a,a)')     'calc        =  ', calc 
-     WRITE ( kunit ,'(a,l2)')    'lnmlj       = ', lnmlj 
-     WRITE ( kunit ,'(a,l2)')    'lbmhft      = ', lbmhft
-     WRITE ( kunit ,'(a,l2)')    'lbmhftd     = ', lbmhftd
-     WRITE ( kunit ,'(a,l2)')    'lmorse      = ', lmorse 
-     WRITE ( kunit ,'(a,l2)')    'lcoulomb    = ', lcoulomb
-     WRITE ( kunit ,'(a,l2)')    'lsurf       = ', lsurf
-     WRITE ( kunit ,'(a,l2)')    'lvnlist     = ', lvnlist
-     WRITE ( kunit ,'(a,l2)')    'lstatic     = ', lstatic
-     WRITE ( kunit ,'(a,l2)')    'lreduced    = ', lreduced 
-     WRITE ( kunit ,'(a,l2)')    'lreducedN   = ', lreducedN 
-     WRITE ( kunit ,'(a,l2)')    'lrestart    = ', lrestart 
+     WRITE ( kunit ,'(a,a)')     'calc           =  ', calc 
+     WRITE ( kunit ,'(a,l2)')    'lnmlj          = ', lnmlj 
+     WRITE ( kunit ,'(a,l2)')    'lbmhft         = ', lbmhft
+     WRITE ( kunit ,'(a,l2)')    'lbmhftd        = ', lbmhftd
+     WRITE ( kunit ,'(a,l2)')    'lmorse         = ', lmorse 
+     WRITE ( kunit ,'(a,l2)')    'lcoulomb       = ', lcoulomb
+     WRITE ( kunit ,'(a,l2)')    'lsurf          = ', lsurf
+     WRITE ( kunit ,'(a,l2)')    'lvnlist        = ', lvnlist
+     WRITE ( kunit ,'(a,l2)')    'lstatic        = ', lstatic
+     WRITE ( kunit ,'(a,l2)')    'lreduced       = ', lreduced 
+     WRITE ( kunit ,'(a,l2)')    'lreducedN      = ', lreducedN 
+     WRITE ( kunit ,'(a,l2)')    'lwrite_restart = ', lwrite_restart 
+     WRITE ( kunit ,'(a,l2)')    'full_restart   = ', full_restart 
      if ( full_restart ) then
        WRITE ( kunit ,'(a)')     'restarting from RESTART file (full restart) '
-     else if ( lrestart ) then
+     else 
        WRITE ( kunit ,'(a)')     'restart from positions and velocities only ( partial restart )' 
      endif
      
