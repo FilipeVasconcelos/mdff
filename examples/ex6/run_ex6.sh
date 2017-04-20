@@ -3,8 +3,8 @@
 EXEDLPOLY=DLPOLY.X
 EXEMDFF=mdff.x
 
-dlpoly=false
-mdff=true
+dlpoly=true
+mdff=false
 ensemble=nvt
 
 if $dlpoly; then

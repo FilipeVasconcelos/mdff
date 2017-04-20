@@ -32,7 +32,7 @@ CP = cpp
 CPPFLAGS= -P -C -CC -traditional
 
 # installation directory
-INSTALL_DIR=/home/filipe/dev/github/mdff/bin
+INSTALL_DIR=/home/filipe/dev/mdff/bin
 $(info instalation dir: : $(shell readlink -f $(INSTALL_DIR)) )
 # List of executable to be built within the package
 EXE= mdff.x 
@@ -64,12 +64,12 @@ endif
 # =================
 #   on mario / babar / charrue
 # =================
-#FCFLAGS = -O3 -xSSE4.2 -align all -ip -static 
+FCFLAGS = -O3 -xSSE4.2 -align all -ip -static 
 #FCFLAGS = -O1 -xHost -align all #-ip -static 
 #FCFLAGS = -O3 -xHost -align all 
 #FCFLAGS = -O3 -ip -static -align all 
 #FCFLAGS = -O3 -ip -static -xHost  -align all
-FCFLAGS = -O3 -xHost -align all
+#FCFLAGS = -O3 -xHost -align all
 #FCFLAGS = -O3 -ip -xW
 #FCFLAGS = -O0 -check all  #-check:noarg_temp_created
 #FCFLAGS = -O0 
