@@ -1163,8 +1163,9 @@ SUBROUTINE engforce_bmhftd_pbc
             ir6d = ir6 * f6
             ir8d = ir8 * f8
           else
-            fdiff6 = 1.0_dp
-            fdiff8 = 1.0_dp
+            !print*,'here in non_bonded'
+            fdiff6 = 0.0_dp
+            fdiff8 = 0.0_dp
             ir6d = ir6
             ir8d = ir8
           endif
