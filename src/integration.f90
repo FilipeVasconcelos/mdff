@@ -146,7 +146,6 @@ SUBROUTINE prop_velocity_verlet
   real(kind=dp), dimension (:), allocatable :: fsx , fsy , fsz
   real(kind=dp) :: tempi , kin
 
-
   ! save previous forces
   allocate (fsx(natm),fsy(natm),fsz(natm))
   fsx = 0.0_dp

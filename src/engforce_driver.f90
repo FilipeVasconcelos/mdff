@@ -117,7 +117,6 @@ SUBROUTINE engforce
   real(kind=dp) , allocatable :: theta ( : , : , : )
   logical :: didpim
 
-
   ! test purpose only
   ! harmonic oscillator ( test purpose )
   !if ( lharm ) then
@@ -147,6 +146,7 @@ SUBROUTINE engforce
   if ( lcoulomb ) then
 
      allocate( ef(3,natm) , efg(3,3,natm) , mu(3,natm) , theta(3,3,natm))
+!     allocate(pair_thole,pair_thole_distance )
      pair_thole_distance = 0.0_dp
      mu=0.0_dp
      theta=0.0_dp
@@ -171,8 +171,8 @@ SUBROUTINE engforce
      efg_t    = efg
 
      deallocate( ef , efg , mu , theta )
-     deallocate ( pair_thole )
-     deallocate ( pair_thole_distance )
+!     deallocate ( pair_thole )
+!     deallocate ( pair_thole_distance )
 
      tau = tau + tau_coul
 

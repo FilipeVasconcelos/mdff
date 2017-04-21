@@ -18,7 +18,7 @@
 
 ! ======= Hardware =======
 #include "symbol.h"
-!#define debug
+#define debug
 ! ======= Hardware =======
 
 ! *********************** MODULE field *****************************************
@@ -115,7 +115,7 @@ SUBROUTINE field_init
   USE control,                  ONLY :  calc , lnmlj , lcoulomb , lmorse , longrange, lnon_bonded
   USE non_bonded,               ONLY :  non_bonded_init
   USE coulomb,                  ONLY :  qch, dip, quad, quad_nuc ,coulomb_init, coulomb_print_info 
-  USE pim,                      ONLY :  pim_init
+  USE pim,                      ONLY :  pim_init,pim_print_info
 
   implicit none
 
@@ -175,6 +175,7 @@ SUBROUTINE field_init
     !  print coulomb info
     ! ================================
     CALL coulomb_print_info(stdout)
+    CALL pim_print_info(stdout)
   endif
 
   ! ================================
