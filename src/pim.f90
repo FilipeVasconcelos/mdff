@@ -205,7 +205,7 @@ SUBROUTINE pim_check_tag
   ldamp=.false.
   if ( any ( ldip_damping )  )  ldamp = .true.
 
-  if ( ldamp .or. lbmhftd ) CALL get_TT_damp
+  if ( ldamp ) CALL get_TT_damp
 
   ! =======================
   !  algo_moment_from_pola 

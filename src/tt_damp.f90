@@ -1,7 +1,7 @@
-!#define debug_TT
 MODULE tt_damp
 
 #include "symbol.h"
+#define debug_TT
   USE constants,        ONLY :  dp
   USE io,               ONLY :  stdout, ionode
 
