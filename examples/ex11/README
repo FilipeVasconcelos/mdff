@@ -1,0 +1,4 @@
+ex11 : Generating 5 random configuration of SiO2 with
+       102  atoms and execute  a short  equilibration
+       run for each of them.
+       (NVE ~ 2 ps Rigid Ions and Polarizable Ions models)
