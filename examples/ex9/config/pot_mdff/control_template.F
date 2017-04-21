@@ -25,6 +25,7 @@
 &non_bondedtag
         ctrunc = 'notrunc'
         !INCLUDE <BMHFTD.POT>  
+        !INCLUDE <BMHFT.POT>  
 &end
 
 
@@ -34,5 +35,13 @@
 &end
 
 &pimtag
+       ! ewald summation
+       algo_moment_from_pola='scf'
+       omegakO       = 0.7
+       conv_tol_ind  = 1e-11
+       algo_ext_dipole = 'aspc'
+       extrapolate_order = 2
+
        !INCLUDE <PIM.POT>
+       !INCLUDE <PIMD.POT>
 &end

@@ -46,14 +46,38 @@ Docontrol()
 	cd pot_mdff/
 	mv ../scr$test_index .
 
-	if [ $pim == "YES" ] ; then
-	        if   [ $damp == "YES" ] ; then
-	                include IONS.POT < control_template.F | include BMHFTD.POT | include PIMD.POT > tmp1
-	        elif [ $damp == "NO" ] ; then
-	                include IONS.POT < control_template.F | include BMHFTD.POT | include PIM.POT > tmp1
-	        fi
+	echo $bmh $ftd $coul $pim $damp
+	if [ $ftd == "YES" ]; then 
+		if [ $pim == "YES" ] ; then
+		        if   [ $damp == "YES" ] ; then
+		                include IONS.POT < control_template.F | include BMHFTD.POT | include PIMD.POT > tmp1
+		        elif [ $damp == "NO" ] ; then
+		                include IONS.POT < control_template.F | include BMHFTD.POT | include PIM.POT > tmp1
+		        fi
+		else
+			 include IONS.POT < control_template.F | include BMHFTD.POT > tmp1	
+		fi
+	elif [ $bmh == "YES" ]; then
+		if [ $pim == "YES" ] ; then
+		        if   [ $damp == "YES" ] ; then
+		                include IONS.POT < control_template.F | include BMHFT.POT | include PIMD.POT > tmp1
+		        elif [ $damp == "NO" ] ; then
+		                include IONS.POT < control_template.F | include BMHFT.POT | include PIM.POT > tmp1
+		        fi
+		else
+			 include IONS.POT < control_template.F | include BMHFT.POT > tmp1	
+		fi
 	else
-		 include IONS.POT < control_template.F | include BMHFTD.POT > tmp1	
+		if [ $pim == "YES" ] ; then
+		        if   [ $damp == "YES" ] ; then
+		                include IONS.POT < control_template.F | include PIMD.POT > tmp1
+		        elif [ $damp == "NO" ] ; then
+		                include IONS.POT < control_template.F | include PIM.POT > tmp1
+		        fi
+		else
+			 include IONS.POT < control_template.F > tmp1	
+		fi
+
 	fi
         source scr$test_index > $control_file 
 

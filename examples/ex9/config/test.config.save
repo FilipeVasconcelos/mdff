@@ -6,16 +6,16 @@ TABLE:
    +--------+---------+---------+----------+-------+---------------+
    |  TEST  |  lbmhft | lbmhftd | lcoulomb |  PIM  |  PIM_DAMPING  |
    +--------+---------+---------+----------+-------+---------------+
-   |   1    |  NO     |   NO    |   YES    |  NO   |     NO        | 
-   |   2    |  NO     |   NO    |   YES    |  YES  |     NO        | 
-   |   3    |  NO     |   NO    |   YES    |  YES  |     YES       | 
-   |   4    |  YES    |   NO    |   NO     |  NO   |     NO        |
-   |   5    |  YES    |   NO    |   YES    |  NO   |     NO        |
-   |   6    |  YES    |   NO    |   YES    |  YES  |     NO        |
-   |   7    |  YES    |   NO    |   YES    |  YES  |     YES       |
-   |   8    |  NO     |  YES    |    NO    |  NO   |     NO        |
-   |   9    |  NO     |  YES    |   YES    |  NO   |     NO        |
-   |   10   |  NO     |  YES    |   YES    |  YES  |     NO        |
-   |   11   |  NO     |  YES    |   YES    |  YES  |     YES       |
+   |   1    |  YES    |   NO    |    NO    |   NO  |     NO        | 
+   |   2    |  YES    |   NO    |   YES    |   NO  |     NO        |
+   |   3    |  YES    |   NO    |   YES    |  YES  |     NO        |
+   |   4    |  YES    |   NO    |   YES    |  YES  |    YES        |
+   |   5    |   NO    |  YES    |    NO    |   NO  |     NO        | 
+   |   6    |   NO    |  YES    |   YES    |   NO  |     NO        |
+   |   7    |   NO    |  YES    |   YES    |  YES  |     NO        |
+   |   8    |   NO    |  YES    |   YES    |  YES  |    YES        |
+   |   9    |   NO    |   NO    |   YES    |   NO  |     NO        | 
+   |   10   |   NO    |   NO    |   YES    |  YES  |     NO        | 
+   |   11   |   NO    |   NO    |   YES    |  YES  |    YES        | 
    +--------+---------+---------+----------+-------+---------------+
     
