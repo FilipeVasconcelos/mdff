@@ -126,6 +126,7 @@ SUBROUTINE pim_default_tag
   extrapolate_order = 0 
   algo_ext_dipole = 'aspc'
   algo_moment_from_pola = 'scf'
+  symmetric_pot = .true.
 
   omegakO               = 0.7_dp 
 
