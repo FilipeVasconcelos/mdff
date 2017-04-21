@@ -11,14 +11,14 @@
         lcoulomb      = .true.
         ltraj         = .true. 
         itraj_start   = 0 
-        itraj_period  = 1
+        itraj_period  = 2
         !lstatic=.true.
 &end
 
 &mdtag
         integrator    = 'nvt-nhcn' 
         !integrator    = 'nve-vv' 
-        npas          = 2000
+        npas          = 4000
         dt            = 0.0005
         nprint        = 10 
         fprint        = 10

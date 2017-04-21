@@ -3,7 +3,7 @@
 EXECP2K=cp2k
 EXEMDFF=mdff.x
 
-cp2k=false
+cp2k=true
 mdff=true
 
 if $cp2k; then
@@ -23,13 +23,13 @@ if $cp2k; then
 fi
 
 if $mdff; then
-	echo "running mdff test (ex8)"
+	echo "running mdff test (ex12)"
 	rm -rf mdff 
 	mkdir -p mdff
 	cd mdff
 	cp ../config/mdff/control_*.F .
 	cp ../config/mdff/POSFF .
-	$EXEMDFF control_md.F > stdout_md
+	mpirun -np 2 $EXEMDFF control_md.F > stdout_md
 	$EXEMDFF control_gr.F > stdout_gr
 	cd ..
 fi
