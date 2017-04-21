@@ -35,9 +35,10 @@ if $mdff; then
 fi
 
 cat > plot.gr << eof
-#!/usr/bin/gnuplot -persist
+#!/usr/bin/gnuplot 
 reset
 p 'cp2k/GRTFF' w l ,'mdff/GRTFF' w l
+pause -1
 eof
 chmod u+x plot.gr
 ./plot.gr

@@ -53,34 +53,37 @@ if $mdff; then
 fi
 
 cat > plot.lj << eof
-#!/usr/bin/gnuplot -persist
+#!/usr/bin/gnuplot 
 reset
 set title "LJ NVE"
 set xlabel "# step"
 set ylabel "E_pot (eV)"
 p 'mdff/etot_l.full_lj' u 3:15 w l  lc 3 title "FULL run",'mdff/etot_l.run1_lj' u 3:15  w p lc 1 title "RUN 1",'mdff/etot_l.run2_lj' u 3:15 w p lc 2  title "RUN 2" 
+pause -1
 eof
 chmod u+x plot.lj
 ./plot.lj
 
 cat > plot.pim << eof
-#!/usr/bin/gnuplot -persist
+#!/usr/bin/gnuplot
 reset
 set title "PIM NVE"
 set xlabel "# step"
 set ylabel "E_pot (eV)"
 p 'mdff/etot_l.full_pim' u 3:15 w l  lc 3 title "FULL run",'mdff/etot_l.run1_pim' u 3:15  w p lc 1 title "RUN 1",'mdff/etot_l.run2_pim' u 3:15 w p lc 2  title "RUN 2" 
+pause -1
 eof
 chmod u+x plot.pim
 ./plot.pim
 
 cat > plot.pim_nvt << eof
-#!/usr/bin/gnuplot -persist
+#!/usr/bin/gnuplot 
 reset
 set title "PIM NVT"
 set xlabel "# step"
 set ylabel "E_pot (eV)"
 p 'mdff/etot_l.full_pim_nvt' u 3:15 w l  lc 3 title "FULL run",'mdff/etot_l.run1_pim_nvt' u 3:15  w p lc 1 title "RUN 1",'mdff/etot_l.run2_pim_nvt' u 3:15 w p lc 2  title "RUN 2" 
+pause -1
 eof
 chmod u+x plot.pim_nvt
 ./plot.pim_nvt

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-EXE=../../bin/./mdff.x
+EXE=/home/filipe/dev/mdff/bin/mdff.x
 echo "===================================================="
 echo "EXAMPLE 5 : Density of states of FCC Lennard-Jones"
 echo "===================================================="

@@ -13,7 +13,7 @@
 EXEDLPOLY=DLPOLY.X
 EXEMDFF=mdff.x
 
-do_dlpoly=false
+do_dlpoly=true
 
 # =====================================================
 
@@ -50,13 +50,14 @@ fi
 lr=`grep "long range correction (init) energy" mdff/stdout |  awk '{print $NF}'`
 echo $lr
 cat > plot << eof
-#!/usr/bin/gnuplot -persist
+#!/usr/bin/gnuplot 
 reset
 set term x11
 set title "Total energy MD ex1."
 set xlabel "time"
 set ylabel "E_{tot}"
 p 'dl_poly/ene' u 1:2 w l title "DL_POLY"
+pause -1
 eof
 chmod u+x plot
 ./plot

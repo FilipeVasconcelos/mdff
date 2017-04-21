@@ -34,9 +34,10 @@ if $mdff; then
 fi
 
 cat > plot.gr << eof
-#!/usr/bin/gnuplot -persist
+#!/usr/bin/gnuplot
 reset
 p 'dlpoly/RDFDAT.$ensemble' w l ,'mdff/GRTFF.$ensemble' w l
+pause -1
 eof
 chmod u+x plot.gr
 ./plot.gr
