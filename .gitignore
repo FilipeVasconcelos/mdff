@@ -128,6 +128,11 @@ examples/ex9/config/pot_mdff/scr9
 examples/ex9/cp2k/
 examples/ex9/mdff/
 examples/ex11/random_structs/*
+examples/ex11/random_structs/POSFF.randomPY.1
+examples/ex11/random_structs/POSFF.randomPY.2
+examples/ex11/random_structs/POSFF.randomPY.3
+examples/ex11/random_structs/POSFF.randomPY.4
+examples/ex11/random_structs/POSFF.randomPY.5
 examples/ex12/mdff/
 examples/ex12/cp2k/
 examples/ex14/mdff/
