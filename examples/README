@@ -30,6 +30,7 @@ ex12 : PIM MD 102  atoms SiO2 (against cp2k)
 
 ex13 : mdff_gui.py 
 
-ex14: restart  (NVT,NVE lennard jones argon, PIM SiO2 )
+ex14: test full restart with different systems (NVT,NVE lennard jones argon, PIM SiO2 )
+      for each test two trajectories are compared = full / split 1 + split 2
 
 ex15: water molecules
