@@ -27,17 +27,23 @@
 &end
 
 &fieldtag
-        ! ewald summation
+        !INCLUDE <IONS.POT>
+&end
+&coulombtag
         lautoES       = .true.
         epsw          = 1.e-4
-        algo_moment_from_pola='scf_kO_v4_1'
-        omegakO       = 0.8 
-        conv_tol_ind  = 1e-4
-        algo_ext_dipole = 'aspc'
-        extrapolate_order = 2
-
-        !INCLUDE <IONS.POT>
-        !INCLUDE <PIM.POT>
-        !INCLUDE <BMHFTD.POT>  
-
 &end
+
+&pimtag        
+        ! ewald summation
+        algo_moment_from_pola='scf_kO_v4_1'
+        omegakO       = 0.7 
+        conv_tol_ind  = 1e-6
+        algo_ext_dipole = 'aspc'
+        extrapolate_order = 4
+        !INCLUDE <PIM.POT>
+&end
+&non_bondedtag        
+        !INCLUDE <BMHFTD.POT>  
+&end
+

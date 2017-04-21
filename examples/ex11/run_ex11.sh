@@ -49,8 +49,8 @@ do
 	cp ../DOALLMD .
 	cp ../quench.config .
 
-	#DoAll_mdff.sh --para=2
-	DoAll_mdff.sh --serial
+	DoAll_mdff.sh --para=2
+	#DoAll_mdff.sh --serial
 
 	cd ..
 
