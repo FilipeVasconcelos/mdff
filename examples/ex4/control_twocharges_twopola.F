@@ -5,7 +5,7 @@
         longrange ='ewald'
 	cutlongrange = 5.0d0
         lstatic=.true.
-        posff_data='rvf'
+        restart_data='rvf'
 	lreduced=.true.            ! reduced units 
 	lreducedN=.false.          ! NOT REDUCED BY N
 	lsurf=.true.

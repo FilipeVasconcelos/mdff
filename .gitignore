@@ -70,9 +70,10 @@ doc/missfont.log
 examples/ex1/dl_poly/
 examples/ex1/mdff/
 examples/ex1/plot
-examples/ex10/control_files/
-examples/ex11/md_runs/
+examples/ex3/runs
 examples/ex4/POSFF
+examples/ex4/control_1.F
+examples/ex4/control_2.F
 examples/ex5/plot.band
 examples/ex5/plot.dos
 examples/ex5/stdout.vib
@@ -127,6 +128,8 @@ examples/ex9/config/pot_mdff/scr8
 examples/ex9/config/pot_mdff/scr9
 examples/ex9/cp2k/
 examples/ex9/mdff/
+examples/ex10/control_files/
+examples/ex11/md_runs/
 examples/ex11/random_structs/POSFF.randomPY.1
 examples/ex11/random_structs/POSFF.randomPY.2
 examples/ex11/random_structs/POSFF.randomPY.3
