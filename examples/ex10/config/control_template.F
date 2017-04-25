@@ -27,17 +27,23 @@
 &end
 
 &fieldtag
+        !INCLUDE <IONS.POT>
+&end
+
+&coulombtag
         ! ewald summation
         lautoES       = .true.
         epsw          = 1.e-6
+&end
 
+&pimtag
         ! scf induced dipole convergence criteria
         min_scf_pol_iter = 6
         max_scf_pol_iter = 6
         conv_tol_ind = 1e-4
-
-        !INCLUDE <IONS.POT>
         !INCLUDE <PIM.POT>
-        !INCLUDE <BMHFTD.POT>  
+&end
 
+&non_bondedtag
+        !INCLUDE <BMHFTD.POT>  
 &end
