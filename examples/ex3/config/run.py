@@ -45,10 +45,10 @@ if __name__ == "__main__" :
     #11   -32.765970
     #12   -37.967600
     #13   -44.326801
-    #natm = 13 
-    #target= -44.326801
-    natm = 12
-    target= -37.967600
+    natm = 13 
+    target= -44.326801
+    #natm = 12
+    #target= -37.967600
     energy = float('inf')
 
     a = natm ** (1./3.) * 10.0

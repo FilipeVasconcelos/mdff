@@ -94,7 +94,7 @@ def read_OSZIFF(filename):
     alldata.append(volu)
     alldata.append(htot)
 
-    return alldata
+    return name_quant,alldata
     
 def averaging(name_quant,alldata,last_points):
 
@@ -173,7 +173,7 @@ if __name__ == '__main__':
     input_file=args.input_file
 
     if format_filename(input_file):
-        alldata = read_OSZIFF(input_file)
+       name_quant,alldata = read_OSZIFF(input_file)
     else:
         raise ValueError('Format of input file doesnt match OSZIFF')
 
@@ -186,7 +186,7 @@ if __name__ == '__main__':
     print "averaging and plot on last",last_points,"points"
 
     average=averaging(name_quant,alldata,last_points)
-   
+    print last_points 
     if args.plot_flag :
         plot_quant2(alldata,name_quant,average,[2,12],title='Total Energy MD',l=last_points)
         plot_quant(alldata,name_quant,average,4,title='Potential Energy MD',l=last_points)

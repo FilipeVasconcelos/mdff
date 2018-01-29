@@ -15,7 +15,7 @@ namelist_control = [ \
                      'ltest',\
                      'lmsd',\
                      'lvacf',\
-                     'lrestart',\
+                     'lwrite_restart',\
                      'cutlongrange',\
                      'cutshortrange',\
                      'calc',\
@@ -31,6 +31,7 @@ namelist_control = [ \
                      'iefgall_format',\
                      'idipall_format',\
                      'restart_data',\
+                     'posff_data',\
                      'skindiff']
 namelist_md = [ \
                      'integrator',\

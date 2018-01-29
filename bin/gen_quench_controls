@@ -2,9 +2,7 @@
 
 usage()
 {
-
 cat quench.config
-
 }
 
 
@@ -41,7 +39,7 @@ Docontrol()
 	elif [ $pot == "PIM" ] ; then
 		include IONS.POT < control_template.F | include BMHFTD.POT | include PIM.POT > tmp1
 	fi
-	if [ $flag == "rescaling" ]; then
+	if [ $flag == "rescaling" ] ; then
 		cat > rescaling << EOF
         temp          = __TEMP__
         nequil        = __NEQUIL__
@@ -55,6 +53,12 @@ EOF
 EOF
 		include rescaling < tmp1 > tmp2
 	fi
+        if [ $ensemble == "NVE" ] &&  [ $flag != "rescaling" ]; then
+                cat > rescaling << EOF
+        temp          = __TEMP__
+EOF
+                include rescaling < tmp1 > tmp2
+        fi
 	if [ $ensemble == "NVT" ] ; then
 		cat > thermostat << EOF
         temp           = __TEMP__
@@ -78,7 +82,7 @@ EOF
 EOF
                 include barostat < tmp1 > tmp2
         fi
-	if [ $ensemble != "NVE" ] || [ $flag == "rescaling" ] ||  [ $flag == "QUENCH" ] ; then
+	if [ $ensemble == "NVE" ] || [ $flag == "rescaling" ] ||  [ $flag == "QUENCH" ] ; then
 		mv tmp2 tmp1	
 	fi
 	source scr$run_index > $controlfile 

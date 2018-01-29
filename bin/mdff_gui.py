@@ -211,7 +211,7 @@ class MApp(tk.Frame):
         #tags highlight 
         counts = []
         self.txt_control.tag_remove("tag", "1.0", "end")
-        keys = ["controltag","mdtag","fieldtag","stochiotag","end"]
+        keys = ["&controltag","&mdtag","&fieldtag","&stochiotag","&end","&non_bondedtag"]
 
         for key in keys:
             counts.append(tk.IntVar())
@@ -965,10 +965,11 @@ class MApp(tk.Frame):
 
         print lp,self.last_points.get()
     
-        self.average,self.ainfo=averaging(self.name_quant,self.alldata,lp)
+        #self.average,self.ainfo=averaging(self.name_quant,self.alldata,lp)
+        self.average=averaging(self.name_quant,self.alldata,lp)
 
         self._create_plot() 
-        self._average_info()
+        #self._average_info()
     
     #----------------------------------------------------------------------
     def _new_plot(self,lp):
