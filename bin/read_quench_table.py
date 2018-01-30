@@ -210,7 +210,7 @@ def write_script(var,table):
             print >> fout, "   -e s/__"+NAME+"__/"+VAL+"/g",
 
             NAME="DATA"
-            VAL="'rvf'"
+            VAL="\\'rvf\\'"
             print >> fout, "   -e s/__"+NAME+"__/"+VAL+"/g tmp"
 
 

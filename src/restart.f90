@@ -173,10 +173,10 @@ SUBROUTINE restart_init ( MDFF )
   READ( kunit_RESTART   ) nhc_n
   READ( kunit_RESTART   ) nhc_yosh_order 
   READ( kunit_RESTART   ) nhc_mults
-  print*,'here b'
+  !print*,'here b'
   CALL extended_coordinates_alloc
   READ( kunit_RESTART   ) vxi
-  print*,'here a'
+  !print*,'here a'
   READ( kunit_RESTART   ) xi
   READ( kunit_RESTART   ) vxib
   READ( kunit_RESTART   ) xib
@@ -193,8 +193,8 @@ SUBROUTINE restart_init ( MDFF )
     write(*,'(a,<nhc_n>f)') 'restart read ',xi
 #endif
   endif
-  print*,'here'
-  print*,'here',vxi
+  !print*,'here'
+  !print*,'here',vxi
   itime0=itime
   itime1=itime0+npas
   

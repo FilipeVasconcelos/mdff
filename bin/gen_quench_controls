@@ -53,11 +53,11 @@ EOF
 EOF
 		include rescaling < tmp1 > tmp2
 	fi
-        if [ $ensemble == "NVE" ] &&  [ $flag != "rescaling" ]; then
-                cat > rescaling << EOF
+        if [ $ensemble == "NVE" ] &&  [ $flag != "rescaling" ] && [ $flag != "QUENCH" ]; then
+                cat > thermostat << EOF
         temp          = __TEMP__
 EOF
-                include rescaling < tmp1 > tmp2
+                include thermostat < tmp1 > tmp2
         fi
 	if [ $ensemble == "NVT" ] ; then
 		cat > thermostat << EOF
@@ -82,9 +82,10 @@ EOF
 EOF
                 include barostat < tmp1 > tmp2
         fi
-	if [ $ensemble == "NVE" ] || [ $flag == "rescaling" ] ||  [ $flag == "QUENCH" ] ; then
-		mv tmp2 tmp1	
-	fi
+        #cat tmp2
+	#if [ $flag == "rescaling" ] ||  [ $flag == "QUENCH" ] ; then
+	mv tmp2 tmp1	
+	#fi
 	source scr$run_index > $controlfile 
 	
 }

@@ -38,10 +38,10 @@ docp()
 {
     ODIR=$1
     mkdir $ODIR
-    for file in MSDFF control.F CONTFF POSFF OSZIFF log TRAJFF cmd ; do
+    for file in MSDFF control.F CONTFF POSFF OSZIFF log TRAJFF cmd RESTART; do
 	[ -f $file ] && mv $file $ODIR/
     done
-    [ -f $ODIR/CONTFF ] && cp $ODIR/CONTFF ./POSFF
+    [ -f $ODIR/CONTFF ] && cp $ODIR/CONTFF ./POSFF && cp $ODIR/RESTART RESTART
 }
 
 DoMD()
