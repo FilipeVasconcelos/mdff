@@ -2356,99 +2356,99 @@ SUBROUTINE extrapolate_dipole_poly ( mu_ind )
 
 END SUBROUTINE extrapolate_dipole_poly
 
-! order of extrapolation is k+1 of Kolafa original derivation.
-! as the zero order is taking juste 
-SUBROUTINE extrapolate_dipole_aspc ( mu_ind , Efield , key ) 
-
-  USE config,           ONLY :  atype, natm, invpoldipia
-  USE pim,              ONLY :  extrapolate_order, ldip_polar
-  USE coulomb,          ONLY :  dipia_ind_t
-  USE md,               ONLY :  itime 
-
-  implicit none
-  ! global  
-  real(kind=dp) , intent (out):: mu_ind (:,:) 
-  real(kind=dp) , intent (in) :: Efield (:,:) 
-  integer :: key 
-  ! local
-  integer :: ia, k ,ext_ord, alpha, beta
-  real(kind=dp)               :: mu_p ( 3 , natm ) 
-  real(kind=dp)               :: mu_p_save (3 , natm ) 
-  ! ASPC coefficient
-  real(kind=dp) :: B_ASPC(6), w_ASPC
-
-  ! switch to lower order of extrapolation 
-  ! if time step is not large enough to store previous dipoles steps
-  if ( itime .ge. extrapolate_order+1 ) then
-    ext_ord = extrapolate_order
-  else
-    if (itime.eq.1.or.itime.eq.0)   then
-      ext_ord = 0 
-    else
-      ext_ord = itime - 1
-    endif
-  endif
+!! order of extrapolation is k+1 of Kolafa original derivation.
+!! as the zero order is taking juste 
+!SUBROUTINE extrapolate_dipole_aspc ( mu_ind , Efield , key ) 
+!
+!  USE config,           ONLY :  atype, natm, invpoldipia
+!  USE pim,              ONLY :  extrapolate_order, ldip_polar
+!  USE coulomb,          ONLY :  dipia_ind_t
+!  USE md,               ONLY :  itime 
+!
+!  implicit none
+!  ! global  
+!  real(kind=dp) , intent (out):: mu_ind (:,:) 
+!  real(kind=dp) , intent (in) :: Efield (:,:) 
+!  integer :: key 
+!  ! local
+!  integer :: ia, k ,ext_ord, alpha, beta
+!  real(kind=dp)               :: mu_p ( 3 , natm ) 
+ ! real(kind=dp)               :: mu_p_save (3 , natm ) 
+!  ! ASPC coefficient
+!  real(kind=dp) :: B_ASPC(6), w_ASPC
+!
+!  ! switch to lower order of extrapolation 
+!  ! if time step is not large enough to store previous dipoles steps
+!  if ( itime .ge. extrapolate_order+1 ) then
+!    ext_ord = extrapolate_order
+!  else
+!    if (itime.eq.1.or.itime.eq.0)   then
+!      ext_ord = 0 
+!    else
+!      ext_ord = itime - 1
+!    endif
+!  endif
 
 !  write(*,'(a,2i,3f16.8)') '(1) key : ',key,ext_ord,mu_ind(1,:)
 
-  SELECT CASE ( ext_ord ) 
-  CASE DEFAULT
-    io_node WRITE(stdout,'(a)') 'value of aspc extrapolation order not available should be 0<= extrapolate_order <= 4'
-    STOP
-  CASE(0)
-    B_ASPC(1) =  1.0_dp 
-    W_ASPC    =  0.0_dp
-  CASE(1) 
-    B_ASPC(1) =  2.0_dp
-    B_ASPC(2) = -1.0_dp
-    W_ASPC    =  2.0_dp/3.0_dp
-  CASE(2)
-    B_ASPC(1) =  2.5_dp
-    B_ASPC(2) = -2.0_dp
-    B_ASPC(3) =  0.5_dp
-    W_ASPC    =  0.6_dp
-  CASE(3)
-    B_ASPC(1) =  2.8_dp
-    B_ASPC(2) = -2.8_dp
-    B_ASPC(3) =  1.2_dp
-    B_ASPC(4) = -0.2_dp
-    W_ASPC    =  4.0_dp/7.0_dp 
-  CASE(4)
-    B_ASPC(1) =  3.0_dp
-    B_ASPC(2) = -24.0_dp/7.0_dp
-    B_ASPC(3) =  27.0_dp/14.0_dp
-    B_ASPC(4) = -4.0_dp/7.0_dp
-    B_ASPC(5) =  1.0_dp/14.0_dp
-    W_ASPC    =  5.0_dp/9.0_dp
-  CASE(5)
-    B_ASPC(1) =  22.0_dp/7.0_dp
-    B_ASPC(2) = -55.0_dp/14.0_dp
-    B_ASPC(3) =  55.0_dp/21.0_dp
-    B_ASPC(4) = -22.0_dp/21.0_dp
-    B_ASPC(5) =  5.0_dp/21.0_dp
-    B_ASPC(6) = -1.0_dp/42.0_dp
-    W_ASPC    =  6.0_dp/11.0_dp
-  END SELECT
+!  SELECT CASE ( ext_ord ) 
+!  CASE DEFAULT
+!    io_node WRITE(stdout,'(a)') 'value of aspc extrapolation order not available should be 0<= extrapolate_order <= 4'
+!    STOP
+!  CASE(0)
+!    B_ASPC(1) =  1.0_dp 
+!    W_ASPC    =  0.0_dp
+!  CASE(1) 
+!    B_ASPC(1) =  2.0_dp
+!    B_ASPC(2) = -1.0_dp
+!    W_ASPC    =  2.0_dp/3.0_dp
+!  CASE(2)
+!    B_ASPC(1) =  2.5_dp
+!    B_ASPC(2) = -2.0_dp
+!    B_ASPC(3) =  0.5_dp
+!    W_ASPC    =  0.6_dp
+!  CASE(3)
+!    B_ASPC(1) =  2.8_dp
+!    B_ASPC(2) = -2.8_dp
+!    B_ASPC(3) =  1.2_dp
+!    B_ASPC(4) = -0.2_dp
+!    W_ASPC    =  4.0_dp/7.0_dp 
+!  CASE(4)
+!    B_ASPC(1) =  3.0_dp
+!    B_ASPC(2) = -24.0_dp/7.0_dp
+!    B_ASPC(3) =  27.0_dp/14.0_dp
+!    B_ASPC(4) = -4.0_dp/7.0_dp
+!    B_ASPC(5) =  1.0_dp/14.0_dp
+!    W_ASPC    =  5.0_dp/9.0_dp
+!  CASE(5)
+!    B_ASPC(1) =  22.0_dp/7.0_dp
+!    B_ASPC(2) = -55.0_dp/14.0_dp
+!    B_ASPC(3) =  55.0_dp/21.0_dp
+!    B_ASPC(4) = -22.0_dp/21.0_dp
+!    B_ASPC(5) =  5.0_dp/21.0_dp
+!    B_ASPC(6) = -1.0_dp/42.0_dp
+!    W_ASPC    =  6.0_dp/11.0_dp
+!  END SELECT
         
-  ! predictor
-  if ( key .eq. 1 ) then 
-    mu_p = 0.0_dp
-    do k=1 , ext_ord+1
-      mu_p = mu_p + B_ASPC( k  ) * dipia_ind_t ( k , : , : )
-    enddo
-    mu_ind=mu_p
-    do k = ext_ord + 1, 2, -1
-      dipia_ind_t(k,:,:) = dipia_ind_t(k-1,:,:)
-    enddo
+!  ! predictor
+!  if ( key .eq. 1 ) then 
+!    mu_p = 0.0_dp
+!    do k=1 , ext_ord+1
+!      mu_p = mu_p + B_ASPC( k  ) * dipia_ind_t ( k , : , : )
+!    enddo
+!    mu_ind=mu_p
+!    do k = ext_ord + 1, 2, -1
+!      dipia_ind_t(k,:,:) = dipia_ind_t(k-1,:,:)
+!    enddo
 !    write(*,'(a,2i,3f16.8)') '(2) key : ',key,ext_ord,mu_ind(1,:)
-  endif
+!  endif
 
-  ! corrector
-  if ( key.eq.2) then 
-    mu_p_save = mu_ind
-    CALL induced_moment ( Efield , mu_ind ) 
-    mu_ind = w_ASPC * mu_ind + ( 1.0_dp - w_ASPC ) * mu_p_save 
-  endif
+!  ! corrector
+!  if ( key.eq.2) then 
+!    mu_p_save = mu_ind
+!    CALL induced_moment ( Efield , mu_ind ) 
+!    mu_ind = w_ASPC * mu_ind + ( 1.0_dp - w_ASPC ) * mu_p_save 
+!  endif
 
 !#ifdef debug_mu
 !      if ( ionode ) then
@@ -2461,9 +2461,9 @@ SUBROUTINE extrapolate_dipole_aspc ( mu_ind , Efield , key )
 !      endif
 !#endif
 
-  return
+!  return
 
-END SUBROUTINE extrapolate_dipole_aspc
+!END SUBROUTINE extrapolate_dipole_aspc
 
 
 SUBROUTINE polint(xa,ya,n,y,dy)

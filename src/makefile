@@ -64,6 +64,7 @@ endif
 # =================
 #   on mario / babar / charrue
 # =================
+#FCFLAGS = -O5 -ffree-line-length-0 -Ofast
 FCFLAGS = -O3 -xSSE4.2 -align all -ip -static 
 #FCFLAGS = -O1 -xHost -align all #-ip -static 
 #FCFLAGS = -O3 -xHost -align all 
@@ -187,8 +188,8 @@ CPPDEFS = -DHOST=\"$(HOST)\"   \
           -Dtiming             \
           -DBRANCH=\"$(BRANCH)\" \
           -DMPI
+#	  -DGFORTRAN 
 #         -Ddebug 
-#	  -DGFORTRAN \
 
 CPP =  $(CP) $(CPPFLAGS) $(CPPDEFS)  $*.f90 > $*$(SUFFIX)
 

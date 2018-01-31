@@ -55,7 +55,7 @@ SUBROUTINE init_velocities
   ! ===============================================
   !  generate velocities from a given distribution
   ! ===============================================
-  if ( (key .eq. 0 .or. .not. full_restart) .and. temp .ne. 0.0_dp ) then
+  if ( (key .eq. 0 .or. .not. full_restart) .and. temp .eq. 0.0_dp ) then
 
     separator(stdout)    
     io_node blankline(stdout)    

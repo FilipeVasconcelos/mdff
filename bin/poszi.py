@@ -166,7 +166,7 @@ if __name__ == '__main__':
     print "author : filipe.manuel.vasconcelos@gmail.com"
     print separator
     print "Running poszi ..."
-    print "This script generate gnuplot plots from input OSZIFF file"
+    print "This script generate plots from input OSZIFF file"
 
     args = main_parser()
 
