@@ -34,3 +34,5 @@ ex14: test full restart with different systems (NVT,NVE lennard jones argon, PIM
       for each test two trajectories are compared = full / split 1 + split 2
 
 ex15: water molecules
+
+ex16: Reproduction of figure 1 in PRB 68, 144202 (2003) Javier Hernandez-Rojas and David J. Wales

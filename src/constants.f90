@@ -47,7 +47,6 @@
 !! forces        : eV / angtrom
 !! density       :  atomic mass unit / angstrom^3
 !! 1/4piepsilon0 : eV  * angstrom / atomiccharge **2 == 1.0
-
 ! ******************************************************************************
 MODULE constants 
 

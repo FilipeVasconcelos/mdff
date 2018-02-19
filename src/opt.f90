@@ -1021,7 +1021,7 @@ SUBROUTINE lbfgs_driver ( icall, Eis , phigrad )
   !  not recommended; large values of M will result in excessive
   !  computing time. 3<= M <=7 is recommended. Restriction: M>0
   !=================================================================================
-  M=5
+  M=4
   NWORK = N * ( 2 * M + 1 ) + 2*M
   ALLOCATE ( W (NWORK) )
   !=================================================================================
@@ -1069,8 +1069,8 @@ SUBROUTINE lbfgs_driver ( icall, Eis , phigrad )
   !         terminate if the relative width of the interval of uncertainty
   !         is less than XTOL.
   !=================================================================================
-  XTOL = tiny(1.0_dp) 
-  !XTOL = 1.0D-14
+  !XTOL = tiny(1.0_dp) 
+  XTOL = 1.0D-14
   
   ICALL = 0
   !=================================================================================
