@@ -5,11 +5,11 @@ Here we reproduce figure 1 of PRB 68, 144202 (2003) by J. Hernandez-Rojas and D.
 reduced_units are used
 
 For different densities (0.6 <= rho <= 1.3) 
-NVE runs are done on the Binary Mixture 
+NVE runs are done on N=256 Binary Mixture 
 Lennard-Jones (Kob-Andersen model)  T=1 (10^5 equilibration 10^6 NVE)
 after the production run 1000 configurations are 
 optimized locally every 1000 steps (by m1qn3 method) 
 we plot the average potential energy and pressure over the 1000 
 inherent structures in function of the density
 
-the calculation is about 6h long 
+the calculation is about 5h long 

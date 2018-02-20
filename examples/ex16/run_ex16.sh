@@ -26,6 +26,8 @@ do
 done
 
 cat > plot << eof
+#!/usr/bin/gnuplot
+reset
 set terminal x11 size 300,600
 set termoption enhanced
 set encoding utf8
