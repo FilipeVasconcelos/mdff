@@ -43,6 +43,7 @@ MODULE control
   character(len=10), SAVE :: HOUR             !< execution HOUR
 
   logical,           SAVE :: ltraj            !< save trajectory                                    
+  logical,           SAVE :: lconstraints     !< use bond constraints
   logical,           SAVE :: lstatic          !< no MD                                                
   logical,           SAVE :: lvnlist          !< verlet list if .true.                            
   logical,           SAVE :: lwrite_restart   !< control RESTART file
@@ -133,6 +134,7 @@ SUBROUTINE control_init ( MDFF )
                          lsurf          , &
                          lcsvr          , &
                          lharm          , &
+                         lconstraints   , &
                          ltraj          , &
                          lvnlist        , &
                          lstatic        , &

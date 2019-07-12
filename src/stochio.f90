@@ -397,6 +397,7 @@ SUBROUTINE stochio_init
                            atoms_in      , &
                            natoms_in     , &
                            sio2          , &
+                           tio2          , &
                            geo2          , &
                            na2o          , &
                            b2o3          , &
@@ -458,6 +459,7 @@ SUBROUTINE stochio_default_tag
   a_o_b   = 1.0_dp
   a_o_c   = 1.0_dp
   sio2    = 0._dp
+  tio2    = 0._dp
   na2o    = 0._dp
   b2o3    = 0._dp
   la2o3   = 0._dp
@@ -528,6 +530,7 @@ SUBROUTINE stochio_print_info ( kunit )
       WRITE ( stdout , '('// ADJUSTL(FMT) //'a8)'   ) (oxydes(iox)%nameox,iox=1,noxyde)
       WRITE ( stdout , '('// ADJUSTL(FMT) //'f8.2)' ) (oxydes(iox)%relcon,iox=1,noxyde)
 #else
+      WRITE(*,*) 'noxyde=',noxyde
       WRITE ( stdout , '(<noxyde>a8)'   ) (oxydes(iox)%nameox,iox=1,noxyde)
       WRITE ( stdout , '(<noxyde>f8.2)' ) (oxydes(iox)%relcon,iox=1,noxyde)
 #endif

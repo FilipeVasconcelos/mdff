@@ -173,7 +173,7 @@ $(info ===================================================)
 # ==================
 OBJ= constants.o io.o dumb.o tt_damp.o tensors.o oxyde.o mpi_mdff.o control.o stochio.o time.o functions.o \
      fft_t.o rand.o lattice.o config.o md.o lbfgs.o m1qn3.o \
-     block_average.o kspace.o rspace.o thermo.o kinetic.o non_bonded.o harm.o coulomb.o pim.o ewald_rec.o ewald_dir.o ewald.o field.o moment_from_pola.o engforce_driver.o \
+     block_average.o kspace.o rspace.o thermo.o kinetic.o constraints.o non_bonded.o harm.o coulomb.o pim.o ewald_rec.o ewald_dir.o ewald.o field.o moment_from_pola.o engforce_driver.o \
      tools.o read_pos.o integration.o opt.o vib.o msd.o multi_tau.o \
      radial_distrib.o vacf.o voisin.o restart.o runmd.o
 

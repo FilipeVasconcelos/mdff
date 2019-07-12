@@ -16,10 +16,10 @@ MODULE oxyde
 ! necessaire... juste à partir de la liste des elements et du numero
 ! d'oxydation par exemple.
 
-  integer , PARAMETER :: noxyde = 10   
+  integer , PARAMETER :: noxyde = 11   
   integer , PARAMETER :: nelem  = 57
 
-  real(kind=dp)       :: sio2 , na2o , b2o3 , cao , p2o5 , al2o3, geo2 , la2o3, sro , moo3 ! valeur en entré
+  real(kind=dp)       :: sio2 , na2o , b2o3 , cao , p2o5 , al2o3, geo2 , la2o3, sro , moo3, tio2 ! valeur en entré
 
   ! type structur pour l'element chimique 
   TYPE element
@@ -39,7 +39,7 @@ MODULE oxyde
 
   ! tableau de type element = tableau periodique  ( nelem_max = 57 )
   TYPE(element), dimension (:) , allocatable :: tabper
-  ! tableau de type oxydes                        ( noxyde_max = 9 ) 
+  ! tableau de type oxydes                        ( noxyde_max = 11 ) 
   TYPE(oxy)    , dimension (:) , allocatable :: oxydes 
 
 CONTAINS
@@ -106,6 +106,10 @@ SUBROUTINE gen_tab_period
   tabper(20)%massele=40.08_dp
   ! # 21
   ! # 22
+  tabper(22)%elename='Ti'
+  tabper(22)%numoxyd=4
+  tabper(22)%valence=4
+  tabper(22)%massele=47.867_dp
   ! # 23
   ! # 24
   ! # 25
@@ -240,6 +244,13 @@ SUBROUTINE gen_oxydes
   oxydes(10)%nel_ox(1)=1
   oxydes(10)%nel_ox(2)=3
   oxydes(10)%relcon = moo3 
+  ! # 11 
+  oxydes(11)%nameox='TiO2'
+  oxydes(11)%ele_ox(1)='Ti'
+  oxydes(11)%ele_ox(2)='O'
+  oxydes(11)%nel_ox(1)=1
+  oxydes(11)%nel_ox(2)=2
+  oxydes(11)%relcon = tio2
 
   return
 
