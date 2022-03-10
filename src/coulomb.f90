@@ -98,6 +98,9 @@ SUBROUTINE coulomb_init
                           epsw         , &
                           alphaES      , &  
                           kES          , &
+                          thole_functions, &
+                          thole_param, &
+                          thole_function_type, &
                           symmetric_pot, & 
                           doefield     , &
                           doefg   
@@ -121,7 +124,6 @@ SUBROUTINE coulomb_init
       STOP
     endif
   CLOSE ( stdin )
-
   ! ================================
   ! check field tags values
   ! ================================
@@ -267,7 +269,7 @@ SUBROUTINE coulomb_print_info ( kunit )
     blankline(kunit)
     WRITE ( kunit ,'(a)')               'COULOMB MODULE ... WELCOME'
     blankline(kunit)
-    lseparator(kunit)
+    lseparator(kunit,61)
     WRITE ( kunit ,'(a)')           'coulombic interaction : '
     WRITE ( kunit ,'(a,l)')         'task : charge-charge        ', task_coul(1)
     WRITE ( kunit ,'(a,l)')         'task : charge-dipole        ', task_coul(2)
@@ -276,7 +278,7 @@ SUBROUTINE coulomb_print_info ( kunit )
     WRITE ( kunit ,'(a,l)')         'task : dipole-quadrupole    ', task_coul(5)
     WRITE ( kunit ,'(a,l)')         'task : quadrupole-quadrupole', task_coul(6)
 
-    lseparator(kunit)
+    lseparator(kunit,61)
     blankline(kunit)
     if ( task_coul(1) .and. .not. task_coul(3)) then
       WRITE ( kunit ,'(a)')             '        qi qj   '
@@ -290,7 +292,7 @@ SUBROUTINE coulomb_print_info ( kunit )
       WRITE ( kunit ,'(a)')             '         rij          rij^3            rij^3  \                            rij^2          /'
       WRITE ( kunit ,'(a)')
       WRITE ( kunit ,'(a)')
-      lseparator(kunit)
+      lseparator(kunit,61)
 
 
     endif

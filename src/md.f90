@@ -310,6 +310,7 @@ SUBROUTINE md_check_tag
   timesca_baro   = timesca_baro   * time_unit
   tauTberendsen  = tauTberendsen  * time_unit
   tauPberendsen  = tauPberendsen  * time_unit
+  taucsvr        = taucsvr        * time_unit
 
   itime0=itime
   itime1=(itime0-1)+npas
@@ -455,8 +456,8 @@ SUBROUTINE md_print_info(kunit)
       if ( nequil .ne. 0 .and.      lcsvr)WRITE ( kunit ,'(a,e12.5,a)') 'Stochastic velocity resc. time scale  = ',taucsvr/time_unit      ,'  ps'
       if ( nequil .ne. 0 .and.      lcsvr)WRITE ( kunit ,'(a,e12.5)')   'taucsvr = 0.0 -> simple rescale'
       if ( nequil .ne. 0 .and. .not.lcsvr)WRITE ( kunit ,'(a,e12.5,a)') 'Berendsen thermostat time scale       = ',tauTberendsen/time_unit,'  ps'
-      if ( nequil .ne. 0 )                WRITE ( kunit ,'(a,e12.5,a)') 'Berendsen barostat time scale         = ',tauPberendsen/time_unit,'  ps'
-      if ( nequil .ne. 0 .and. tauTberendsen .eq. dt )   &
+      if ( nequil .ne. 0 .and. .not.lcsvr)WRITE ( kunit ,'(a,e12.5,a)') 'Berendsen barostat time scale         = ',tauPberendsen/time_unit,'  ps'
+      if ( nequil .ne. 0 .and. tauTberendsen .eq. dt .and. .not.lcsvr)   &
                                           WRITE ( kunit ,'(a)')         'tau[T-P]berendsen = dt -> simple rescale'
                                           WRITE ( kunit ,'(a,i12)')     'print thermo  periodicity             = ',nprint
       if ( ltraj )                   then    

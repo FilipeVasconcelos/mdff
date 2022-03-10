@@ -1,5 +1,4 @@
 .SUFFIXES: .h .F90 .f90
-
 ###################################################
 # MAKEFILE FOR MDFF ON LISA AMSTERDAM JUNE 2011
 # module load fortran/intel
@@ -51,12 +50,13 @@ $(info branch :  $(BRANCH))
 #FCFLAGS = -O3 -pg -warn all
 #FCFLAGS = -O5 -ip -xW -warn all
 #FCFLAGS = -fpp -O3 -ip -xW 
+FCFLAGS = -O3 -ffree-line-length-0 -Wno-maybe-uninitialized -Werror -Ofast 
 
 # =================
 #   on superbock
 # =================
 ifeq ($(FC),/usr/bin/gfortran)
-FCFLAGS = -O5 -ffree-line-length-0 -Warray-bounds -Wno-maybe-uninitialized -Werror -Ofast
+FCFLAGS = -O5 -ffree-line-length-0 -Wno-maybe-uninitialized -Ofast
 endif
 ifeq ($(FC),ifort)
 FCFLAGS = -O0 -xHost #-align all 
@@ -64,7 +64,7 @@ endif
 # =================
 #   on mario / babar / charrue
 # =================
-FCFLAGS = -O3 -xSSE4.2 -align all -ip -static 
+#FCFLAGS = -O3 -xSSE4.2 -align all -ip -static 
 #FCFLAGS = -O1 -xHost -align all #-ip -static 
 #FCFLAGS = -O3 -xHost -align all 
 #FCFLAGS = -O3 -ip -static -align all 
@@ -90,7 +90,7 @@ $(info FCFLAGS :  $(FCFLAGS))
 # =================
 #   on superbock
 # =================
-#LDFLAGS= -lm -llapack -lfftw3
+LDFLAGS= -lm -llapack -lfftw3
 
 # =================
 #   on mario 
@@ -120,10 +120,10 @@ endif
 # =================
 #   on charrue
 # =================
-#ifeq ($(HOST),debian-charrue)
+ifeq ($(HOST),debian-charrue)
 	LDFLAGS=-Wl,-rpath,/opt/intel/mkl/lib/intel64/ -Wl,--start-group /opt/intel/mkl/lib/intel64/libmkl_intel_lp64.a /opt/intel/mkl/lib/intel64/libmkl_sequential.a /opt/intel/mkl/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread -limf -lm
 	INC=-I/opt/intel/mkl/include/fftw/
-#endif
+endif
 
 # =================
 #   on curie
@@ -186,9 +186,9 @@ OBJ= constants.o io.o dumb.o tt_damp.o tensors.o oxyde.o mpi_mdff.o control.o st
 CPPDEFS = -DHOST=\"$(HOST)\"   \
           -Dtiming             \
           -DBRANCH=\"$(BRANCH)\" \
+	  -DGFORTRAN \
           -DMPI
 #         -Ddebug 
-#	  -DGFORTRAN \
 
 CPP =  $(CP) $(CPPFLAGS) $(CPPDEFS)  $*.f90 > $*$(SUFFIX)
 

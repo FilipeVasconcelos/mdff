@@ -53,15 +53,20 @@ SUBROUTINE md_run
 
 
   USE constants,                ONLY :  dp
-  USE config,                   ONLY :  natm , natmi , ntype , atype , atypei , itype , rx , ry , rz , rxs , rys , rzs , vx , vy , vz , fx, fy , fz , &
-                                        write_CONTFF , center_of_mass , ntypemax , tau_nonb , tau_coul , write_trajff_xyz , simu_cell , system
+  USE config,                   ONLY :  natm , natmi , ntype , atype , atypei , itype , rx , ry , rz , rxs , rys , rzs , &
+                                        vx , vy , vz , fx, fy , fz , write_CONTFF , center_of_mass , ntypemax , tau_nonb ,&
+                                        tau_coul , write_trajff_xyz , simu_cell , system
   USE control,                  ONLY :  ltraj , longrange , calc , lstatic , lvnlist , lnmlj , lcoulomb , lmorse , &
-                                        lnon_bonded, numprocs, myrank , itraj_period , itraj_start , itraj_format, iefgall_format , iefall_format , idipall_format , lmsd, lvacf
-  USE io,                       ONLY :  ionode , stdout, kunit_OSZIFF, kunit_TRAJFF,  kunit_EFGALL , kunit_EFALL , kunit_EQUILFF, ioprint , ioprintnode, kunit_DIPFF
+                                        lnon_bonded, numprocs, myrank , itraj_period , itraj_start , itraj_format, &
+                                        iefgall_format , iefall_format , idipall_format , lmsd, lvacf, lcsvr
+  USE io,                       ONLY :  ionode , stdout, kunit_OSZIFF, kunit_TRAJFF,  kunit_EFGALL , kunit_EFALL , &
+                                        kunit_EQUILFF, ioprint , ioprintnode, kunit_DIPFF
   USE md,                       ONLY :  npas , lleapequi , nequil , nequil_period , nprint, &
-                                        fprint, spas , dt,  temp , updatevnl , integrator , itime, itime0, itime1, xi ,vxi, nhc_n, npropr,npropr_start
+                                        fprint, spas , dt,  temp , updatevnl , integrator , itime, itime0, itime1, &
+                                        xi ,vxi, nhc_n, npropr,npropr_start
 
-  USE thermodynamic,            ONLY :  e_tot, u_lj_r, h_tot, e_kin , temp_r , init_general_accumulator , write_thermo ,  write_average_thermo , calc_thermo
+  USE thermodynamic,            ONLY :  e_tot, u_lj_r, h_tot, e_kin , temp_r , init_general_accumulator , write_thermo ,&
+                                        write_average_thermo , calc_thermo
   USE time,                     ONLY :  mdsteptimetot
 !  USE field,                    ONLY :  engforce_driver , doefg , doefield , ef_t , efg_t , mu_t , lwfc , lwrite_dip , lwrite_quad,  &
 !                                        lwrite_ef , lwrite_efg , write_DIPFF , write_EFGALL , write_EFALL, write_QUADFF
@@ -123,7 +128,7 @@ SUBROUTINE md_run
 
   separator(stdout)
 
-  io_node WRITE ( stdout , '(a,i)' )      'properties at t=',itime0-1
+  io_node WRITE ( stdout , '(a,i0)' )      'properties at t=',itime0-1
  
   allocate( xtmp(natm), ytmp(natm), ztmp(natm) )
 
@@ -315,8 +320,12 @@ MAIN:  do itime = itime0 , itime1
          if ( ( ANY ( integrator .eq. rescale_allowed ) ) .and.  &
                   ( ( itime .le. nequil .and. MOD ( itime , nequil_period ) .eq. 0 ) .and. &
                     ( itime .ne. itime0 .and. itime .ne. itime1 ) ) ) then
-           io_printnode WRITE(stdout ,'(a)') ''
-           io_printnode WRITE(stdout ,'(a)') 'velocities are rescaled'
+            io_printnode WRITE(stdout ,'(a)') ''
+            if (.not.lcsvr) then
+                io_printnode WRITE(stdout ,'(a)') '  velocities are rescaled (berendsen)'
+            else
+                io_printnode WRITE(stdout ,'(a)') '  velocities are rescaled (csvr)'
+            endif
            CALL rescale_velocities(0)
          endif
          ! ================================

@@ -107,13 +107,6 @@ PROGRAM main_MDFF
   statime 
 #endif
 
-  ! ====================================================      
-  ! random number generator init
-  ! MD is too sensitive to the initial velocities
-  ! for test purpose keep it commented
-  ! uncomment it if you want uncorrelated runs  
-  ! ====================================================
-  !CALL init_random_seed 
 
 #ifdef MPI
   ! ====================================================
@@ -126,6 +119,13 @@ PROGRAM main_MDFF
   ! ====================================================
   CALL MPI_COMM_SIZE ( MPI_COMM_WORLD , numprocs , ierr )  
 #endif
+  ! ====================================================      
+  ! random number generator init
+  ! MD is too sensitive to the initial velocities
+  ! for test purpose keep it commented
+  ! uncomment it if you want uncorrelated runs  
+  ! ====================================================
+  CALL init_random_seed(myrank,numprocs) 
 
   ! ====================================================
   ! input/output init 

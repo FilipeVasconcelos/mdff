@@ -160,6 +160,9 @@ MODULE io
 
   integer, PARAMETER :: kunit_RESTART   = 600
 
+
+  integer :: oszcall 
+
 CONTAINS
 
 ! *********************** SUBROUTINE io_init ***********************************

@@ -20,6 +20,7 @@
 #include "symbol.h"
 !#define debug
 !#define debug_ES_dir
+#define debug_thole
 ! ======= Hardware =======
 
 ! *********************** MODULE field *****************************************
@@ -39,6 +40,7 @@ CONTAINS
 SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_dir , tau_dir , mu , theta , & 
                               task , damp_ind , do_efield , do_efg , do_forces , do_stress )
 
+  USE io,                       ONLY :  ioprint
   USE pim,                      ONLY :  ldip_damping, pol_damp_b, pol_damp_c, pol_damp_k
   USE control,                  ONLY :  lvnlist
   USE coulomb,                  ONLY :  alphaES, thole_functions, thole_param, thole_function_type, pair_thole, pair_thole_distance 
@@ -307,7 +309,6 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
 
             ! if both ions have polarizability
             if ( ipol .and. jpol ) then
-
                ! =========================================
                !  "Thole" functions (linear)
                !  B.T. Thole, Chem. Phys. 59 p341 (1981)
@@ -321,8 +322,8 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
                   pair_thole(ia) = ja
                   pair_thole_distance (ia) = d
 #ifdef debug_thole
-                  io_print write(stdout,'(3a,2i)') 'thole function for',atype(ia),atype(ja),ia,ja
-                  io_print write(stdout,'(a,f,a,f)') 's =', sthole,'  r =',d
+                  io_print write(stdout,'(3a,2i5)') 'thole function for',atype(ia),atype(ja),ia,ja
+                  io_print write(stdout,'(a,e12.6,a,e12.6)') 's =', sthole,'  r =',d
 #endif
                   cthole = cthole + 1 
                   vthole = d / sthole

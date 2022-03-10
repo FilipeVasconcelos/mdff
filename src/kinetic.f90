@@ -213,10 +213,8 @@ SUBROUTINE rescale_volume (quite)
   USE thermodynamic,            ONLY :  pressure_tot!, calc_thermo
 
   implicit none
-
   ! global
   integer, intent(in) :: quite
-
   ! local
   integer :: ia
   real(kind=dp) :: P, lambda, lambda3

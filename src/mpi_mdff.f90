@@ -24,7 +24,7 @@ CONTAINS
 !> \brief
 !! this routine split the number of atoms into np procs
 !! istart and iend are the atom index for myrank task
-!! nex version mardi 15 oct
+!! new version mardi 15 oct
 !
 !> \param[in]  n     number of atoms
 !> \param[in]  mrank current task index

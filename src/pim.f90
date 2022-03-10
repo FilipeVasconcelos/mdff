@@ -340,12 +340,12 @@ SUBROUTINE pim_print_info ( kunit )
   if ( ionode ) then
     blankline(kunit)
     if ( linduced ) then 
-      lseparator(kunit) 
+      lseparator(kunit,61) 
       WRITE ( kunit ,'(a)')             'polarizabilities on atoms'
       if ( ldamp ) &
       WRITE ( kunit ,'(a)')             'electric field damping applied to polarizable atoms' 
 
-      lseparator(kunit) 
+      lseparator(kunit,61) 
       do it1 = 1 , ntype
         if ( ldip_polar( it1 ) ) then
           WRITE ( kunit ,'(a,a2,a,f12.4)')'polarizability on type ', atypei(it1),' : ' 
@@ -368,7 +368,7 @@ SUBROUTINE pim_print_info ( kunit )
         else
           WRITE ( kunit ,'(a,a2)')      'no polarizability on type ', atypei(it1)
         endif
-        lseparator(kunit) 
+        lseparator(kunit,61) 
         blankline(kunit)
       enddo
     endif

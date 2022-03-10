@@ -1294,7 +1294,8 @@ subroutine m1qn3 (simul,prosca,ctonb,ctcab,n,x,f,g,dxmin,df1,epsg,normtype,impre
       if (tg.eq.0.0_dp) go to 940
       fn=fg
       do 930 i=1,n
-  930 xn(i)=xn(i)+tg*d(i)
+      xn(i)=xn(i)+tg*d(i)
+      930 continue
   940 if (imp.le.3) go to 999
       write (io,1001)
       write (io,1005) tg,fg,fpg
@@ -1305,7 +1306,8 @@ subroutine m1qn3 (simul,prosca,ctonb,ctcab,n,x,f,g,dxmin,df1,epsg,normtype,impre
 !c               recopiage de x et boucle
 !c
   950 do 960 i=1,n
-  960 x(i)=xn(i)+t*d(i)
+      x(i)=xn(i)+t*d(i)
+      960 continue
       go to 100
 !c     --- linesearch finished, no skip at next entry in mlis3
   999 if (reverse.ne.0) reentry = 0

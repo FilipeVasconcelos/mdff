@@ -37,6 +37,7 @@
 !#define debug_extrapolate
 !#define debug_print_dipff_scf
 !#define debug_scf_kO_inner
+!#define debug_write_DIPFF
 ! ======= Hardware =======
 
 ! *********************** MODULE field *****************************************
@@ -163,7 +164,12 @@ SUBROUTINE get_dipole_moments ( mu , theta , didpim )
   deallocate ( fx_save, fy_save, fz_save ) 
   deallocate ( dipia_ind  )
   deallocate ( quadia_ind  )
-
+#ifdef debug_write_DIPFF
+    OPEN  ( kunit_DIPFF , file = 'DIPFF',STATUS = 'UNKNOWN')
+    mu_t = mu
+    CALL    write_DIPFF 
+    CLOSE ( kunit_DIPFF )
+#endif
   ! =====================================
   ! check for POLARIZATION CATASTROPH
   ! =====================================
@@ -193,9 +199,9 @@ SUBROUTINE get_dipole_moments ( mu , theta , didpim )
       if ( pair_thole(ja) .ne. 0 ) then
         if ( ionode ) then
           WRITE ( stdout, '(a)' )          'Ajust thole_param to avoid this issue'
-          WRITE ( stdout, '(a,2i5,a5,a,a5,a,f12.8)') 'thole pair : ',ja,pair_thole(ja), atype(ja) ,'-', atype(pair_thole(ja)), 'distance = ',pair_thole_distance(ja)
-          WRITE ( stdout, '(a,i5,3f12.8)') '  dipoles for ', ja , mu (:, ja ) 
-          WRITE ( stdout, '(a,i5,3f12.8)') '  dipoles for ', pair_thole(ja) , mu (:,pair_thole(ja))
+          WRITE ( stdout, '(a,2i5,a5,a,a5,a,e15.8)') 'thole pair : ',ja,pair_thole(ja), atype(ja) ,'-', atype(pair_thole(ja)), 'distance = ',pair_thole_distance(ja)
+          WRITE ( stdout, '(a,i5,3e15.8)') '  dipoles for ', ja , mu (:, ja ) 
+          WRITE ( stdout, '(a,i5,3e15.8)') '  dipoles for ', pair_thole(ja) , mu (:,pair_thole(ja))
         endif
       endif
     enddo
@@ -320,7 +326,9 @@ SUBROUTINE moment_from_pola_scf ( mu_ind , theta_ind , didpim )
   ! use_ckrskr  = .true. : use the store exp(ikr) 
   CALL  multipole_ES ( Efield_stat , EfieldG_stat , dipia , quadia , task_static , & 
                        damp_ind =.true. , do_efield=.true. , do_efg=.false. , & 
-                       do_forces=.false. , do_stress = .false. , do_rec = .true. , do_dir = .true. , do_strucfact= .true. , use_ckrskr=.true. ) 
+                       do_forces=.false. , do_stress = .false. , do_rec = .true. , do_dir = .true. , & 
+                       do_strucfact= .true. , use_ckrskr=.true. )
+  !WRITE(stdout,'(a,i5,a,e15.8)') "myrank ",myrank," u_coul debug ",u_coul 
   u_coul_stat = u_coul 
   fx      = 0.0_dp
   fy      = 0.0_dp
@@ -365,7 +373,6 @@ SUBROUTINE moment_from_pola_scf ( mu_ind , theta_ind , didpim )
     ! ==========================================================
     if ( iscf.ne.1 .or. ( calc .ne. 'md' .and.  calc .ne. 'opt' ) ) then
       CALL induced_moment       ( Efield , mu_ind )  ! Efield in ; mu_ind and u_pol out
-
     else
       CALL extrapolate_dipole_aspc ( mu_ind , Efield , key=1 )  ! predictor
     endif
@@ -387,15 +394,14 @@ SUBROUTINE moment_from_pola_scf ( mu_ind , theta_ind , didpim )
     enddo
     u_pol = u_pol * 0.5_dp
 
-
-
     ! ==========================================================
     !  calculate Efield_ind from mu_ind
     !  Efield_ind out , mu_ind in ==> charges and static dipoles = 0
     ! ==========================================================
     CALL  multipole_ES ( Efield_ind , EfieldG_ind , mu_ind , theta_ind , task_ind , & 
                          damp_ind = .false. , do_efield=.true. , do_efg = .false. , &
-                         do_forces = .false. , do_stress =.false. , do_rec=.true., do_dir=.true. , do_strucfact=.false. , use_ckrskr = .true. )
+                         do_forces = .false. , do_stress =.false. , do_rec=.true., do_dir=.true. , &
+                         do_strucfact=.false. , use_ckrskr = .true. )
 
     u_coul_ind = u_coul 
     u_coul_pol = u_coul_stat-u_coul_ind
@@ -414,12 +420,12 @@ SUBROUTINE moment_from_pola_scf ( mu_ind , theta_ind , didpim )
 
     ! output
     if ( calc .ne. 'opt' ) then
-#ifdef debug
-    io_printnode WRITE ( stdout ,'(a,i4,5(a,e16.8))') &
+#ifdef debug_write_DIPFF
+    WRITE ( stdout ,'(a,i4,5(a,e16.8))') &
     'scf = ',iscf,' u_pol = ',u_pol * coul_unit , ' u_coul (qq)  = ', u_coul_stat, ' u_coul (dd)  = ', u_coul_ind,' u_coul_pol = ', u_coul_pol, ' rmsd       = ', rmsd
 #endif
-    io_printnode WRITE ( stdout ,'(a,i4,2(a,e16.8))') &
-    'scf = ',iscf,' u_pol = ',u_pol * coul_unit , ' rmsd       = ', rmsd
+!    io_printnode WRITE ( stdout ,'(a,i4,2(a,e16.8))') &
+!    'scf = ',iscf,' u_pol = ',u_pol * coul_unit , ' rmsd       = ', rmsd
     endif
  
 #ifdef debug_print_dipff_scf
@@ -2355,116 +2361,6 @@ SUBROUTINE extrapolate_dipole_poly ( mu_ind )
   return 
 
 END SUBROUTINE extrapolate_dipole_poly
-
-! order of extrapolation is k+1 of Kolafa original derivation.
-! as the zero order is taking juste 
-SUBROUTINE extrapolate_dipole_aspc ( mu_ind , Efield , key ) 
-
-  USE config,           ONLY :  atype, natm, invpoldipia
-  USE pim,              ONLY :  extrapolate_order, ldip_polar
-  USE coulomb,          ONLY :  dipia_ind_t
-  USE md,               ONLY :  itime 
-
-  implicit none
-  ! global  
-  real(kind=dp) , intent (out):: mu_ind (:,:) 
-  real(kind=dp) , intent (in) :: Efield (:,:) 
-  integer :: key 
-  ! local
-  integer :: ia, k ,ext_ord, alpha, beta
-  real(kind=dp)               :: mu_p ( 3 , natm ) 
-  real(kind=dp)               :: mu_p_save (3 , natm ) 
-  ! ASPC coefficient
-  real(kind=dp) :: B_ASPC(6), w_ASPC
-
-  ! switch to lower order of extrapolation 
-  ! if time step is not large enough to store previous dipoles steps
-  if ( itime .ge. extrapolate_order+1 ) then
-    ext_ord = extrapolate_order
-  else
-    if (itime.eq.1.or.itime.eq.0)   then
-      ext_ord = 0 
-    else
-      ext_ord = itime - 1
-    endif
-  endif
-
-!  write(*,'(a,2i,3f16.8)') '(1) key : ',key,ext_ord,mu_ind(1,:)
-
-  SELECT CASE ( ext_ord ) 
-  CASE DEFAULT
-    io_node WRITE(stdout,'(a)') 'value of aspc extrapolation order not available should be 0<= extrapolate_order <= 4'
-    STOP
-  CASE(0)
-    B_ASPC(1) =  1.0_dp 
-    W_ASPC    =  0.0_dp
-  CASE(1) 
-    B_ASPC(1) =  2.0_dp
-    B_ASPC(2) = -1.0_dp
-    W_ASPC    =  2.0_dp/3.0_dp
-  CASE(2)
-    B_ASPC(1) =  2.5_dp
-    B_ASPC(2) = -2.0_dp
-    B_ASPC(3) =  0.5_dp
-    W_ASPC    =  0.6_dp
-  CASE(3)
-    B_ASPC(1) =  2.8_dp
-    B_ASPC(2) = -2.8_dp
-    B_ASPC(3) =  1.2_dp
-    B_ASPC(4) = -0.2_dp
-    W_ASPC    =  4.0_dp/7.0_dp 
-  CASE(4)
-    B_ASPC(1) =  3.0_dp
-    B_ASPC(2) = -24.0_dp/7.0_dp
-    B_ASPC(3) =  27.0_dp/14.0_dp
-    B_ASPC(4) = -4.0_dp/7.0_dp
-    B_ASPC(5) =  1.0_dp/14.0_dp
-    W_ASPC    =  5.0_dp/9.0_dp
-  CASE(5)
-    B_ASPC(1) =  22.0_dp/7.0_dp
-    B_ASPC(2) = -55.0_dp/14.0_dp
-    B_ASPC(3) =  55.0_dp/21.0_dp
-    B_ASPC(4) = -22.0_dp/21.0_dp
-    B_ASPC(5) =  5.0_dp/21.0_dp
-    B_ASPC(6) = -1.0_dp/42.0_dp
-    W_ASPC    =  6.0_dp/11.0_dp
-  END SELECT
-        
-  ! predictor
-  if ( key .eq. 1 ) then 
-    mu_p = 0.0_dp
-    do k=1 , ext_ord+1
-      mu_p = mu_p + B_ASPC( k  ) * dipia_ind_t ( k , : , : )
-    enddo
-    mu_ind=mu_p
-    do k = ext_ord + 1, 2, -1
-      dipia_ind_t(k,:,:) = dipia_ind_t(k-1,:,:)
-    enddo
-!    write(*,'(a,2i,3f16.8)') '(2) key : ',key,ext_ord,mu_ind(1,:)
-  endif
-
-  ! corrector
-  if ( key.eq.2) then 
-    mu_p_save = mu_ind
-    CALL induced_moment ( Efield , mu_ind ) 
-    mu_ind = w_ASPC * mu_ind + ( 1.0_dp - w_ASPC ) * mu_p_save 
-  endif
-
-!#ifdef debug_mu
-!      if ( ionode ) then
-!        WRITE ( stdout , '(a)' )     'Induced dipoles at atoms from extrapolation: '
-!        do ia = 1 , natm 
-!          WRITE ( stdout , '(i5,a3,a,3f18.10)' ) &
-!          ia,atype(ia),' mu_ind = ', mu_ind ( 1 , ia ) , mu_ind ( 2 , ia ) , mu_ind ( 3 , ia )
-!        enddo
-!        blankline(stdout)
-!      endif
-!#endif
-
-  return
-
-END SUBROUTINE extrapolate_dipole_aspc
-
 
 SUBROUTINE polint(xa,ya,n,y,dy)
 

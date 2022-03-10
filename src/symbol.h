@@ -27,7 +27,7 @@
 #define bigseparator_noionode(X)          WRITE ( X , '(a)' ) repeat('=',100) 
 
 ! separator '-'
-#define lseparator(X)     if ( ionode ) WRITE ( X , '(a)' ) repeat('-',61) 
+#define lseparator(X,Y)     if ( ionode ) WRITE ( X , '(a)' ) repeat('-',Y) 
 #define lseparator_noionode(X)          WRITE ( X , '(a)' ) repeat('-',61) 
 #define lseparator_ioprintnode(X)  if ( ioprintnode )        WRITE ( X , '(a)' ) repeat('-',61) 
 

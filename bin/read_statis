@@ -9,8 +9,8 @@ nstat=`grep stat CONTROL | awk '{print $NF}'`
 echo "## nstat = $nstat"
 ninfo=`echo "$nsteps / $nstat" | bc `
 echo "## ninfo : $ninfo "
-line9=`echo "$ninfo*9" | bc `
-line11=`echo "$ninfo*11" | bc `
+line9=`echo "$ninfo*9+$ninfo" | bc `
+line11=`echo "$ninfo*11+$ninfo" | bc `
 if [ -f REVCON ] ; then
 	natom=`wc REVCON | awk '{print ($1-5)/4}'`
 else
@@ -29,9 +29,6 @@ if [ "$nline" -eq "$line11" ] ; then
 fi
 
 #awk -v natm=$natm '{print natm,$0}' tmpfile 
-
-
-
 
 
 awk -v skey=$skey -v natom=$natom 'BEGIN{start=0;tstep=0;htot=0.0;etot=0.0;ekin=0.0;vdw=0.0;vol=0.0;a=0.0;b=0.0;c=0.0;

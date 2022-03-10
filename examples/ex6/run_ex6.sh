@@ -4,7 +4,7 @@ EXEDLPOLY=DLPOLY.X
 EXEMDFF=mdff.x
 
 dlpoly=true
-mdff=false
+mdff=true
 ensemble=nvt
 
 if $dlpoly; then

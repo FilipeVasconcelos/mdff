@@ -166,9 +166,9 @@ SUBROUTINE config_print_info(kunit)
                           'n',atypei(it),'                  = ',natmi(it),REAL(natmi(it),kind=dp )/REAL(natm,kind=dp ) * 100.0_dp,'%'
     enddo
     blankline(kunit)
-    lseparator(kunit)
+    lseparator(kunit,61)
     WRITE ( kunit ,'(a)')            'direct     basis : '
-    lseparator(kunit)
+    lseparator(kunit,61)
     WRITE ( kunit ,'(a,3f12.4)')     'a_vector              = ',simu_cell%A(1,1),simu_cell%A(2,1),simu_cell%A(3,1) 
     WRITE ( kunit ,'(a,3f12.4)')     'b_vector              = ',simu_cell%A(1,2),simu_cell%A(2,2),simu_cell%A(3,2) 
     WRITE ( kunit ,'(a,3f12.4)')     'c_vector              = ',simu_cell%A(1,3),simu_cell%A(2,3),simu_cell%A(3,3) 
@@ -178,9 +178,9 @@ SUBROUTINE config_print_info(kunit)
     WRITE ( kunit ,'(a,f12.4)')      'volume                = ',simu_cell%omega
     blankline(kunit)
     blankline(kunit)
-    lseparator(kunit)
+    lseparator(kunit,61)
     WRITE ( kunit ,'(a)')            'reciprocal basis : '
-    lseparator(kunit)
+    lseparator(kunit,61)
     WRITE ( kunit ,'(a,3f12.4)')     'a*_vector             = ',simu_cell%B(1,1),simu_cell%B(2,1),simu_cell%B(3,1) 
     WRITE ( kunit ,'(a,3f12.4)')     'b*_vector             = ',simu_cell%B(1,2),simu_cell%B(2,2),simu_cell%B(3,2) 
     WRITE ( kunit ,'(a,3f12.4)')     'c*_vector             = ',simu_cell%B(1,3),simu_cell%B(2,3),simu_cell%B(3,3) 
@@ -190,7 +190,7 @@ SUBROUTINE config_print_info(kunit)
     WRITE ( kunit ,'(a,3f12.4)')     'angles                = ',simu_cell%RALPH,simu_cell%RBET,simu_cell%RGAMM
     WRITE ( kunit ,'(a,f12.4)')      'volume                = ',simu_cell%romega
     blankline(kunit)
-    lseparator(kunit)
+    lseparator(kunit,61)
     blankline(kunit)
     
   endif 

@@ -334,6 +334,7 @@ SUBROUTINE write_thermo ( step , kunit , key )
   USE constants,        ONLY :  time_unit
   USE config,           ONLY :  simu_cell 
   USE md,               ONLY :  dt
+  USE io,               ONLY :  oszcall
 
   implicit none
 
@@ -343,7 +344,7 @@ SUBROUTINE write_thermo ( step , kunit , key )
 
   ! local 
   real(kind=dp) :: omega , acell ,bcell , ccell
-  real(kind=dp) :: u_vdw_r , pvirial_vdw_r
+  real(kind=dp) :: u_vdw_r , pvirial_vdw_r,time
   
   omega = simu_cell%omega
   acell = simu_cell%ANORM(1)
@@ -352,26 +353,39 @@ SUBROUTINE write_thermo ( step , kunit , key )
 
   u_vdw_r = u_lj_r + u_bmhft_r + u_morse_r
   pvirial_vdw_r   = pvirial_lj_r + pvirial_morse_r + pvirial_bmhft_r 
+  time = REAL ( step * dt / time_unit , kind = dp )
 
   if ( key .eq. 'osz' ) then
     if ( ionode ) then
-        WRITE ( kunit , 200 ) &
-        step , REAL ( step * dt / time_unit , kind = dp ) , e_tot   , e_kin_r      , u_tot        , u_vdw_r      , u_coul_r   
-        WRITE ( kunit , 201 ) &
-        step , REAL ( step * dt / time_unit , kind = dp ) , temp_r  , pressure_tot_r , pvirial_vdw_r , pvirial_coul_r , omega , h_tot  
+        if ( MOD ( oszcall , 10 ) .eq. 0) then
+            lseparator ( kunit , 110)
+            WRITE ( kunit , 100 )
+            lseparator ( kunit , 110)
+        endif
+! OLD VERSION
+!        WRITE ( kunit , 200 ) &
+!        step , REAL ( step * dt / time_unit , kind = dp ) , e_tot   , e_kin_r      , u_tot        , u_vdw_r      , u_coul_r   
+!        WRITE ( kunit , 201 ) &
+!        step , REAL ( step * dt / time_unit , kind = dp ) , temp_r  , pressure_tot_r , pvirial_vdw_r , pvirial_coul_r , omega , h_tot  
+        WRITE ( kunit , 200 ) step , time , e_tot, e_kin_r, u_tot, u_vdw_r, u_coul_r   
+        WRITE ( kunit , 200 ) step , temp_r  , pressure_tot_r , pvirial_vdw_r , pvirial_coul_r , omega , h_tot  
+        oszcall=oszcall+1
     endif
   endif
   if ( key .eq. 'std' ) then
-        io_node WRITE ( kunit, 300)  step , REAL ( step * dt / time_unit , kind = dp ) , &
+        io_node WRITE ( kunit, 300)  step , time , &
                                      e_kin_r , temp_r , u_tot  , u_vdw_r , u_coul_r  , &
                                      pressure_tot_r , pvirial_vdw_r , pvirial_coul_r , pvirial_tot_r, omega ,    &
                                      acell , bcell, ccell , e_tot, h_tot
   endif
 
- 200 FORMAT(' step = ',I9,2X,' Time = 'E15.8,'  Etot = ',E15.8,'  Ekin  = ',E15.8,'  Utot      = ',&
-                E15.8,'  U_vdw     = ',E15.8,'  U_coul   = ',E15.8)                     
- 201 FORMAT(' step = ',I9,2X,' Time = 'E15.8,'  Temp = ',E15.8,'  Press = ',E15.8,'  Pvir_vdw  = ',&
-                E15.8,'  Pvir_coul = ',E15.8,'  Volume   = ',E15.8,'  Htot = ',E15.8)
+ ! OLD VERSION 
+ !200 FORMAT(' step = ',I9,2X,' Time = 'E15.8,'  Etot = ',E15.8,'  Ekin  = ',E15.8,'  Utot      = ',&
+ !               E15.8,'  U_vdw     = ',E15.8,'  U_coul   = ',E15.8)                     
+ !201 FORMAT(' step = ',I9,2X,' Time = 'E15.8,'  Temp = ',E15.8,'  Press = ',E15.8,'  Pvir_vdw  = ',&
+ !               E15.8,'  Pvir_coul = ',E15.8,'  Volume   = ',E15.8,'  Htot = ',E15.8)
+ 100 FORMAT("     step      Time/Temp   Etot/Pressure    Ekin/Pvir_nb  Utot/Pvir_coul      U_nb/Omega     U_coul/Htot")
+ 200 FORMAT(I9,2X,6E16.8)                     
 
  300 FORMAT(/ &
               '  Thermodynamic information '/ &

@@ -241,13 +241,13 @@ SUBROUTINE field_print_info ( kunit , quiet )
     blankline(kunit)
     WRITE ( kunit ,'(a)')               'FIELD MODULE ... WELCOME'
     blankline(kunit)
-    lseparator(kunit)
+    lseparator(kunit,61)
     WRITE ( kunit ,'(a,f12.4,a)')       'total mass            = ', total_mass ,' a.m '
     WRITE ( kunit ,'(a,2f12.4,a)')      'density               = ', rhoN , rho * rho_unit ,' g/cm^3 '
-    print*,rho_unit,rho
+    !print*,rho_unit,rho
     blankline(kunit)
     WRITE ( kunit ,'(a)')               'point charges: '
-    lseparator(kunit)
+    lseparator(kunit,61)
     do it = 1 , ntype
       WRITE ( kunit ,'(a,a,a,e10.3)')   'q_',atypei(it),'                   = ',qch(it)
     enddo
@@ -255,21 +255,21 @@ SUBROUTINE field_print_info ( kunit , quiet )
     WRITE ( kunit ,'(a,e10.3)')         'second moment of charge = ',  qtot2
     blankline(kunit)
     WRITE ( kunit ,'(a)')               'quadrupolar nuclear moment: '
-    lseparator(kunit)
+    lseparator(kunit,61)
     do it = 1 , ntype
       WRITE ( kunit ,'(a,a,a,e10.3,a)') 'Q_',atypei(it),'                 = ',quad_nuc(it),' mb'
     enddo
     blankline(kunit)
-    lseparator(kunit)
+    lseparator(kunit,61)
     WRITE ( kunit ,'(a)')               'static dipoles: '
-    lseparator(kunit)
+    lseparator(kunit,61)
     do it = 1 , ntype
       WRITE ( kunit ,'(a,a,a,3e12.3)')  'mu_',atypei(it),'      = ',dip(it,1),dip(it,2),dip(it,3)
     enddo
     WRITE ( kunit ,'(a,3e12.3)')        'sum         = ',mu_sum(1),mu_sum(2),mu_sum(3)
     blankline(kunit)
     WRITE ( kunit ,'(a)')               'static quadrupoles: '
-    lseparator(kunit)
+    lseparator(kunit,61)
     do it = 1 , ntype
       WRITE ( kunit ,'(a,a,a)')         'theta_',atypei(it),'      = '
       do i = 1 , 3

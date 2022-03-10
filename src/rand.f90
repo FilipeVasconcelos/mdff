@@ -28,6 +28,7 @@
 ! ******************************************************************************
 SUBROUTINE init_random_seed(rank,nump)
 
+  USE io,       ONLY :  stdout
   USE mpimdff
 
   implicit none
@@ -42,7 +43,6 @@ SUBROUTINE init_random_seed(rank,nump)
 #else
   rank = 0
 #endif
-
   if ( rank .eq. 0 ) then
     CALL RANDOM_SEED(SIZE = n)
     do proc = 1 , nump-1
@@ -63,10 +63,13 @@ SUBROUTINE init_random_seed(rank,nump)
   CALL SYSTEM_CLOCK(COUNT = clock)
 
   seed = clock + 48 * (/ (i - 1, i = 1, n) /)
+
 #ifdef MPI
   CALL MPI_ALL_REDUCE_INTEGER ( seed , n )
 #endif
   CALL RANDOM_SEED(PUT = seed)
+  !WRITE(stdout,'(3i12)') myrank,seed,n 
+  !STOP
   deallocate(SEED)
 
   return

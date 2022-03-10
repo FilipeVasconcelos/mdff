@@ -1,7 +1,28 @@
+! MDFF parallel Molecular Dynamics ... For Fun
+! Copyright (C) 2011  F. Vasconcelos
+!
+! This program is free software; you can redistribute it and/or
+! modify it under the terms of the GNU General Public License
+! as published by the Free Software Foundation; either version 2
+! of the License, or (at your option) any later version.
+!
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+! GNU General Public License for more details.
+!
+! You should have received a copy of the GNU General Public License
+! along with this program; if not, write to the Free Software
+! Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+! ===== fmV =====
+
+! ======= Hardware =======
+#include "symbol.h"
+!#define debug_TT
+! ======= Hardware =======
 MODULE tt_damp
 
-#include "symbol.h"
-#define debug_TT
+
   USE constants,        ONLY :  dp
   USE io,               ONLY :  stdout, ionode
 
@@ -10,6 +31,14 @@ MODULE tt_damp
 
 CONTAINS
 
+! *********************** SUBROUTINE get_TT_damp *******************************
+!> \brief
+!!  
+!> \author
+!! FMV
+!> \date 
+!! February 2014
+! ******************************************************************************
 SUBROUTINE get_TT_damp 
 
   implicit none
@@ -45,7 +74,6 @@ SUBROUTINE TT_damping_functions(b,c,r,f,fd,order)
   ! global 
   integer :: order
   real(kind=dp) :: b , c , r, f , fd  ! f damping function , fd first derivative
-
 
   ! local 
   integer :: k

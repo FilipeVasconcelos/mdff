@@ -319,16 +319,16 @@ SUBROUTINE non_bonded_print_info(kunit)
     blankline(kunit)
     WRITE ( kunit ,'(a)')               'NON BONDED MODULE ... WELCOME'
     blankline(kunit)
-    lseparator(kunit) 
+    lseparator(kunit,61) 
     ! =================================
     !     SHORT RANGE INTERACTIONS 
     ! =================================
     !       LENNARD-JONES
     ! =================================
     if ( lnmlj )       then     
-      lseparator(kunit) 
+      lseparator(kunit,61) 
       WRITE ( kunit ,'(a)')             'lennard-jones           '
-      lseparator(kunit) 
+      lseparator(kunit,61) 
       blankline(kunit)
       WRITE ( kunit ,'(a)')             '       eps    /    / sigma* \ q       / sigma*  \ p  |'
       WRITE ( kunit ,'(a)')             ' V = ------- |  p | ------- |    - q | -------- |    |'   
@@ -343,9 +343,9 @@ SUBROUTINE non_bonded_print_info(kunit)
       blankline(kunit)
       do it1 = 1 , ntype
         do it2 = it1 , ntype 
-          lseparator(kunit) 
+          lseparator(kunit,61) 
           WRITE ( kunit ,'(a,a,a,a)')   atypei(it1),'-',atypei(it2),' interactions:'    
-          lseparator(kunit) 
+          lseparator(kunit,61) 
           if ( it1 .eq. it2 ) then
             WRITE ( kunit ,100)         'sigma                                = ',sigmalj ( it1 , it2 )
             WRITE ( kunit ,100)         'eps                                  = ',epslj   ( it1 , it2 )
@@ -370,16 +370,16 @@ SUBROUTINE non_bonded_print_info(kunit)
     ! =================================
     if ( lmorse )       then
       blankline(kunit)
- lseparator(kunit)
+      lseparator(kunit,61)
       WRITE ( kunit ,'(a)')             'Morse  potential'
-      lseparator(kunit)
+      lseparator(kunit,61)
       blankline(kunit)
       WRITE ( kunit ,'(a)')             ' V = eps * exp ( -2 rho ( r - sigma ) ) - 2 eps * exp ( -rho ( r - sigma) ) '
       do it1 = 1 , ntype
         do it2 = it1 , ntype
-          lseparator(kunit)
+          lseparator(kunit,61)
           WRITE ( kunit ,'(a,a,a,a)')   atypei(it1),'-',atypei(it2),' interactions:'
-          lseparator(kunit)
+          lseparator(kunit,61)
           if ( it1 .eq. it2 ) then
             WRITE ( kunit ,100)         'sigma                                = ',sigmamor ( it1 , it2 )
             WRITE ( kunit ,100)         'eps                                  = ',epsmor   ( it1 , it2 )
@@ -394,10 +394,10 @@ SUBROUTINE non_bonded_print_info(kunit)
     endif
     if ( lbmhftd .or. lbmhft ) then
       blankline(kunit)
-      lseparator(kunit)
+      lseparator(kunit,61)
       WRITE ( kunit ,'(a)')             'BMHFTD potential'
       WRITE ( kunit ,'(a)')             'Born-Huggins-Meyer-Fumi-Tossi + Damping'
-      lseparator(kunit)
+      lseparator(kunit,61)
       blankline(kunit)
       WRITE ( kunit ,'(a)')             '                                  C              D  '
       WRITE ( kunit ,'(a)')             ' V = A  exp ( - B  r ) - f_6(r) ----- - f_8(r) -----'
@@ -411,9 +411,9 @@ SUBROUTINE non_bonded_print_info(kunit)
       blankline(kunit)
       do it1 = 1 , ntype
         do it2 = it1 , ntype
-          lseparator(kunit)
+          lseparator(kunit,61)
           WRITE ( kunit ,'(a,a,a,a)')   atypei(it1),'-',atypei(it2),' interactions:'
-          lseparator(kunit)
+          lseparator(kunit,61)
           if ( it1 .eq. it2 ) then
             WRITE ( kunit ,100)         'A                                = ',Abmhftd ( it1 , it2 )
             WRITE ( kunit ,100)         'B                                = ',Bbmhftd ( it1 , it2 )

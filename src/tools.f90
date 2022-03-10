@@ -724,12 +724,11 @@ END SUBROUTINE merge_1
 !  a(5)=1.0
 
 !  do ia = 1 , 5
-!  labela(ia) = ia
+!       labela(ia) = ia
 !  enddo
-!  write(*,*) 'befo',a
+!  write(*,*) 'before',a
 !  call merge_sort ( a , 5 , t , labela , labelt )
-!  write(*,*) 'after1 ',a
-
+!  write(*,*) 'after ',a
 !
 ! ******************************************************************************
 RECURSIVE SUBROUTINE merge_sort(A,N,T,labela,labelt)
@@ -928,9 +927,6 @@ SUBROUTINE write_all_conf_proc
 
 END SUBROUTINE write_all_conf_proc 
 
-
-
-
 ! *********************** SUBROUTINE dumb_guy **********************************
 !
 !> \brief
@@ -943,7 +939,7 @@ SUBROUTINE dumb_guy(kunit)
   USE io,  ONLY :  ionode 
 
   implicit none
-
+  ! global
   integer :: kunit
 
 !  Here is the guy ...
@@ -980,13 +976,20 @@ SUBROUTINE check_allowed_tags( size_allowed , allowed_values , tag , tagsection 
   ! local
   integer :: i
   logical :: allowed
+  character(len=20) :: FMT
 
   allowed = .false.
   do i = 1 , size_allowed 
     if ( trim ( tag ) .eq. allowed_values ( i ) )  allowed = .true.
   enddo
   if ( .not. allowed ) then
+
+#ifdef GFORTRAN
+    WRITE ( FMT , * ) size_allowed 
+    if ( ionode )  WRITE ( stderr , '(a,a,a,a,a,'// ADJUSTL(FMT) //'a)') 'ERROR ',tagsection,': ',tagname,' should be :'
+#else
     if ( ionode )  WRITE ( stderr , '(a,a,a,a,a,<size_allowed>a)' ) 'ERROR ',tagsection,': ',tagname,' should be :'
+#endif
     do i = 1 , size_allowed 
       if ( ionode )  WRITE ( stderr ,'(a)') allowed_values(i)
     enddo
