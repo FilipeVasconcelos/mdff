@@ -117,9 +117,9 @@ if [ -s exact ]; then
 		tag=$tgt
 	fi		
 	mv POSFF.randomPY POSFF.randomPY.$tag
-	if [ "vasp_output " = true ]; then
-		echo "creating equivqlent POSCAR output"
-		fftocar -i POSFF.randomPY.$tgt -o POSCAR.randomPY.$tgt -q
+	if [ "${vasp_output}" = "true" ]; then
+		echo "creating equivalent POSCAR output"
+		fftocar.py -i POSFF.randomPY.$tgt -o POSCAR.randomPY.$tgt
 	else
 		echo "=========================================================="
 	fi

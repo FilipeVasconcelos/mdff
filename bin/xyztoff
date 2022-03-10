@@ -58,7 +58,7 @@ echo "with $natm ions"
 
 #process first config to get type info
 echo "$natm"  >  $trajff
-echo "file generated from $xyxpos by xyztoconf script" >> $trajff
+echo "file generated from $xyxpos by xyztoff script" >> $trajff
 head -n $nlines $xyzpos | tail -n $natm > tmpposfile
 
 declare -a type_info=('')
@@ -152,31 +152,31 @@ cat tmpposfile        >> $trajff
 kline=0
 start=1
 conf=1
-echo -e -n "conf : [ $conf / $nconf ]\r"
+pct=0
+echo -e -n "conf : [ 0 % ]\r"
 while read line
 do
-	end=$((nlines+$start))
+        end=$((nlines+$start))
 	kline=$((kline+1))
 	if [ $kline -gt $end ] && [ $((conf+1)) -le $nconf ] ; then
 		conf=$((conf+1))
-		echo -e -n "conf : [ $conf / $nconf ]\r"
+                if ! ((conf % (nconf/100))); then
+                    pct=$((pct+1))
+                    echo -e -n "conf : [ $((pct)) % ]\r"
+                fi
 		start=$end
 		echo $natm                                             >> $trajff
-		echo "file generated from $xyzpos by xyztoconf script" >> $trajff
+		echo "file generated from $xyzpos by xyztoff script"   >> $trajff
 		head -n $((conf+1)) $seed.cell | tail -n 1 > celltmp
-		a=`awk '{print $3}' celltmp`
-		b=`awk '{print $7}' celltmp`
-		c=`awk '{print $11}' celltmp`
-		echo "$a  0.0000000000  0.0000000000"                  >> $trajff 
-		echo " 0.0000000000 $b  0.0000000000"                  >> $trajff
-		echo " 0.0000000000  0.0000000000 $c"                  >> $trajff
+		awk '{print $3" 0.0000000000  0.0000000000"}'  celltmp >> $trajff
+		awk '{print "0.0000000000 "$7" 0.0000000000"}' celltmp >> $trajff
+		awk '{print "0.0000000000 0.0000000000 "$7  }' celltmp >> $trajff
 		echo $ntype                                            >> $trajff
 		echo ${type_info[@]}                                   >> $trajff
 		echo ${typei[@]}                                       >> $trajff
 		echo "Cartesian"                                       >> $trajff
 	fi
 	if [ $kline -lt $end ] && [ $kline -ge $start ] && [ $conf -ge 2 ]; then
-#		echo $start $end $kline $line
 		printf "%3s %20s %19s %19s\n" $line >> $trajff
 	fi
 	
@@ -187,7 +187,7 @@ done < $xyzpos
 
 echo "file $trajff generated"
 echo $separator
-#rm celltmp tmpposfile typesi
+rm celltmp tmpposfile typesi
 exit 0;
 
 

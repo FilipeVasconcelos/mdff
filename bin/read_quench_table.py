@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 # ===============================================================
 # name        : read_quench_table
 # author      : fmv
@@ -21,9 +21,9 @@
 #               item[1] = value
 # newtable  : quench table
 # ------------------------------------------------
-def read_quench():
+def read_quench(filename):
     
-    f=open('quench.config')
+    f=open(filename)
 
     lines=f.readlines()
     f.close()
@@ -227,7 +227,7 @@ def write_script(var,table):
     
 var=[]
 table=[]
-var,table = read_quench()
+var,table = read_quench('quench.config')
 write_script(var,table)
 
 
