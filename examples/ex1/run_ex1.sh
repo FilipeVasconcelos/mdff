@@ -12,6 +12,7 @@
 
 EXEDLPOLY=DLPOLY.X
 EXEMDFF=mdff.x
+bin=/home/filipe/dev/mdff/bin
 
 do_dlpoly=true
 
@@ -31,7 +32,7 @@ echo "# mdff calculation "
 cp ../config/control.F .
 cp ../config/POSFF .
 $EXEMDFF control.F > stdout
-poszi.py -i OSZIFF -n
+${bin}/poszi.py -i OSZIFF -n
 cd ..
 
 if $do_dlpoly; then
@@ -43,7 +44,7 @@ if $do_dlpoly; then
         cp ../config/FIELD .
         cp ../config/CONFIG .
         $EXEDLPOLY
-	read_statis > ene
+	${bin}/read_statis > ene
         cd ..
 fi
 

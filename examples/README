@@ -10,7 +10,7 @@ ex4  : EFG ewald sum, direct sum on two charges and cluster ( comp to Nymand and
 
 ex5  : Density of states of FCC Lennard-Jones
 
-ex6  : NVT   lennard jones argon (against DLPOLY) 
+ex6  : NVT (NoseHoover) lennard jones argon (against DLPOLY) 
  
 ex7  : NVE   lennard jones argon (against DLPOLY)
 
