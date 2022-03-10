@@ -291,14 +291,15 @@ MAIN:  do itime = itime0 , itime1
          ! =========================    
          !  integration t -> t + dt 
          ! =========================
-         if ( integrator.eq.'nve-lf'  )      CALL prop_leap_frog 
-         if ( integrator.eq.'nve-be'  )      CALL beeman 
-         if ( integrator.eq.'nve-vv'  )      CALL prop_velocity_verlet 
-         if ( integrator.eq.'npe-vv'  )      CALL prop_velocity_verlet 
-         if ( integrator.eq.'nvt-and' )      CALL prop_velocity_verlet 
-         if ( integrator.eq.'nvt-nhc2')      CALL nhc2 
-         if ( integrator.eq.'nvt-nhcn')      CALL nhcn 
-         if ( integrator.eq.'npt-nhcnp')     CALL nhcnp
+         if ( integrator.eq.'nve-lf'   )    CALL prop_leap_frog 
+         if ( integrator.eq.'nve-be'   )    CALL beeman 
+         if ( integrator.eq.'nve-vv'   )    CALL prop_velocity_verlet 
+         if ( integrator.eq.'npe-vv'   )    CALL prop_velocity_verlet 
+         if ( integrator.eq.'nvt-and'  )    CALL prop_velocity_verlet 
+         if ( integrator.eq.'nvt-nh'   )    CALL nose_hoover 
+         if ( integrator.eq.'nvt-nhc2' )    CALL nose_hoover_chain2 
+         if ( integrator.eq.'nvt-nhcn' )    CALL nose_hoover_chain_n 
+         if ( integrator.eq.'npt-nhcnp')    CALL nose_hoover_chain_n_p
 
          if ( lvnlist ) CALL vnlistcheck
 
@@ -320,7 +321,7 @@ MAIN:  do itime = itime0 , itime1
          if ( ( ANY ( integrator .eq. rescale_allowed ) ) .and.  &
                   ( ( itime .le. nequil .and. MOD ( itime , nequil_period ) .eq. 0 ) .and. &
                     ( itime .ne. itime0 .and. itime .ne. itime1 ) ) ) then
-            io_printnode WRITE(stdout ,'(a)') ''
+            io_printnode blankline(stdout)
             if (.not.lcsvr) then
                 io_printnode WRITE(stdout ,'(a)') '  velocities are rescaled (berendsen)'
             else
@@ -342,9 +343,9 @@ MAIN:  do itime = itime0 , itime1
          ! ===================================
          if ( (integrator.eq.'nvt-and') ) CALL andersen_velocities
 
-         ! ===================
+         ! =========================================================
          !  print trajectory and tensor/vectors efield,efg,dipoles
-         ! ===================
+         ! =========================================================
          if ( ltraj .and. (itime .gt. itraj_start ) .and. MOD (itime,itraj_period) .eq. 0 ) then
            xtmp = rx
            ytmp = ry
@@ -377,7 +378,7 @@ MAIN:  do itime = itime0 , itime1
            !  endif
 
            ! ================================
-           !  write DIPFF file (trajectory)
+           !  write QUADFF file (trajectory)
            ! ================================
            !  if ( lwrite_quad ) then
            !    CALL write_QUADFF 
