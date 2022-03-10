@@ -26,7 +26,7 @@ do
 
 
 	$EXEMDFF config/control.F > stdout
-	echo "$cluster `grep "Etot" OSZIFF | awk '{print $18}'` `grep " $cluster " config/REFERENCE| awk '{print $2}'` " | awk '{printf(" %4i %16.5f %12.5f %12.5f\n",$1,$2,$3,$2-$3)}'
+        echo "$cluster $(grep "Etot" stdout | tail -n 1 | awk '{print $NF}') $(grep " $cluster " config/REFERENCE| awk '{print $2}') " | awk '{printf(" %4i %16.5f %12.5f %12.5f\n",$1,$2,$3,$2-$3)}'
 
 done
 
