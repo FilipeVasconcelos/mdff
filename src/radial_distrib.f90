@@ -214,8 +214,8 @@ SUBROUTINE grcalc
   USE config,                   ONLY :  system , natm , ntype , rx , ry , rz , atype , &
                                         rhoN , config_alloc , simu_cell , atypei , itype, natmi, &
                                         coord_format_allowed , atom_dec , read_traj , read_traj_header
-  USE io,                       ONLY :  kunit_TRAJFF , kunit_GRTFF , kunit_NRTFF
-  USE constants,                ONLY :  pi 
+  USE io,                       ONLY :  kunit_TRAJFF, kunit_GRTFF , kunit_NRTFF
+  USE constants,                ONLY :  pi , dthird 
   USE cell,                     ONLY :  lattice , dirkar , periodicbc, kardir
   USE time,                     ONLY :  grtimetot_comm
 
@@ -295,7 +295,7 @@ SUBROUTINE grcalc
     CALL lattice ( simu_cell )
     rhoN_av = rhoN_av + ( REAL ( natm ,kind=dp )  / simu_cell%omega )
     average_volume = average_volume + simu_cell%omega    
-    io_node WRITE ( stdout , '(a,i6,a,i6,a,f12.3)' ) 'config : [ ',ic,' / ',nconf,' ]   vol : ',simu_cell%omega
+    io_node WRITE ( stdout , '(a,i6,a,i6,a,f12.3)') 'config : [ ',ic,' / ',nconf,' ]   vol : ',simu_cell%omega
 #ifdef debug
     CALL distance_tab
 !    print*,simu_cell%omega,average_volume/ REAL(ic,kind=dp)
@@ -366,13 +366,12 @@ SUBROUTINE grcalc
 
   nr ( 0 ) = 0 
 
-  do igr = 0 , nbins-1
-    rr  = ( REAL ( igr ,kind=dp )+0.5d0)*resg
-    vol = 4.d0 * pi * ( resg * rr* rr + ( resg**3 ) / 12.d0 )
-    vol = vol / average_volume  ! only  make sense for trajectory in NPT otherwise the average volume is the current volume ) 
+  do igr = 0 , nbins-2
+    rr = ( REAL ( igr ,kind=dp ) - 0.5d0 )*resg
+    vol = 4.d0 * pi * ( resg * rr * rr + ( resg**3 / 12.d0 ) )
+    vol = vol / average_volume  ! only  make sense for trajectory in NPT otherwise the average volume is the current volume  
     ! all - all pairs 
-    grr ( 0 , igr ) = REAL ( gr ( igr , 0 , 0 ) , kind = dp ) / ( ngr * vol * natm * natm )
-!    grr ( 0 , igr ) = REAL ( gr ( 0 , 0 , igr ) ) / ( ngr * vol * natm * natm )
+    grr ( 0 , igr ) = REAL ( gr ( igr , 0 , 0 ) , kind = dp ) / ( ngr * vol * natm * (natm -1) )
     ! type pairs
     mp = 1
     do it1 = 1 , ntype
@@ -386,7 +385,6 @@ SUBROUTINE grcalc
         endif 
         nr ( mp ) = it1          
         grr ( mp , igr ) = REAL ( gr ( igr , it1 , it2 ) , kind = dp) / REAL ( ngr * vol * natmi ( it1 ) * natmi ( it2 ) , kind = dp )  
-!        grr ( mp , igr ) = REAL ( gr ( it1 , it2 , igr ) ) / REAL ( ngr * vol * natmi ( it1 ) * natmi ( it2 ) )  
         mp = mp + 1
       enddo
     enddo
@@ -473,7 +471,7 @@ SUBROUTINE gr_main
         rijsq = rxij * rxij + ryij * ryij + rzij * rzij
         if ( rijsq.lt.cut2 ) then
           rr = SQRT ( rijsq )
-          igr = INT ( rr / resg ) 
+          igr = INT ( rr / resg ) + 1 
           if ( igr .lt. 0 .and. igr .gt. nbins-1 ) then
             WRITE ( stderr , '(a)' ) 'ERROR out of bound of gr in gr_main'
             STOP
