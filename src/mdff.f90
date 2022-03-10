@@ -125,7 +125,7 @@ PROGRAM main_MDFF
   ! for test purpose keep it commented
   ! uncomment it if you want uncorrelated runs  
   ! ====================================================
-  CALL init_random_seed(myrank,numprocs) 
+  !CALL init_random_seed(myrank,numprocs) 
 
   ! ====================================================
   ! input/output init 

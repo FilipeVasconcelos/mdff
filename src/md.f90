@@ -71,9 +71,9 @@ MODULE md
   data                 yosh_allowed / 1, 3 , 5 , 7 , 9 / 
 
   character(len=60) :: integrator               !< integration method   
-  character(len=60) :: integrator_allowed(9)    
+  character(len=60) :: integrator_allowed(10)    
   data                 integrator_allowed / 'nve-vv'  , 'nve-lf'   , 'nve-be' ,  'nve-lfq',  &
-                                            'nvt-and' , 'nvt-nhc2' , 'nvt-nhcn', & 
+                                            'nvt-and' , 'nvt-nh'   , 'nvt-nhc2' , 'nvt-nhcn', & 
                                             'npe-vv'  , 'npt-nhcnp' /
 
   character(len=60) :: nve_ensemble(4)
@@ -198,9 +198,9 @@ SUBROUTINE md_default_tag
   taucsvr       = 0.0_dp
   tauTberendsen = 0.0_dp
   tauPberendsen = 0.0_dp
-  nhc_yosh_order= 3 
-  nhc_mults     = 2 
-  nhc_n         = 4
+  nhc_yosh_order= 1 
+  nhc_mults     = 1 
+  nhc_n         = 2
   annealing     = 1.0_dp
   npropr        = 1
   npropr_start  = 0
@@ -268,12 +268,6 @@ SUBROUTINE md_check_tag
     STOP
   endif
 
-  if (integrator.eq.'nvt-nh' ) then
-    if ( ionode )  WRITE ( stdout ,'(a)') 'ERROR mdtag: integrator = "nvt-nh" not yet implemented try nvt-nhc2 '
-    if ( ionode )  WRITE ( stdout ,'(a)') integrator
-    STOP 
-  endif
-
   ! ============================
   !  check if leap frog is 
   !  wanted with equilibration 
@@ -285,11 +279,10 @@ SUBROUTINE md_check_tag
     integrator = 'nve-vv' 
   endif
 
-
-  !if ( nhc_n == 1 ) then
-  !  write(stdout,'(a)') 'ERROR : nhc_n = 1 is not allowed with Nose Hoover chains thermostats'
-  !  stop
-  !endif
+  if ( nhc_n == 1 ) then
+    write(stdout,'(a)') 'ERROR : nhc_n = 1 is not allowed with Nose Hoover chains thermostats'
+    stop
+  endif
 
   ! annealing 
   if ( annealing .ne. 1.0_dp ) then
@@ -342,6 +335,10 @@ SUBROUTINE extended_coordinates_alloc
     allocate ( vxib(nhc_n) , xib(nhc_n) )
     vxib = 0.0_dp
     xib  = 0.0_dp
+  else if ( integrator .eq. 'nvt-nh' ) then
+    allocate ( vxi(1) , xi(1) )
+    vxi  = 0.0_dp
+    xi   = 0.0_dp
   else
     !restart purpose if ensemble is NVT
     allocate ( vxi(1) , xi(1) )
@@ -373,6 +370,8 @@ SUBROUTINE extended_coordinates_dealloc
     if ( integrator .eq. 'npt-nhcnp' ) then
       deallocate ( vxib , xib )
     endif
+  else if (  integrator .eq. 'nvt-nh' ) then
+    deallocate (vxi,xi)
   else
     deallocate (vxi,xi)
     deallocate (vxib,xib)
