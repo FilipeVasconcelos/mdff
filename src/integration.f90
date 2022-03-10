@@ -193,6 +193,68 @@ SUBROUTINE prop_velocity_verlet
 
 END SUBROUTINE prop_velocity_verlet
 
+! *********************** SUBROUTINE nose_hoover *******************************
+! ******************************************************************************
+SUBROUTINE nose_hoover
+
+  USE io,                       ONLY :  stdout,ioprintnode 
+  USE constants,                ONLY :  dp
+  USE config,                   ONLY :  natm,rx,ry,rz,vx,vy,vz,fx,fy,fz,massia
+  USE md,                       ONLY :  timesca_thermo, temp,dt,vxi,xi
+  USE thermodynamic,            ONLY :  temp_r , e_kin , e_nvt 
+  USE engforce_driver,          ONLY :  engforce
+
+  implicit none
+  ! local
+  integer                :: ia
+  real(kind=dp)          :: kin , tempi, L 
+  real(kind=dp)          :: invQ, Q
+  real(kind=dp)          :: dt2,dt4,s
+  
+  dt2=dt*0.5_dp
+  dt4=dt2*0.5_dp
+  ! degrees of freedom
+  L = 3.0_dp * ( REAL ( natm , kind=dp) )
+  ! thermostat mass
+  Q = timesca_thermo**2.0_dp * temp *  L 
+
+  CALL calc_temp ( tempi , kin )
+  vxi(1) = vxi(1) + ( 2.0_dp*kin - L * temp ) * dt4 / Q
+  s = EXP ( - vxi(1) * dt2 ) 
+  do ia = 1, natm
+    vx ( ia ) = s * vx ( ia )
+    vy ( ia ) = s * vy ( ia )
+    vz ( ia ) = s * vz ( ia )
+  enddo
+  vxi(1) = vxi(1) + ( 2.0_dp*kin*s*s - L * temp ) * dt4 / Q
+  xi(1) = xi(1) + vxi(1) * dt2 
+  
+  CALL prop_pos_vel_verlet ( kin )
+  
+  vxi(1) = vxi(1) + ( 2.0_dp*kin - L * temp ) * dt4 / Q
+  s = EXP ( - vxi(1) * dt2 ) 
+  do ia = 1, natm
+    vx ( ia ) = s * vx ( ia )
+    vy ( ia ) = s * vy ( ia )
+    vz ( ia ) = s * vz ( ia )
+  enddo
+  vxi(1) = vxi(1) + ( 2.0_dp*kin*s*s - L * temp ) * dt4 / Q
+  xi(1) = xi(1) + vxi(1) * dt2 
+  
+  CALL calc_temp ( tempi , kin )
+  e_kin = kin
+  temp_r = tempi
+
+  e_nvt = 0.0_dp
+  e_nvt = e_nvt + L * temp * xi(1)
+  e_nvt = e_nvt + vxi(1) * vxi(1) * 0.5_dp * Q
+  io_printnode blankline(stdout) 
+  io_printnode write(stdout,'(a,5f16.8)') '  (extended system contribution) e_nvt',e_nvt,xi(1),vxi(1)
+ 
+  return 
+
+END SUBROUTINE
+
 ! *********************** SUBROUTINE nose_hoover_chain2 ************************
 !
 !> \brief
@@ -202,12 +264,12 @@ END SUBROUTINE prop_velocity_verlet
 !! adapted from Frenkel and Smit
 !
 ! ******************************************************************************
-SUBROUTINE nhc2 
+SUBROUTINE nose_hoover_chain2 
 
-  USE io,                       ONLY :  ioprint
+  USE io,                       ONLY :  ioprintnode, ioprint, stdout
   USE constants,                ONLY :  dp 
   USE config,                   ONLY :  natm , rx , ry , rz , vx , vy , vz , fx , fy , fz , center_of_mass, ntypemax
-  USE md,                       ONLY :  dt, vxi, xi , timesca_thermo, nhc_n,temp
+  USE md,                       ONLY :  dt, vxi, xi , timesca_thermo, temp
   USE thermodynamic,            ONLY :  temp_r , e_kin , e_nvt , e_tot,u_lj_r,h_tot
 
   implicit none
@@ -218,7 +280,7 @@ SUBROUTINE nhc2
   real(kind=dp)          :: Q(2)
 
   ! degrees of freedom
-  L = 3.0_dp * ( REAL ( natm - 1 , kind=dp) )
+  L = 3.0_dp * ( REAL ( natm , kind=dp) )
 
   ! thermostat mass
   Q(1) = timesca_thermo**2.0_dp * temp * L 
@@ -237,16 +299,16 @@ SUBROUTINE nhc2
 
   e_nvt = 0.0_dp
   e_nvt = e_nvt + L * temp * xi(1)
-  e_nvt = e_nvt + vxi(1) * vxi(1) * 0.5_dp / Q(1)
-  do inhc = 2 , nhc_n 
+  do inhc=1,2
     e_nvt = e_nvt + vxi(inhc) * vxi(inhc) * 0.5_dp / Q(inhc)
-    e_nvt = e_nvt + temp * xi(inhc)
   enddo
-
+  e_nvt = e_nvt + temp * xi(2)
+  io_printnode blankline(stdout) 
+  io_printnode write(stdout,'(a,5f16.8)') '  (extended system contribution) e_nvt',e_nvt
  
   return
 
-END SUBROUTINE nhc2
+END SUBROUTINE nose_hoover_chain2
 
 
 ! *********************** SUBROUTINE chain_nhc2 ********************************
@@ -279,38 +341,39 @@ SUBROUTINE chain_nhc2 ( kin, vxi, xi , Q , L )
   real(kind=dp) :: s
  
   ! some constants related integrator step dt
-  s = 1._dp
+  s   = 1.0_dp
   dt2 = dt  * 0.5_dp
   dt4 = dt2 * 0.5_dp
   dt8 = dt4 * 0.5_dp
 
-  G1     = ( 2.0_dp*kin - L * temp) / Q(1)
-  G2     = ( Q(1) * vxi(1) * vxi(1) - temp) / Q(2)
+  G2     = ( Q(1) * vxi(1) * vxi(1) - temp ) / Q(2)
 #ifdef debug_nvt_nhc2
   write(*,'(a,e16.8)') "G2",G2
+#endif
+  vxi(2) = vxi(2) + G2 * dt4
+  vxi(1) = vxi(1) * EXP ( - vxi(2) * dt8 )
+  G1     = ( 2.0_dp * kin - L * temp ) / Q(1)
+#ifdef debug_nvt_nhc2
   write(*,'(a,3e16.8)') "G1",G1,Q(1),L
 #endif
-  vxi(2) = vxi(2) + G2 * dt4
-  vxi(1) = vxi(1) * EXP ( - vxi(2) * dt8 )
   vxi(1) = vxi(1) + G1 * dt4
   vxi(1) = vxi(1) * EXP ( - vxi(2) * dt8 )
 #ifdef debug_nvt_nhc2
-    io_print write(stdout,'(a,<nhc_n>e16.8)') "vxi(nhc_n)",vxi
-    io_print write(stdout,'(a,<nhc_n>e16.8)') "G",G1,G2
+    io_print write(stdout,'(a,2e16.8)') "vxi(1),vxi(2)",vxi
+    io_print write(stdout,'(a,2e16.8)') "G1,G2",G1,G2
 #endif
   s   = s * EXP ( - vxi(1) * dt2 )
-  kin = s * s * kin
-
-  xi  = xi + vxi * dt2
-  G1     = ( 2.0_dp*kin - L * temp) / Q(1)
+  !kin = s * s * kin
+  xi     = xi + vxi * dt2
   vxi(1) = vxi(1) * EXP ( - vxi(2) * dt8 )
+  G1     = ( 2.0_dp * kin * s * s - L * temp) / Q(1)
   vxi(1) = vxi(1) + G1 * dt4
   vxi(1) = vxi(1) * EXP ( - vxi(2) * dt8 )
-  G2     = ( Q(1) * vxi(1) * vxi(1) - temp) / Q(2)
+  G2     = ( Q(1) * vxi(1) * vxi(1) - temp ) / Q(2)
   vxi(2) = vxi(2) + G2 * dt4
 #ifdef debug_nvt_nhc2
-    io_print write(stdout,'(a,<nhc_n>e16.8)') "xi(nhc_n)",xi
-    io_print write(stdout,'(a,<nhc_n>e16.8)') "G",G1,G2
+    io_print write(stdout,'(a,2e16.8)') "xi(1),xi(2)",xi
+    io_print write(stdout,'(a,2e16.8)') "G1,G2",G1,G2
 #endif
 
   do ia = 1, natm
@@ -349,8 +412,8 @@ SUBROUTINE prop_pos_vel_verlet ( kin )
   dt2 = dt * 0.5_dp
 
   ! =========================================
-  !  v(t+dt2) = v(t) + f(t) * dt2
-  !  r(t+dt)  = r(t) + v(t+dt2) * dt / m 
+  !  v(t+dt2) = v(t) + f(t) * dt2 / m
+  !  r(t+dt)  = r(t) + v(t+dt2) * dt  
   ! note : dt2 = dt / 2
   ! =========================================
   do ia = 1 , natm  
@@ -366,9 +429,8 @@ SUBROUTINE prop_pos_vel_verlet ( kin )
   ! f(t+dt)
   ! ==========================
   CALL engforce
-
   ! =========================================
-  !   v(t) = v(t+dt2) + f(t+dt) * dt2
+  !   v(t) = v(t+dt2) + f(t+dt) * dt2 / m
   !   v(t) = v(t) + dt2 * ( f(t) + f(t+ft) ) 
   ! =========================================
   kin  = 0.0_dp
@@ -473,7 +535,7 @@ END SUBROUTINE beeman
 !> \brief
 !
 ! ******************************************************************************
-SUBROUTINE nhcn
+SUBROUTINE nose_hoover_chain_n
 
   USE io,                       ONLY :  ioprintnode, stdout
   USE constants,                ONLY :  dp  
@@ -530,10 +592,11 @@ SUBROUTINE nhcn
   nvt4 = 0.0_dp
   do inhc = 2 , nhc_n
     nvt3 = nvt3 + vxi(inhc) * vxi(inhc) * 0.5_dp / Q(inhc)
-    nvt4 = nvt4 + temp * xi(inhc)    
+    nvt4 = nvt4 + xi(inhc)    
   enddo
-  e_nvt = nvt1 + nvt2 + nvt3 + nvt4
-  io_printnode write(stdout,'(a,5f16.8)') 'e_nvt',e_nvt,nvt1,nvt2,nvt3,nvt4
+  e_nvt = nvt1 + nvt2 + nvt3 + temp * nvt4
+  io_printnode blankline(stdout) 
+  io_printnode write(stdout,'(a,5f16.8)') '  e_nvt',e_nvt,nvt1,nvt2,nvt3,nvt4
 
   deallocate( Q ) 
 #ifdef MPI
@@ -542,7 +605,7 @@ SUBROUTINE nhcn
 
   return
 
-END SUBROUTINE nhcn
+END SUBROUTINE nose_hoover_chain_n 
 
 ! *********************** SUBROUTINE chain_nhcn ***********************
 !
@@ -557,7 +620,7 @@ SUBROUTINE chain_nhcn ( kin , vxi , xi , Q , L )
 
   USE constants,                ONLY :  dp 
   USE config,                   ONLY :  natm , vx , vy , vz, massia 
-  USE md,                       ONLY :  temp , dt , nhc_n , nhc_yosh_order,nhc_mults, yosh_allowed
+  USE md,                       ONLY :  temp , dt , nhc_n , nhc_yosh_order,nhc_mults
   USE io,                       ONLY :  ionode, stdout , ioprint , ioprintnode
 
   implicit none
@@ -577,41 +640,7 @@ SUBROUTINE chain_nhcn ( kin , vxi , xi , Q , L )
   allocate ( yosh_w  ( nhc_yosh_order) )       
   allocate ( dt_yosh ( nhc_yosh_order) )       
        
-  SELECT CASE ( nhc_yosh_order )
-  CASE DEFAULT
-    io_node WRITE(stdout,'(a,5i3)') 'value of yoshida order not available try :',yosh_allowed
-    STOP
-  CASE (1)
-     yosh_w(1) = 1.0_dp
-  CASE (3)
-     yosh_w(1) = 1.0_dp/(2.0_dp-(2.0_dp)**(1.0_dp/3.0_dp))
-     yosh_w(2) = 1.0_dp - 2.0_dp*yosh_w(1)
-     yosh_w(3) = yosh_w(1)
-  CASE (5)
-     yosh_w(1) = 1.0_dp/(4.0_dp-(4.0_dp)**(1.0_dp/3.0_dp))
-     yosh_w(2) = yosh_w(1)
-     yosh_w(3) = yosh_w(1)
-     yosh_w(4) = yosh_w(1)
-     yosh_w(5) = 1.0_dp - 4.0_dp*yosh_w(1)
-  CASE (7)
-     yosh_w(1) = .78451361047756_dp
-     yosh_w(2) = .235573213359357_dp
-     yosh_w(3) = -1.17767998417887_dp
-     yosh_w(4) = 1.0_dp - 2.0_dp*(yosh_w(1)+yosh_w(2)+yosh_w(3))
-     yosh_w(5) = yosh_w(3)
-     yosh_w(6) = yosh_w(2)
-     yosh_w(7) = yosh_w(1)
-   CASE (9)
-     yosh_w(1) = 0.192_dp
-     yosh_w(2) = 0.554910818409783619692725006662999_dp
-     yosh_w(3) = 0.124659619941888644216504240951585_dp
-     yosh_w(4) = -0.843182063596933505315033808282941_dp
-     yosh_w(5) = 1.0_dp - 2.0_dp*(yosh_w(1)+yosh_w(2)+yosh_w(3)+yosh_w(4))
-     yosh_w(6) = yosh_w(4)
-     yosh_w(7) = yosh_w(3)
-     yosh_w(8) = yosh_w(2)
-     yosh_w(9) = yosh_w(1)
-  END SELECT
+  CALL get_yoshida_weigth(nhc_yosh_order,yosh_w)
 
   allocate ( G ( nhc_n) )
   G = 0.0_dp
@@ -619,7 +648,6 @@ SUBROUTINE chain_nhcn ( kin , vxi , xi , Q , L )
 
   s = 1.0_dp ! scale
   G(1) =  2.0_dp*kin - L * temp 
-  
 
   msloop : do k=1,nhc_mults
 
@@ -658,7 +686,6 @@ SUBROUTINE chain_nhcn ( kin , vxi , xi , Q , L )
     enddo
     vxi ( nhc_n ) = vxi ( nhc_n ) + G ( nhc_n ) * dts4
 
-
   enddo yoshloop
 
 enddo msloop 
@@ -692,7 +719,7 @@ SUBROUTINE chain_nhcnp ( kin , vxi , xi , vxib , xib , ve , Q , Qb , W , L , tro
 
   USE constants,                ONLY :  dp
   USE config,                   ONLY :  simu_cell, massia , natm , vx , vy , vz
-  USE md,                       ONLY :  temp , press, dt , nhc_n , nhc_yosh_order, nhc_mults, yosh_allowed 
+  USE md,                       ONLY :  temp , press, dt , nhc_n , nhc_yosh_order, nhc_mults
   USE thermodynamic,            ONLY :  pvirial_tot
   USE io,                       ONLY :  ionode , stdout, stderr, ioprint, ioprintnode
   USE mpimdff,                  ONLY :  myrank
@@ -716,41 +743,7 @@ SUBROUTINE chain_nhcnp ( kin , vxi , xi , vxib , xib , ve , Q , Qb , W , L , tro
   allocate ( yosh_w  ( nhc_yosh_order) )
   allocate ( dt_yosh ( nhc_yosh_order) )
 
-  SELECT CASE ( nhc_yosh_order )
-  CASE DEFAULT
-    io_node WRITE(stdout,'(a,5i3)') 'value of yoshida order not available try :',yosh_allowed
-    STOP
-  CASE (1)
-     yosh_w(1) = 1.0_dp
-  CASE (3)
-     yosh_w(1) = 1.0_dp/(2.0_dp-(2.0_dp)**(1.0_dp/3.0_dp))
-     yosh_w(2) = 1.0_dp - 2.0_dp*yosh_w(1)
-     yosh_w(3) = yosh_w(1)
-  CASE (5)
-     yosh_w(1) = 1.0_dp/(4.0_dp-(4.0_dp)**(1.0_dp/3.0_dp))
-     yosh_w(2) = yosh_w(1)
-     yosh_w(3) = yosh_w(1)
-     yosh_w(4) = yosh_w(1)
-     yosh_w(5) = 1.0_dp - 4.0_dp*yosh_w(1)
-  CASE (7)
-     yosh_w(1) = .78451361047756_dp
-     yosh_w(2) = .235573213359357_dp
-     yosh_w(3) = -1.17767998417887_dp
-     yosh_w(4) = 1.0_dp - 2.0_dp*(yosh_w(1)+yosh_w(2)+yosh_w(3))
-     yosh_w(5) = yosh_w(3)
-     yosh_w(6) = yosh_w(2)
-     yosh_w(7) = yosh_w(1)
-   CASE (9)
-     yosh_w(1) = 0.192_dp
-     yosh_w(2) = 0.554910818409783619692725006662999_dp
-     yosh_w(3) = 0.124659619941888644216504240951585_dp
-     yosh_w(4) = -0.843182063596933505315033808282941_dp
-     yosh_w(5) = 1.0_dp - 2.0_dp*(yosh_w(1)+yosh_w(2)+yosh_w(3)+yosh_w(4))
-     yosh_w(6) = yosh_w(4)
-     yosh_w(7) = yosh_w(3)
-     yosh_w(8) = yosh_w(2)
-     yosh_w(9) = yosh_w(1)
-  END SELECT
+  CALL get_yoshida_weigth(nhc_yosh_order,yosh_w)
 
   odnf = 1.0_dp + 3.0_dp / L
 
@@ -938,12 +931,12 @@ enddo msloop
 
 END SUBROUTINE chain_nhcnp
 
-! *********************** SUBROUTINE nhcnp ***********************
+! *********************** SUBROUTINE nose_hoover_chain_n_p ***********************
 !
 !> \brief
 !
 ! ******************************************************************************
-SUBROUTINE nhcnp
+SUBROUTINE nose_hoover_chain_n_p
 
   USE io,                       ONLY :  stdout, ioprintnode
   USE constants,                ONLY :  dp
@@ -1059,7 +1052,7 @@ SUBROUTINE nhcnp
 
   return
 
-END SUBROUTINE nhcnp
+END SUBROUTINE nose_hoover_chain_n_p 
 
 ! *********************** SUBROUTINE prop_pos_vel_verlet ***********************
 !
@@ -1078,10 +1071,8 @@ SUBROUTINE prop_pos_vel_verlet_npt ( kin , xe , ve , xe0 , L , W )
   USE io,                       ONLY :  stdout, ioprintnode
 
   implicit none
-
   ! global
   real(kind=dp) :: kin, xe, ve , xe0, L, W
-
   ! local
   integer :: ia
   real(kind=dp) :: dt2 , dt4 , e2, e4, e6, e8
@@ -1168,11 +1159,55 @@ SUBROUTINE prop_pos_vel_verlet_npt ( kin , xe , ve , xe0 , L , W )
   enddo
   kin = kin * 0.5_dp
 
-
   return
 
 END SUBROUTINE prop_pos_vel_verlet_npt
 
+SUBROUTINE get_yoshida_weigth(yosh_order,yosh_w)
 
-
+  USE constants,        ONLY :  dp
+  USE io ,              ONLY :  ionode, stdout
+  USE md,               ONLY :  yosh_allowed
+  
+  implicit none
+  !global
+  integer,       intent (in)    :: yosh_order
+  real(kind=dp), intent (inout) :: yosh_w(yosh_order) 
+  
+  SELECT CASE ( yosh_order )
+  CASE DEFAULT
+    io_node WRITE(stdout,'(a,5i3)') 'value of yoshida order not available try :',yosh_allowed
+    STOP
+  CASE (1)
+     yosh_w(1) = 1.0_dp
+  CASE (3)
+     yosh_w(1) = 1.0_dp/(2.0_dp-(2.0_dp)**(1.0_dp/3.0_dp))
+     yosh_w(2) = 1.0_dp - 2.0_dp*yosh_w(1)
+     yosh_w(3) = yosh_w(1)
+  CASE (5)
+     yosh_w(1) = 1.0_dp/(4.0_dp-(4.0_dp)**(1.0_dp/3.0_dp))
+     yosh_w(2) = yosh_w(1)
+     yosh_w(3) = yosh_w(1)
+     yosh_w(4) = yosh_w(1)
+     yosh_w(5) = 1.0_dp - 4.0_dp*yosh_w(1)
+  CASE (7)
+     yosh_w(1) = .78451361047756_dp
+     yosh_w(2) = .235573213359357_dp
+     yosh_w(3) = -1.17767998417887_dp
+     yosh_w(4) = 1.0_dp - 2.0_dp*(yosh_w(1)+yosh_w(2)+yosh_w(3))
+     yosh_w(5) = yosh_w(3)
+     yosh_w(6) = yosh_w(2)
+     yosh_w(7) = yosh_w(1)
+   CASE (9)
+     yosh_w(1) = 0.192_dp
+     yosh_w(2) = 0.554910818409783619692725006662999_dp
+     yosh_w(3) = 0.124659619941888644216504240951585_dp
+     yosh_w(4) = -0.843182063596933505315033808282941_dp
+     yosh_w(5) = 1.0_dp - 2.0_dp*(yosh_w(1)+yosh_w(2)+yosh_w(3)+yosh_w(4))
+     yosh_w(6) = yosh_w(4)
+     yosh_w(7) = yosh_w(3)
+     yosh_w(8) = yosh_w(2)
+     yosh_w(9) = yosh_w(1)
+  END SELECT
+END SUBROUTINE
 ! ===== fmV =====

@@ -65,6 +65,7 @@ MODULE constants
   real(kind=dp),      PARAMETER :: pi          = 3.14159265358979323846264338327950_dp !< pi
   real(kind=dp),      PARAMETER :: dzero       = 0.0_dp                                !< zero 
   real(kind=dp),      PARAMETER :: done        = 1.0_dp                                !< one 
+  real(kind=dp),      PARAMETER :: dthird      = 1.0_dp/3.0_dp                         !< one_third
   real(kind=dp),      PARAMETER :: pisq        = pi * pi                               !< pi^2
   real(kind=dp),      PARAMETER :: tpi         = 2.0_dp*pi                             !< 2pi
   real(kind=dp),      PARAMETER :: fpi         = 2.0_dp*tpi                            !< 4pi

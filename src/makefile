@@ -50,7 +50,7 @@ $(info branch :  $(BRANCH))
 #FCFLAGS = -O3 -pg -warn all
 #FCFLAGS = -O5 -ip -xW -warn all
 #FCFLAGS = -fpp -O3 -ip -xW 
-FCFLAGS = -O3 -ffree-line-length-0 -Wno-maybe-uninitialized -Werror -Ofast 
+#FCFLAGS = -O3 -ffree-line-length-0 -Wno-maybe-uninitialized -Werror -Ofast 
 
 # =================
 #   on superbock
@@ -66,7 +66,7 @@ endif
 # =================
 #FCFLAGS = -O3 -xSSE4.2 -align all -ip -static 
 #FCFLAGS = -O1 -xHost -align all #-ip -static 
-#FCFLAGS = -O3 -xHost -align all 
+FCFLAGS = -O3 -xHost -align all 
 #FCFLAGS = -O3 -ip -static -align all 
 #FCFLAGS = -O3 -ip -static -xHost  -align all
 #FCFLAGS = -O3 -xHost -align all
@@ -186,8 +186,8 @@ OBJ= constants.o io.o dumb.o tt_damp.o tensors.o oxyde.o mpi_mdff.o control.o st
 CPPDEFS = -DHOST=\"$(HOST)\"   \
           -Dtiming             \
           -DBRANCH=\"$(BRANCH)\" \
-	  -DGFORTRAN \
           -DMPI
+#	  -DGFORTRAN \
 #         -Ddebug 
 
 CPP =  $(CP) $(CPPFLAGS) $(CPPDEFS)  $*.f90 > $*$(SUFFIX)
