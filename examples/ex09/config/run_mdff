@@ -3,7 +3,7 @@ EXEMDFF=$1
 
 test_id=$2
 install_dir=/home/filipe/dev/github
-mpirun -np 2 $EXEMDFF control.F > log
+$EXEMDFF control.F > log
 echo " mdff calc complete"
 echo ""  > frce
 echo "" >> frce
@@ -39,15 +39,12 @@ awk 'BEGIN{ns=0} {if (($1=="total")&&($2=="stress")&&($3=="tensor")){lr=NR;ns+=1
                  }' log
 
 echo " (CP2K) : "
-for dir in X Y Z
-do
-        grep " $dir " ../../cp2k/$test_id/output.cp2k | tail -n 1 | awk '{printf("%20.12e %20.12e %20.12e\n",$2,$3,$4)}'
-done
+grep STRESS ../../cp2k/${test_id}/output.cp2k |head -n 5|tail -n 3| awk '{printf("%20.12e %20.12e %20.12e\n",$3,$4,$5)}'
 echo " ------------------------------------------------------"
 echo " TIMING"
 echo " "
 echo " (MDFF) :"
 grep TOTAL log
 echo " (CP2K) : "
-grep CP2K ../../cp2k/$test_id/output.cp2k | tail -n 1 | awk '{print "                           TOTAL :  cpu time    ",$NF}'
+grep CP2K ../../cp2k/${test_id}/output.cp2k | tail -n 1 | awk '{print "                           TOTAL :  cpu time    ",$NF}'
 echo " ------------------------------------------------------"
