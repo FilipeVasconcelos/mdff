@@ -12,7 +12,7 @@
   nkphon       = 100
   path='G-X'
   ks = 0.0d0 0.0d0 0.0d0,
-  ks = 0.0d0 1.0d0 1.0d0,
+  kf = 0.0d0 1.0d0 1.0d0,
   ncell=4
 &end
 
