@@ -1,0 +1,48 @@
+#!/bin/bash
+export OMP_NUM_THREADS=1
+exercice="ex07"
+rootexe=${PWD}
+
+execp2k=cp2k
+exemdff=mdff.x
+
+cp2k=true
+mdff=true
+
+for code in cp2k mdff
+do
+    if ${!code}
+    then
+        exe=exe${code}
+        echo "running ${code} test ${exercice}"
+        rm -rf ${code} 
+        mkdir -p ${code}
+        cd ${code}
+        if [ ${code} == "cp2k" ]
+        then
+            cp ${rootexe}/config/argon.inp .
+	    cp ${rootexe}/config/control_gr.F .
+	    mpirun -np 2 ${!exe} -i argon.inp -o argon.out
+            xyztoff -i argon-pos-1.xyz 
+	    mpirun -np 2 ${exemdff} control_gr.F > /dev/null
+        fi
+        if [ ${code} == "mdff" ]
+        then
+	    cp ${rootexe}/config/control_* .
+	    cp ${rootexe}/config/POSFF .
+	    mpirun -np 2 ${!exe} control_md.F > stdout_md
+	    mpirun -np 2 ${!exe} control_gr.F > stdout_gr
+        fi
+        cd ..
+    fi
+done
+
+cat > plot.gr << eof
+#!/usr/bin/gnuplot
+reset
+p 'cp2k/GRTFF' w l ,'mdff/GRTFF' w l
+pause -1
+eof
+chmod u+x plot.gr
+./plot.gr
+
