@@ -12,6 +12,6 @@ rm -r $dir
 mkdir -p $dir
 cp config/* $dir
 cd $dir
-
-gen_quench_controls
+bin=/home/filipe/dev/mdff/bin
+${bin}/gen_quench_controls
 
