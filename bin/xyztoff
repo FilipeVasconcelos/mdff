@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==================================================================
-# date        : feb 2014
+# date        : feb 2014, mar 2022
 # author      : fmv
 # description : convert xyz pos trajectory file (cp2k) to TRAJFF (mdff)
 # ==================================================================
@@ -13,6 +13,8 @@ echo "Running xyztoff ..."
 echo "This script generate TRAJFF file from xyz pos file (cp2k) "
 USAGE="Usage: -i [inputfile] -o [outputfile] "
 
+#default
+trajff=TRAJFF
 if [ $# -eq 0 ]
 then
     echo "$USAGE"
@@ -39,7 +41,7 @@ do
 done
 
 file=$(basename "$xyzpos")
-seed="${file%.*}"
+seed="${file%%-*}-1"
 cell=$seed.cell
 
 if [ ! -f $cell ] 
@@ -55,7 +57,6 @@ nlines=$((natm+2))
 echo "reading $nconf configs in $xyzpos"
 echo "with $natm ions"
 
-
 #process first config to get type info
 echo "$natm"  >  $trajff
 echo "file generated from $xyxpos by xyztoff script" >> $trajff
@@ -69,32 +70,28 @@ kline=0
 awk '{print $1}' tmpposfile > typesi
 while read line 
 do
+    if [ "${type_info[0]}" == '' ]
+    then
+        type_info[0]=$line
+	echo "first type" ${type_info[@]}
+    fi
+    new=true
+    for ((tp=0;tp<=$((ntype-1));tp++))
+    do
 
-#debug	kline=$((kline+1))
-#debug	echo $kline $line ${typei[@]} ${type_info[@]}
-	if [ "${type_info[0]}" == '' ]
+        if [ "$line" == "${type_info[$tp]}" ] 
 	then
-		type_info[0]=$line
-		echo "first type" ${type_info[@]}
+	    typei[$tp]=$((${typei[$tp]} + 1))
+	    new=false
 	fi
-	new=true
-	for ((tp=0;tp<=$((ntype-1));tp++))
-	do
-		
-		if [ "$line" == "${type_info[$tp]}" ] 
-		then
-			typei[$tp]=$((${typei[$tp]} + 1))
-			new=false
-		fi
-	done
-	if $new  
-	then
-		echo "found newtype" $line 
-		type_info[$ntype]=$line
-		typei[$ntype]+=1
-		ntype=$((ntype+1))
-	fi
-	
+    done
+    if $new  
+    then
+        echo "found newtype" $line 
+	type_info[$ntype]=$line
+	typei[$ntype]+=1
+	ntype=$((ntype+1))
+    fi
 done < typesi
 echo "found $ntype types"
 echo "types :" ${type_info[@]}
@@ -115,40 +112,6 @@ echo "Cartesian"      >> $trajff
 cat tmpposfile        >> $trajff
 
 
-# old version was too slow
-#echo "too slow !!!!!!"
-#===== test ======
-#nconf=2
-#=================
-#start=0
-#for ((i=2;i<=$nconf;i++))
-#do
-#	echo -e -n "conf : [ $i / $nconf ]\r"
-#	end=$((nlines+$start))
-	#echo $start $end
-	
-#	head -n $end $xyzpos | tail -n $nlines > tmpposfile 
-#	head -n 1 tmpposfile             >>  $trajff
-#	head -n 2 tmpposfile | tail -n 1 >>  $trajff
-#	# get cell from *.cell
-#	head -n $((i+1)) *.cell | tail -n 1 > celltmp
-#	a=`awk '{print $3}' celltmp`
-#	b=`awk '{print $7}' celltmp`
-#	c=`awk '{print $11}' celltmp`
-#	echo "$a  0.0000000000  0.0000000000" >> $trajff 
-#	echo " 0.0000000000 $b  0.0000000000" >> $trajff
-#	echo " 0.0000000000  0.0000000000 $c" >> $trajff
-#	echo $ntype           >> $trajff
-#	echo ${type_info[@]}  >> $trajff
-#	echo ${typei[@]}      >> $trajff
-#	echo "Cartesian"      >> $trajff
-#	tail -n $natm  tmpposfile >> $trajff
-#	start=$end
-#	
-#done
-
-#new version 
-#not ready yet !!!
 kline=0
 start=1
 conf=1
@@ -160,7 +123,8 @@ do
 	kline=$((kline+1))
 	if [ $kline -gt $end ] && [ $((conf+1)) -le $nconf ] ; then
 		conf=$((conf+1))
-                if ! ((conf % (nconf/100))); then
+                if ! ((conf % (nconf/100)))
+                then
                     pct=$((pct+1))
                     echo -e -n "conf : [ $((pct)) % ]\r"
                 fi
@@ -179,15 +143,9 @@ do
 	if [ $kline -lt $end ] && [ $kline -ge $start ] && [ $conf -ge 2 ]; then
 		printf "%3s %20s %19s %19s\n" $line >> $trajff
 	fi
-	
-
 done < $xyzpos 
-
-
 
 echo "file $trajff generated"
 echo $separator
 rm celltmp tmpposfile typesi
 exit 0;
-
-
