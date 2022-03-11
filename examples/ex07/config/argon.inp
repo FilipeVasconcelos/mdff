@@ -1,7 +1,7 @@
 @SET STDOUTMD 1000
 
 &GLOBAL
-  PROJECT argon_ex6      
+  PROJECT argon    
   RUN_TYPE md           
   PRINT_LEVEL LOW 
 &END GLOBAL

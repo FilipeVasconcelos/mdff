@@ -3,24 +3,24 @@
         cutshortrange = 8.5d0
         skindiff      = 1.0d0
         posff_data    = 'rnn'
-        lreduced      = .false.
-        lwrite_restart= .false.
         lnmlj         = .true.
-        lvnlist       = .true.
+        lvnlist       = .false.
         ltraj         = .true.
-        itraj_start   = 0
-        itraj_period  = 10
+        itraj_start   = 0 
+        itraj_period  = 5
 &end
 &mdtag
-        npas          = 40000
-        nequil        = 20000
-        nequil_period = 10
+        npas          = 40000 
         nprint        = 100
-        fprint        = 1
-        spas          = 10000
-        
-        dt            = 0.001 
-        temp          = 86.56d0 
+        fprint        = 100
+
+        integrator    = 'nvt-nhcn'
+        dt            = 0.006
+        temp          = 119.8d0
+        nhc_n         = 2
+        nhc_yosh_order= 1
+        nhc_mults     = 1
+        timesca_thermo= 2.0 
 &end
 &fieldtag
         mass=39.95d0
