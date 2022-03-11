@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 # ===============================================================
 # name        : read_test_table
 # author      : fmv
