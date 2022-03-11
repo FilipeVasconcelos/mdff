@@ -14,12 +14,9 @@
         nprint        = 100
         fprint        = 100
 
-        integrator    = 'nvt-nhcn'
+        integrator    = 'nvt-nh'
         dt            = 0.006
         temp          = 119.8d0
-        nhc_n         = 2 
-        nhc_yosh_order= 1 
-        nhc_mults     = 1
         timesca_thermo= 2.0 
 &end
 &fieldtag
