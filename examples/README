@@ -1,22 +1,25 @@
-ex0  : static LJ FCC (argon) 
+ex00  : static LJ FCC (argon) 
 
-ex1  : MD LJ FCC (argon) at low temperature (90K)
+ex01  : MD LJ FCC (argon) at low temperature (90K)
 
-ex2  : calculation of total energy of LJ clusters reference structures and energies from : The Cambridge Cluster Database http://www-wales.ch.cam.ac.uk/CCD.html
+ex02  : calculation of total energy of LJ clusters reference 
+        structures and energies from : 
+        The Cambridge Cluster Database http://www-wales.ch.cam.ac.uk/CCD.html
 
-ex3  :  "Global optimization" LJ clusters
+ex03  :  "Global optimization" LJ clusters
 
-ex4  : EFG ewald sum, direct sum on two charges and cluster ( comp to Nymand and Linse anf GULP ) not working anymore
+ex04  : EFG ewald sum, direct sum on two charges and cluster 
+        ( compare to Nymand and Linse and GULP ) not working anymore ;)
 
-ex5  : Density of states of FCC Lennard-Jones
+ex05  : Density of states of FCC Lennard-Jones
 
-ex6  : NVT (NoseHoover) lennard jones argon (against DLPOLY) 
+ex06  : NVT (Nose Hoover)        lennard jones argon (against DLPOLY) 
  
-ex7  : NVE   lennard jones argon (against DLPOLY)
+ex07  : NVT (Nose Hoover Chain)  lennard jones argon (against CP2K)
 
-ex8  : NPT_I lennard jones argon (against DLPOLY)
+ex08  : NPT_I lennard jones argon (against DLPOLY)
 
-ex9  : complete PIM BMHFTD test (against cp2k)
+ex09  : complete PIM BMHFTD test (against cp2k)
 
 ex10 : Generating control.F files for a set
        of runs. see README for more details
