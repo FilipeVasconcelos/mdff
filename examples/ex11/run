@@ -1,7 +1,7 @@
 #!/bin/bash
 
 pwds=$PWD
-
+bin=/home/filipe/dev/mdff/bin/
 do_mdff=true
 
 
@@ -23,7 +23,7 @@ cd $dir1
 
 for i in {1..5}
 do
-	random_struct+stochio -s 102 -f 102 -t $i
+	${bin}/random_struct+stochio -s 102 -f 102 -t $i
 done
 
 cd $pwds 
