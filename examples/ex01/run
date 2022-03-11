@@ -1,0 +1,63 @@
+#!/bin/bash
+# =====================================================
+# user settings
+description="Example 1: Lennard-Jones argon\nfcc structure at low temperature (90K)"
+rootexe=${PWD}
+exedlpoly=DLPOLY.X
+exemdff=mdff.x
+bin=/home/filipe/dev/mdff/bin
+mdff=true
+dlpoly=true
+# =====================================================
+echo "----------------------------------------"
+echo -e ${description} 
+echo "----------------------------------------"
+for code in mdff dlpoly 
+do
+    if ${!code}
+    then
+        exe=exe${code}
+        echo "running ${code}"
+        rm -rf ${code} 
+        mkdir ${code}
+        cd ${code}
+        if [ ${code} == "mdff" ]
+        then
+            cp ${rootexe}/config/control.F .
+            cp ${rootexe}/config/POSFF .
+            ${!exe} control.F > stdout 
+            ${bin}/poszi.py -i OSZIFF -n > /dev/null
+        fi
+        if [ ${code} == "dlpoly" ]
+        then
+	    cp ${rootexe}/config/CONTROL .
+	    cp ${rootexe}/config/FIELD .
+	    cp ${rootexe}/config/CONFIG .
+	    ${!exe} 
+            ${bin}/read_statis > ene
+        fi
+#        if [ ${code} == "cp2k" ]
+#        then
+#	    cp ${rootexe}/config/input.cp2k .
+#	    ${!exe} -i input.cp2k -o output.cp2k
+#        fi
+        cd ..
+
+    fi
+done
+
+lr=$(grep "long range correction (init) energy" mdff/stdout |  awk '{print $NF}')
+echo "long range correction ${lr}"
+cat > plot << eof
+#!/usr/bin/gnuplot 
+reset
+set term x11
+set title "Total energy MD ex1."
+set xlabel "time"
+set ylabel "E_{tot}"
+p 'dlpoly/ene' u 1:2 w l title "DLPOLY",'mdff/etot_l' u 2:(\$3+(${lr})) w l title "MDFF"
+pause -1
+eof
+chmod u+x plot
+./plot
+echo "plot total energy"

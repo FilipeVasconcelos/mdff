@@ -1,30 +1,29 @@
 #!/usr/bin/python
-
+import sys
+sys.path.append('/home/filipe/dev/mdff/bin')
 import numpy as np
 import random
 from config import Config
 from config import Ion
-
 import subprocess
 import re
 
 def write_TRAJFF(natm,ions,filename):
 
     f=open(filename,'w+')
-    print >> f , natm
-    print >> f , "cluster"
-    print >> f , "    500.00000000      0.00000000      0.00000000"
-    print >> f , "      0.00000000    500.00000000      0.00000000"
-    print >> f , "      0.00000000      0.00000000    500.00000000"
-    print >> f , "1"
-    print >> f , "A"
-    print >> f , natm
-    print >> f , "C"
+    f.write(str(natm)+'\n')
+    f.write("cluster\n")
+    f.write("    500.00000000      0.00000000      0.00000000\n")
+    f.write("      0.00000000    500.00000000      0.00000000\n")
+    f.write("      0.00000000      0.00000000    500.00000000\n")
+    f.write("1\n")
+    f.write("A\n")
+    f.write(str(natm)+'\n')
+    f.write("C\n")
     for ia in range ( natm ) :
-        print >> f , "A",ions[ia][0],ions[ia][1],ions[ia][2]
+        f.write("A "+str(ions[ia][0])+" "+str(ions[ia][1])+" "+str(ions[ia][2])+'\n')
     f.close()
     return
-
 
 if __name__ == "__main__" :
 
@@ -52,15 +51,11 @@ if __name__ == "__main__" :
     energy = float('inf')
 
     a = natm ** (1./3.) * 10.0
-    print "cluster with",natm,"LJ atoms" 
-    print "target energy (M.R. Hoare and P. Pal, Adv. Phys. 20 161 (1971)",target
+    print("cluster with",natm,"LJ atoms") 
+    print("target energy (M.R. Hoare and P. Pal, Adv. Phys. 20 161 (1971)",target)
 
     it=0
     while (abs(energy-target)>1e-4) :
-        
-#    for it in range ( n) :
-
-#        print it,abs(energy-target)
         ions=[]
         for ia in range ( natm ) :
             x=(2.0*random.random()-1.0)*a
@@ -72,9 +67,8 @@ if __name__ == "__main__" :
         cmd = "mdff.x control_opt.F"
         mdff = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 
-
         while True:
-            line = mdff.stdout.readline()
+            line = mdff.stdout.readline().decode('utf-8')
             if line != '':
                 if re.search("final energy&pressure =",line.rstrip()):
                     energy = float ( line.rstrip().split()[3] )
@@ -82,12 +76,10 @@ if __name__ == "__main__" :
                         min_energy = energy
                         min_it = it
                     form="%10s %10i %10s %20.8f %20s %20.8f %10s %10i"
-                    print form % ("config :",it, "energy :",energy, "current :",min_energy,"config :",min_it)
+                    print(f"config : {it} energy :{energy} current : {min_energy} config :{min_it}")
             else :
                 break
-
         it+=1
-
         mdff.stdout.close()
     
     subprocess.call("cp -p ISCFF"+" ISCFF.min", shell=True)

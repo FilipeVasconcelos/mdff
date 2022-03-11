@@ -1,0 +1,68 @@
+#!/bin/bash
+# ====================================================
+# user settings
+description="Example 0: minimum settings with FCC structure"
+rootexe=${PWD}
+exemdff=mdff.x
+execp2k=cp2k
+exedlpoly=DLPOLY.X
+mdff=true
+cp2k=true
+dlpoly=true
+# =====================================================
+echo "-----------------------------------------------"
+echo -e ${description} 
+echo "-----------------------------------------------"
+for code in mdff cp2k dlpoly
+do
+    if ${!code}
+    then
+        exe=exe${code}
+        echo "running ${code}"
+        rm -rf ${code} 
+        mkdir ${code}
+        cd ${code}
+        if [ ${code} == "mdff" ]
+        then
+            cp ${rootexe}/config/control.F .
+            cp ${rootexe}/config/POSFF .
+            ${!exe} control.F > stdout 
+        fi
+        if [ ${code} == "dlpoly" ]
+        then
+	    cp ${rootexe}/config/CONTROL .
+	    cp ${rootexe}/config/FIELD .
+	    cp ${rootexe}/config/CONFIG .
+	    ${!exe} 
+        fi
+        if [ ${code} == "cp2k" ]
+        then
+	    cp ${rootexe}/config/input.cp2k .
+	    ${!exe} -i input.cp2k -o output.cp2k
+        fi
+        cd ..
+    fi
+done
+echo $sep
+# print energy informations
+etot=`grep Etot mdff/stdout | tail -n 1 | awk '{print $NF}'` 
+etot2=`echo ${etot} | sed -e 's/[eE]+*/\\*10\\^/'`
+#natm=`grep natm mdff/stdout | awk '{print $NF}'`
+lr=`grep "long range correction (init) energy" mdff/stdout |  awk '{print $NF}'`
+etot3=`echo "scale=8;$etot2" | bc -l | awk '{printf("%.4f\n", $1)}'`
+etotlr=`echo "scale=8;($etot2)+($lr)" | bc -l | awk '{printf("%.4f\n", $1)}'`
+echo "Etot (mdff)                  = " $etot3
+echo "Etot + long range correction = " $etotlr
+if [ ${cp2k} ] && [ -f cp2k/FCC_LJ-1.ener ]
+then
+	etotcp2k=`tail -n 1 cp2k/FCC_LJ-1.ener | awk '{printf ("%.4f\n", $5*27.211385)}'`
+	echo "cp2k                         = " $etotcp2k 
+fi
+if [ ${dlpoly} ] && [ -f dlpoly/STATIS ]
+then
+	etotdl=`head -n 4 dlpoly/STATIS | tail -n 1 | awk '{printf("%.4f\n", $1*1.0)}'`
+	echo "dlpoly                       = " $etotdl 
+fi
+
+
+exit 0

@@ -202,5 +202,5 @@ def vesta_definitions(ele):
 if __name__ == '__main__':
 
     radius , rgb = vesta_definitions('C')
-    print radius , rgb
+    print(radius , rgb)
 

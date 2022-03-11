@@ -30,11 +30,10 @@ fi
 
 #awk -v natm=$natm '{print natm,$0}' tmpfile 
 
-
 awk -v skey=$skey -v natom=$natom 'BEGIN{start=0;tstep=0;htot=0.0;etot=0.0;ekin=0.0;vdw=0.0;vol=0.0;a=0.0;b=0.0;c=0.0;
-                              if (skey==9)  print "#           time             htot             etot             ekin             temp              vdw              vol            press"; 
-                              if (skey==11) print "#           time             htot             etot             ekin             temp              vdw              vol                a                b                c            press"}
-          { start+=1;  
+if (skey==9)  print "#           time             htot             etot             ekin             temp              vdw              vol            press"; 
+if (skey==11) print "#           time             htot             etot             ekin             temp              vdw              vol                a                b                c            press"}
+            { start+=1;  
               
             { if (start==1)                { tstep=$2                                                } }
             { if (start==2)                { htot=$1; temp=$2; ekin=$2*3.0*natom*0.5*8.6173423e-05 ; vdw=$4; etot=ekin+vdw  } }
@@ -43,8 +42,9 @@ awk -v skey=$skey -v natom=$natom 'BEGIN{start=0;tstep=0;htot=0.0;etot=0.0;ekin=
             { if ((skey==11)&&(start==10)) { b=$2                                                    } } 
             { if ((skey==11)&&(start==11)) { c=$1                                                    } } 
             { if ((start==7))  { press=$2                                                } } 
-            { if (start==skey) { start=0; if (skey==9)  { printf("%16.8e %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e \n",tstep, htot, etot, ekin, temp, vdw, vol,press) }
-                                          if (skey==11) { printf("%16.8e %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e\n",tstep, htot, etot, ekin, temp , vdw, vol,a,b,c,press) }
+            { if (start==skey+1) { start=0; 
+       if (skey==9)  { printf("%16.8e %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e \n",tstep, htot, etot, ekin, temp, vdw, vol,press) }
+       if (skey==11) { printf("%16.8e %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e\n",tstep, htot, etot, ekin, temp , vdw, vol,a,b,c,press) }
                               }   }
           }' tmpfile 
 
