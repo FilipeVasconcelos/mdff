@@ -36,11 +36,6 @@ do
 	    ${!exe} 
             ${bin}/read_statis > ene
         fi
-#        if [ ${code} == "cp2k" ]
-#        then
-#	    cp ${rootexe}/config/input.cp2k .
-#	    ${!exe} -i input.cp2k -o output.cp2k
-#        fi
         cd ..
 
     fi

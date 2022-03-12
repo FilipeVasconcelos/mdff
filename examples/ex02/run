@@ -52,7 +52,7 @@ do
         mv tmp.file POSFF
 
         $exemdff ../config/control.F > stdout
-	echo " "$((cluster))i" `grep "Etot" OSZIFF | awk '{print $18}'` `grep " $((cluster)) " ../config/REFERENCE| awk '{print $2}'` " | awk '{printf(" %4s %16.5f %12.5f %12.5f\n",$1,$2,$3,$2-$3)}'
+	echo " "$((cluster))i" `grep "Etot" OSZIFF | awk '{print $18}'` `grep " $((cluster))i " ../config/REFERENCE| awk '{print $2}'` " | awk '{printf(" %4s %16.5f %12.5f %12.5f\n",$1,$2,$3,$2-$3)}'
 done
 
 cd ..
