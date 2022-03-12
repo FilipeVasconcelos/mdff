@@ -46,7 +46,7 @@
         qch= -2.0d0      4.0d0
 &end
 &pimtag
-        algo_moment_from_pola = 'scf_kO_v2'
+        algo_moment_from_pola = 'scf_kO_v1'
         omegakO       = 0.7 
         conv_tol_ind  = 1e-6
         algo_ext_dipole = 'aspc'
