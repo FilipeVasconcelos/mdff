@@ -24,15 +24,13 @@ def main_parser():
 
 if __name__ == "__main__":
 
-    separator=60*"="
     now = datetime.datetime.now()
-
-    print(separator)
-    print(now.strftime("%Y-%m-%d %H:%M"))
-    print("author : filipe.manuel.vasconcelos@gmail.com")
+    separator=60*"-"
     print(separator)
     print("Running fftohis ...")
     print("This script generate HISTORY file (DLPOLY) from TRAJFF file (MDFF)")
+    print("date :",now.strftime("%Y-%m-%d %H:%M"))
+    print(separator)
 
     args = main_parser()
 
