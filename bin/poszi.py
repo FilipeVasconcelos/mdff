@@ -189,15 +189,13 @@ def main_parser():
 
 if __name__ == '__main__':
 
-    separator=60*"="
     now = datetime.datetime.now()
-
-    print(separator)
-    print(now.strftime("%Y-%m-%d %H:%M"))
-    print("author : filipe.manuel.vasconcelos@gmail.com")
+    separator=60*"-"
     print(separator)
     print("Running poszi ...")
     print("This script generate matplotlib plots from input OSZIFF file")
+    print("date :",now.strftime("%Y-%m-%d %H:%M"))
+    print(separator)
 
     args = main_parser()
     input_file=args.input_file
