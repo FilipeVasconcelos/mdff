@@ -8,6 +8,9 @@ echo "The Cambridge Cluster Database"
 echo "http://www-wales.ch.cam.ac.uk/CCD.html" 
 echo ""
 
+rm -rf runs
+mkdir runs
+cd runs
 echo "N (atoms)      mdff.x       CCD          diff"
 for (( cluster=3;cluster<150;cluster++)) 
 do
@@ -21,12 +24,12 @@ do
 	echo "A"                     >> tmp.file
 	echo $cluster                >> tmp.file
 	echo "Cartesian"             >> tmp.file
-	awk '{print "A",$1,$2,$3}' config/$cluster >> tmp.file 
+	awk '{print "A",$1,$2,$3}' ../config/$cluster >> tmp.file 
 	mv tmp.file POSFF
 
 
-	$exemdff config/control.F > stdout
-        echo "$cluster $(grep "Etot" stdout | tail -n 1 | awk '{print $NF}') $(grep " $cluster " config/REFERENCE| awk '{print $2}') " | awk '{printf(" %4i %16.5f %12.5f %12.5f\n",$1,$2,$3,$2-$3)}'
+	$exemdff ../config/control.F > stdout
+        echo "$cluster $(grep "Etot" stdout | tail -n 1 | awk '{print $NF}') $(grep " $cluster " ../config/REFERENCE| awk '{print $2}') " | awk '{printf(" %4i %16.5f %12.5f %12.5f\n",$1,$2,$3,$2-$3)}'
 
 done
 
@@ -45,12 +48,13 @@ do
         echo "A" >> tmp.file
         echo $cluster >> tmp.file
 	echo "Cartesian"             >> tmp.file
-        awk '{print "A",$1,$2,$3}' config/$((cluster))i >> tmp.file
+        awk '{print "A",$1,$2,$3}' ../config/$((cluster))i >> tmp.file
         mv tmp.file POSFF
 
-        $exemdff config/control.F > stdout
-	echo " "$((cluster))i" `grep "Etot" OSZIFF | awk '{print $18}'` `grep " $((cluster))i " config/REFERENCE| awk '{print $2}'` " | awk '{printf(" %4s %16.5f %12.5f %12.5f\n",$1,$2,$3,$2-$3)}'
+        $exemdff ../config/control.F > stdout
+	echo " "$((cluster))i" `grep "Etot" OSZIFF | awk '{print $18}'` `grep " $((cluster)) " ../config/REFERENCE| awk '{print $2}'` " | awk '{printf(" %4s %16.5f %12.5f %12.5f\n",$1,$2,$3,$2-$3)}'
 done
 
+cd ..
 
-rm CONTFF  OSZIFF  POSFF  stdout  TRAJFF
+

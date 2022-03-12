@@ -249,7 +249,7 @@ SUBROUTINE nose_hoover
   e_nvt = e_nvt + L * temp * xi(1)
   e_nvt = e_nvt + vxi(1) * vxi(1) * 0.5_dp * Q
   io_printnode blankline(stdout) 
-  io_printnode write(stdout,'(a,5f16.8)') '  (extended system contribution) e_nvt',e_nvt,xi(1),vxi(1)
+  io_printnode write(stdout,'(a,5f16.8)') '  (extended system ) e_nvt',e_nvt,xi(1),vxi(1)
  
   return 
 
@@ -304,7 +304,7 @@ SUBROUTINE nose_hoover_chain2
   enddo
   e_nvt = e_nvt + temp * xi(2)
   io_printnode blankline(stdout) 
-  io_printnode write(stdout,'(a,5f16.8)') '  (extended system contribution) e_nvt',e_nvt
+  io_printnode write(stdout,'(a,5f16.8)') '  (extended system) e_nvt',e_nvt
  
   return
 
@@ -596,7 +596,7 @@ SUBROUTINE nose_hoover_chain_n
   enddo
   e_nvt = nvt1 + nvt2 + nvt3 + temp * nvt4
   io_printnode blankline(stdout) 
-  io_printnode write(stdout,'(a,5f16.8)') '  e_nvt',e_nvt,nvt1,nvt2,nvt3,nvt4
+  io_printnode write(stdout,'(a,5f16.8)') '  (extended system) e_nvt',e_nvt,nvt1,nvt2,nvt3,nvt4
 
   deallocate( Q ) 
 #ifdef MPI
@@ -1044,8 +1044,8 @@ SUBROUTINE nose_hoover_chain_n_p
                                                               vxib(inhc) * vxib(inhc) * 0.5_dp / Qb(inhc)  , &
                                                               temp * xi(inhc)                              , & 
                                                               temp * xib(inhc)             , inhc=2,nhc_n)
-  io_printnode write(stdout,'(a,e16.8)')          'e_npt  ', e_npt
   io_printnode blankline(stdout)
+  io_printnode write(stdout,'(a,f16.8)') '  (extended system) e_npt',e_npt
              
   deallocate(Q , Qb )
   CALL calc_thermo
