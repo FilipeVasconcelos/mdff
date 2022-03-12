@@ -202,15 +202,53 @@ class Config(Lattice):
             self.rcut_coeff = 1.    
         dexp = self.exp_dist()
         return dexp
-
     # =====================================================================================
-    def read_POSFF(self,filename):
+    def read_TRAJFF_write(self,filename,filenameout,outformat="HISTORY"):
         try:
-            f = open(filename)
+            f = open(filename,'r')
         except IOError:
             sys.exit()
         else:
             lines       = f.readlines()
+        f.close()
+        # get nion
+        f = open(filename,'r')
+        self.nion   = int(lines[0])
+        nconf=int(len(lines)/(self.nion+9))
+        print("total number of configuration found",nconf)
+        
+        fout = open(filenameout,'w')
+        # HISTORY header
+        if outformat == "HISTORY":
+            fout.write("from fftohis.py\n")
+            fout.write("0    3         "+str(self.nion)+'\n')
+        
+        # read/write config
+        for iconf in range(nconf):
+            pct=(iconf/nconf)*100
+            print(f"reading conf : [{int(pct):3d}%]\r",end='')
+            self.read_POSFF(filename,f,self.nion)
+            if outformat == "HISTORY":
+                self.write_HISTORY(fout,iconf,dt=0.001)
+        f.close()
+        fout.close()
+
+    # =====================================================================================
+    def read_POSFF(self,filename,fp=None,nion=None):
+        if not fp :
+            try:
+                f = open(filename)
+            except IOError:
+                sys.exit()
+            else:
+                lines       = f.readlines()
+        else:
+            kline=0
+            lines=[]
+            self.ions=[]
+            while kline < nion+9 :
+                lines.append(fp.readline())
+                kline+=1
         
         self.nion   = int(lines[0])
         self.system = lines[1].strip()
@@ -238,10 +276,14 @@ class Config(Lattice):
         self.lattice_parameters (self.direct)
         self.reciprocal_basis (self.direct)
 
-        f.close()
+        if not fp :
+            f.close()
     
     # =====================================================================================
     def write_XYZ(self,filename):
+        if self.coord_format in ['D','Direct']:
+            self.dirkar()
+            self.coord_format='Direct'
         f = open(filename,'w+')
         f.write(str(self.nion)+'\n')
         f.write(self.system+'\n')
@@ -252,6 +294,15 @@ class Config(Lattice):
                                         self.ions[ia].r[2]))
         f.close()
 
+    # =====================================================================================
+    def write_HISTORY(self,fp,iconf,dt):
+        fp.write("timestep          "+str(iconf)+"        "+str(self.nion)+"     0    3      "+str(0.001)+'\n') 
+        self.print_direct_basis(fp) # standard output filename = None
+        for ia in range(self.nion):
+            fp.write(self.ions[ia].type+"         "+str(ia+1)+"  1.0000 0.0000\n")
+            fp.write(config.format(self.ions[ia].r[0],self.ions[ia].r[1],self.ions[ia].r[2]))
+         #A         84  1.0000 0.0000 
+# 0.524784184177E+01 0.787470068680E+01 0.262338511593E+01
     # =====================================================================================
     def write_CONFIG(self,filename):
         f = open(filename,'w+')
