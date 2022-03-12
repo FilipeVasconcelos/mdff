@@ -1,22 +1,25 @@
-MDFF comes with several python scripts to maniopulate input 
+MDFF comes with several python scripts to manipulate input 
 and output files from the main MD code
 
+poszi.py              :  generate plots from OSZIFF (mdff output) file
 cartoff.py            :  convert POSCAR (vasp) to POSFF (mdff)
 fftocar.py            :  convert POSFF (mdff) to POSCAR (vasp)    
-fftoconf              :  convert POSFF (mdff) to CONFIG (DL_POLY) not completely tested
-fftohis
+fftoconf.py           :  convert POSFF (mdff) to CONFIG (DLPOLY) 
+fftohis.py            :  convert TRAJFF (mdff) to HISTORY (DLPOLY)
 forcecp2k.py          :  extract forces from CP2K output
-forceoutcar
-gen_quench_controls
-histoff
-live-gnuplot
-mdff.x
-outoff
-poszi.py              : generate plots from OSZIFF (mdff output) file
-random_struct.py      :
+random_struct.py      :  generate random configuration (not general)
+xyztoff               :  need to be update as python script
+histoff               :  need to be updated as python script
+
+USEFUL 
 random_struct+stochio
 read_quench_table.py
 read_statis
-xdatcartoff
-xyztoff
+gen_quench_controls
 
+
+OLDIES :
+live-gnuplot
+outoff
+xdatcartoff
+forceoutcar
