@@ -2,7 +2,7 @@
 # ===============================================================
 # date       : 30 novembre 2016 
 # author     : fmv
-# decription : convert POSFF (mdff) to CONFIG (vasp)
+# decription : convert POSFF (mdff) to CONFIG (DLPOLY)
 # ===============================================================
 
 import datetime
