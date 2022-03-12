@@ -1,0 +1,12 @@
+Example 1: Lennard-Jones argon fcc structure at low temperature (90K)
+
+more details in config/ :
+control.F  (MDFF)
+POSFF      (MDFF)
+CONFIG     (DLPOLY)
+CONTROL    (DLPOLY)
+FIELD      (DLPOLY)
+
+execute : 
+./run
+
