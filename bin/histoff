@@ -100,7 +100,6 @@ itype=`head -n 3 $typeinfo | tail -n 1 | awk '{print $0}'`
 echo "itype = $itype"
 # ==================================================================
 
-
 awk -v natm=$natm -v sys="$system" -v labels="$labels" -v ntype=$ntype -v itype="$itype" '{
        if ( $1 == "timestep" ) { nconfig=NR;step=$2; printf("%5s\n %10s\n",natm,"t="step)}  
        if (( NR==nconfig+1   )&&(nconfig!=0)) { print $0     }
