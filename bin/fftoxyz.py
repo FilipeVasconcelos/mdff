@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 # ===============================================================
-# date       : 30 novembre 2016 
+# date       : 12 mars 2022 
 # author     : fmv
 # decription : convert POSFF (mdff) to CONFIG (vasp)
 # ===============================================================
@@ -32,7 +32,7 @@ if __name__ == "__main__":
     print "author : filipe.manuel.vasconcelos@gmail.com"
     print separator
     print "Running poszi ..."
-    print "This script generate CONFIG file from POSFF file"
+    print "This script generate xzy file from POSFF file"
 
     args = main_parser()
 
@@ -43,7 +43,7 @@ if __name__ == "__main__":
     conf_pos=Config(ions=ions)
 
     conf_pos.read_POSFF(input_file)
-    conf_pos.write_CONFIG(output_file)
+    conf_pos.write_XYZ(output_file)
     print "file "+output_file+" generated"
 
 

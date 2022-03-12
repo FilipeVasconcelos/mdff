@@ -239,6 +239,18 @@ class Config(Lattice):
         self.reciprocal_basis (self.direct)
 
         f.close()
+    
+    # =====================================================================================
+    def write_XYZ(self,filename):
+        f = open(filename,'w+')
+        f.write(str(self.nion)+'\n')
+        f.write(self.system+'\n')
+        for ia in range(self.nion):
+            f.write(posff.format(str(self.ions[ia].type),\
+                                        self.ions[ia].r[0],\
+                                        self.ions[ia].r[1],\
+                                        self.ions[ia].r[2]))
+        f.close()
 
     # =====================================================================================
     def write_CONFIG(self,filename):

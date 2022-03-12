@@ -1,5 +1,5 @@
 #!/bin/bash
-rootexa=${PWD}
+rootexample=${PWD}
 exemdff=mdff.x
 
 echo "-----------------------------------------------------------------"
@@ -21,6 +21,8 @@ fi
 cd $rep
 	cp ${rootexample}/config/control_opt.F .
 	cp ${rootexample}/config/run.py .
-	./run.py
+	./run.py --natm $1
+        fftoxyz.py -i ISCFF.min -o ISCFF.xyz
+        rasmol -ballstick -xyz ISCFF.xyz 
 cd ..
 
