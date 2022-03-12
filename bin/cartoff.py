@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # ===============================================================
 # date       : 30 novembre 2016 
 # author     : fmv
@@ -27,12 +27,12 @@ if __name__ == "__main__":
     separator=60*"="
     now = datetime.datetime.now()
 
-    print separator
-    print now.strftime("%Y-%m-%d %H:%M")
-    print "author : filipe.manuel.vasconcelos@gmail.com"
-    print separator
-    print "Running poszi ..."
-    print "This script generate POSFF file from POSCAR file"
+    print(separator)
+    print(now.strftime("%Y-%m-%d %H:%M"))
+    print("author : filipe.manuel.vasconcelos@gmail.com")
+    print(separator)
+    print("Running cartoff ...")
+    print("This script generate POSFF file from POSCAR file")
 
     args = main_parser()
 
@@ -44,6 +44,6 @@ if __name__ == "__main__":
 
     conf_pos.read_POSCAR(input_file)
     conf_pos.write_POSFF(output_file)
-    print "file "+output_file+" generated"
+    print("file "+output_file+" generated")
 
 

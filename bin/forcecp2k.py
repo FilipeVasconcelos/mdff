@@ -1,6 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # ===============================================================
-# date       : 1er decembre 2016 
+# date       : 1er decembre 2016, python3 2022 (to be tested) 
 # author     : fmv
 # decription : extract forces from cp2k output 
 # ===============================================================
@@ -29,12 +29,12 @@ if __name__ == "__main__":
     separator=60*"="
     now = datetime.datetime.now()
 
-    print separator
-    print now.strftime("%Y-%m-%d %H:%M")
-    print "author : filipe.manuel.vasconcelos@gmail.com"
-    print separator
-    print "Running poszi ..."
-    print "This script extract forces from CP2K output file"
+    print(separator)
+    print(now.strftime("%Y-%m-%d %H:%M"))
+    print("author : filipe.manuel.vasconcelos@gmail.com")
+    print(separator)
+    print("Running forcecp2k ...")
+    print("This script extract forces from CP2K output file")
 
     args = main_parser()
 
@@ -46,7 +46,7 @@ if __name__ == "__main__":
             f = re.findall(r'\- Atoms:', line)
             if f :
                 natm=int(line.split()[-1])
-    print "number of atoms : ",natm
+    print("number of atoms : ",natm)
 
     f = open(output_file,'w+')
     ls=None
@@ -58,9 +58,9 @@ if __name__ == "__main__":
             if ls :
                 if k > ls + 1 and k <= ls + 2 + natm :
                     form = 3*"%6s"+3*"%20s"
-                    print >> f , form%(line.split()[0],line.split()[1],line.split()[2],line.split()[3],line.split()[4],line.split()[5], ) 
+                    f.write(line.split()[0],line.split()[1],line.split()[2],line.split()[3],line.split()[4],line.split()[5], )
 
 
 
-    print "file "+output_file+" generated"
+    print("file "+output_file+" generated")
 

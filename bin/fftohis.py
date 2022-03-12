@@ -31,7 +31,7 @@ if __name__ == "__main__":
     print(now.strftime("%Y-%m-%d %H:%M"))
     print("author : filipe.manuel.vasconcelos@gmail.com")
     print(separator)
-    print("Running fftohis.py ...")
+    print("Running fftohis ...")
     print("This script generate HISTORY file (DLPOLY) from TRAJFF file (MDFF)")
 
     args = main_parser()

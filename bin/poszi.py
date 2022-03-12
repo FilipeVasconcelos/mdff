@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 # ===============================================================
-# date       : mars 2022
+# date       : mars 2022 (rewrite in python3)
 # author     : fmv
 # description: This script generate matplotlib plots from input OSZIFF file
 # ===============================================================
