@@ -4,7 +4,7 @@
 # author      : fmv
 # description : convert xyz pos trajectory file (cp2k) to TRAJFF (mdff)
 # ==================================================================
-separator="=========================================================="
+separator="----------------------------------------------------------"
 echo $separator
 date
 echo "author : filipe.manuel.vasconcelos@gmail.com"

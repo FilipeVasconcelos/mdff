@@ -1,0 +1,3 @@
+ex07  : NVT (Nose Hoover Chain) lennard jones argon (against CP2K)
+two architechure of the extended system are compared : (221) and (332)
+(xyz) : (<nb_chains><yoshida_order><multitime_step>)

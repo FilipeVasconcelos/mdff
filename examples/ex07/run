@@ -1,5 +1,6 @@
 #!/bin/bash
 export OMP_NUM_THREADS=1
+description="NVT (Nose Hoover Chain) lennard jones argon (against CP2K)"
 exercice="ex07"
 rootexe=${PWD}
 
@@ -20,18 +21,27 @@ do
         cd ${code}
         if [ ${code} == "cp2k" ]
         then
-            cp ${rootexe}/config/argon.inp .
+            cp ${rootexe}/config/argon*.inp .
 	    cp ${rootexe}/config/control_gr.F .
-	    mpirun -np 2 ${!exe} -i argon.inp -o argon.out
-            xyztoff -i argon-pos-1.xyz 
-	    mpirun -np 2 ${exemdff} control_gr.F > /dev/null
+            for run in 1 2
+            do
+	        mpirun -np 2 ${!exe} -i argon_${run}.inp -o argon_${run}.out
+                xyztoff -i argon-pos-1.xyz 
+	        mpirun -np 2 ${exemdff} control_gr.F > /dev/null
+                mv GRTFF GRTFF.${run}
+                rm argon-pos-1.xyz
+            done
         fi
         if [ ${code} == "mdff" ]
         then
 	    cp ${rootexe}/config/control_* .
 	    cp ${rootexe}/config/POSFF .
-	    mpirun -np 2 ${!exe} control_md.F > stdout_md
-	    mpirun -np 2 ${!exe} control_gr.F > stdout_gr
+            for run in 1 2
+            do
+	        mpirun -np 2 ${!exe} control_md_${run}.F > stdout_md_${run}
+	        mpirun -np 2 ${!exe} control_gr.F > /dev/null
+                mv GRTFF GRTFF.${run}
+            done
         fi
         cd ..
     fi
@@ -40,7 +50,8 @@ done
 cat > plot.gr << eof
 #!/usr/bin/gnuplot
 reset
-p 'cp2k/GRTFF' w l ,'mdff/GRTFF' w l
+p 'cp2k/GRTFF.1' w l title "CP2K 221",'mdff/GRTFF.1' w l title "MDFF 221",\
+  'cp2k/GRTFF.2' w l title "CP2K 332",'mdff/GRTFF.2' w l title "MDFF 332"
 pause -1
 eof
 chmod u+x plot.gr

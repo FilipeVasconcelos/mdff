@@ -2,8 +2,8 @@ ex00  : static LJ FCC (argon)
 
 ex01  : MD LJ FCC (argon) at low temperature (90K)
 
-ex02  : calculation of total energy of LJ clusters reference 
-        structures and energies from : 
+ex02  : Calculation of total energy of LJ clusters. 
+        Reference structures and energies from : 
         The Cambridge Cluster Database http://www-wales.ch.cam.ac.uk/CCD.html
 
 ex03  :  "Global optimization" LJ clusters
