@@ -1,8 +1,8 @@
-#!/usr/bin/env python2
+#!/usr/bin/python
 # ===============================================================
 # date       : 12 mars 2022 
 # author     : fmv
-# decription : convert POSFF (mdff) to CONFIG (vasp)
+# decription : convert POSFF (mdff) to XYZ 
 # ===============================================================
 
 import datetime
@@ -27,12 +27,12 @@ if __name__ == "__main__":
     separator=60*"="
     now = datetime.datetime.now()
 
-    print separator
-    print now.strftime("%Y-%m-%d %H:%M")
-    print "author : filipe.manuel.vasconcelos@gmail.com"
-    print separator
-    print "Running poszi ..."
-    print "This script generate xzy file from POSFF file"
+    print(separator)
+    print(now.strftime("%Y-%m-%d %H:%M"))
+    print("author : filipe.manuel.vasconcelos@gmail.com")
+    print(separator)
+    print("Running fftoxyz ...")
+    print("This script generate xzy file from POSFF file")
 
     args = main_parser()
 
@@ -44,6 +44,6 @@ if __name__ == "__main__":
 
     conf_pos.read_POSFF(input_file)
     conf_pos.write_XYZ(output_file)
-    print "file "+output_file+" generated"
+    print("file "+output_file+" generated")
 
 
