@@ -12,22 +12,19 @@
         itraj_period  = 10 
 &end
 &mdtag
-        npas          = 200000
-        nprint        = 1000
+        npas          = 40000
+        nprint        = 2000
         fprint        = 10
-
-        !nequil =100000        
-        !nequil_period =10
 
         integrator    = 'npt-nhcnp'
         dt            = 0.001
-        temp          = 119.8d0
-        press         = 0.0d0
+        temp          = 85.0d0
+        press         = 0.1d0
         nhc_n         = 2
         nhc_yosh_order= 1 
         nhc_mults     = 1
-        timesca_thermo= 2.0 
-        timesca_baro  = 2.0 
+        timesca_thermo= 1.0 
+        timesca_baro  = 1.0 
 &end
 &fieldtag
         mass=39.95d0
