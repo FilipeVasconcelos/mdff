@@ -1,28 +1,31 @@
 #!/bin/bash
+# ====================================================
+# user settings
 export OMP_NUM_THREADS=1
-description="NVT (Nose Hoover Chain) lennard jones argon (against CP2K)"
-exercice="ex07"
-rootexe=${PWD}
-
+description="Example 07 : NVT (Nose Hoover Chain) lennard jones argon (against CP2K)"
 execp2k=cp2k
 exemdff=mdff.x
-
 cp2k=true
 mdff=true
-
+# ====================================================
+rootexample=${PWD}
+example=${description%:*}
+echo "-----------------------------------------------"
+echo -e ${description} 
+echo "-----------------------------------------------"
 for code in cp2k mdff
 do
     if ${!code}
     then
         exe=exe${code}
-        echo "running ${code} test ${exercice}"
+        echo "running ${code} test ${example}"
         rm -rf ${code} 
         mkdir -p ${code}
         cd ${code}
         if [ ${code} == "cp2k" ]
         then
-            cp ${rootexe}/config/argon*.inp .
-	    cp ${rootexe}/config/control_gr.F .
+            cp ${rootexample}/config/argon*.inp .
+	    cp ${rootexample}/config/control_gr.F .
             for run in 1 2
             do
 	        mpirun -np 2 ${!exe} -i argon_${run}.inp -o argon_${run}.out
@@ -34,8 +37,8 @@ do
         fi
         if [ ${code} == "mdff" ]
         then
-	    cp ${rootexe}/config/control_* .
-	    cp ${rootexe}/config/POSFF .
+	    cp ${rootexample}/config/control_* .
+	    cp ${rootexample}/config/POSFF .
             for run in 1 2
             do
 	        mpirun -np 2 ${!exe} control_md_${run}.F > stdout_md_${run}

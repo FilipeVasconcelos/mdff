@@ -1,36 +1,39 @@
 #!/bin/bash
+# ====================================================
+# user settings
 export OMP_NUM_THREADS=1
-
-exercice="ex06"
-rootexe=${PWD}
-
+description="NVT (Nose Hoover) lennard jones argon (against DLPOLY)" 
 exedlpoly=DLPOLY.X
 exemdff=mdff.x
-
 dlpoly=true
 mdff=true
-
+# ====================================================
+rootexample=${PWD}
+example=${description%:*}
+echo "----------------------------------------------------------"
+echo -e ${description} 
+echo "----------------------------------------------------------"
 for code in dlpoly mdff
 do
     if ${!code}
     then
         exe=exe${code}
-        echo "running ${code} test ${exercice}"
+        echo "running ${code} test ${example}"
         rm -rf ${code} 
         mkdir -p ${code}
         cd ${code}
         if [ ${code} == "dlpoly" ]
         then
-            cp ${rootexe}/config/CONFIG .
-            cp ${rootexe}/config/CONTROL .
-            cp ${rootexe}/config/FIELD .
+            cp ${rootexample}/config/CONFIG .
+            cp ${rootexample}/config/CONTROL .
+            cp ${rootexample}/config/FIELD .
             ${!exe}
             tail -n +4 RDFDAT > RDFDAT.tmp
         fi
         if [ ${code} == "mdff" ]
         then
-	    cp ${rootexe}/config/control_* .
-	    cp ${rootexe}/config/POSFF .
+	    cp ${rootexample}/config/control_* .
+	    cp ${rootexample}/config/POSFF .
 	    mpirun -np 2 ${!exe} control_md.F > stdout_md
 	    mpirun -np 2 ${!exe} control_gr.F > stdout_gr
         fi

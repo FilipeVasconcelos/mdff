@@ -2,7 +2,6 @@
 # ====================================================
 # user settings
 description="Example 0: minimum settings with FCC structure"
-rootexe=${PWD}
 exemdff=mdff.x
 execp2k=cp2k
 exedlpoly=DLPOLY.X
@@ -10,6 +9,8 @@ mdff=true
 cp2k=true
 dlpoly=true
 # =====================================================
+rootexample=${PWD}
+example=${description%:*}
 echo "-----------------------------------------------"
 echo -e ${description} 
 echo "-----------------------------------------------"
@@ -18,26 +19,26 @@ do
     if ${!code}
     then
         exe=exe${code}
-        echo "running ${code}"
+        echo "running ${code} test ${example}"
         rm -rf ${code} 
         mkdir ${code}
         cd ${code}
         if [ ${code} == "mdff" ]
         then
-            cp ${rootexe}/config/control.F .
-            cp ${rootexe}/config/POSFF .
+            cp ${rootexample}/config/control.F .
+            cp ${rootexample}/config/POSFF .
             ${!exe} control.F > stdout 
         fi
         if [ ${code} == "dlpoly" ]
         then
-	    cp ${rootexe}/config/CONTROL .
-	    cp ${rootexe}/config/FIELD .
-	    cp ${rootexe}/config/CONFIG .
+	    cp ${rootexample}/config/CONTROL .
+	    cp ${rootexample}/config/FIELD .
+	    cp ${rootexample}/config/CONFIG .
 	    ${!exe} 
         fi
         if [ ${code} == "cp2k" ]
         then
-	    cp ${rootexe}/config/input.cp2k .
+	    cp ${rootexample}/config/input.cp2k .
 	    ${!exe} -i input.cp2k -o output.cp2k
         fi
         cd ..
