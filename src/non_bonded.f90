@@ -57,8 +57,6 @@ MODULE non_bonded
 
   integer :: cccc=0
   logical, PRIVATE :: symmetric_pot
-  real(kind=dp)     :: utail               !< long-range correction (energy) of short-range interaction 
-  real(kind=dp)     :: ptail               !< long-range correction (virial) of short-range interaction 
   logical, SAVE     :: lKA               !< use Kob-Andersen model for BMLJ                        
 
   character(len=60) :: ctrunc                                                     !< truncation of nmlj
@@ -304,6 +302,7 @@ SUBROUTINE non_bonded_print_info(kunit)
 
   USE control,  ONLY :  lnmlj, lmorse, lbmhft, lbmhftd, cutshortrange, lreducedN
   USE config,   ONLY :  ntype, atypei
+  USE thermodynamic,    ONLY :  u_tail,ptail,pvtail
 
   implicit none
 
@@ -337,8 +336,9 @@ SUBROUTINE non_bonded_print_info(kunit)
       WRITE ( kunit ,'(a,f10.5)')       'cutoff      = ',cutshortrange
       WRITE ( kunit ,'(a,a)')           'truncation  = ',ctrunc
       if ( .not. lreducedN ) &
-      WRITE ( kunit ,'(a,2f20.9)')      'long range correction (energy)   : ',utail
+      WRITE ( kunit ,'(a,2f20.9)')      'long range correction (energy)   : ',u_tail
       WRITE ( kunit ,'(a,2f20.9)')      'long range correction (pressure) : ',ptail
+      WRITE ( kunit ,'(a,2f20.9)')      'long range correction (pvirial)  : ',pvtail
       blankline(kunit)
       blankline(kunit)
       do it1 = 1 , ntype
@@ -457,6 +457,7 @@ SUBROUTINE initialize_param_non_bonded
   USE constants,                ONLY :  tpi , press_unit
   USE config,                   ONLY :  ntypemax , natm , natmi , rhoN , atype , itype  , ntype , simu_cell
   USE control,                  ONLY :  skindiff , cutshortrange , calc
+  USE thermodynamic,            ONLY :  u_tail,ptail,pvtail
 
   implicit none
 
@@ -481,7 +482,7 @@ SUBROUTINE initialize_param_non_bonded
   real(kind=dp) :: srq ( ntype , ntype ) 
 
   rskinmax = 0.0_dp
-  utail    = 0.0_dp
+  u_tail    = 0.0_dp
   ptail    = 0.0_dp
   rcut3    = 0.0_dp
   rcut     = 0.0_dp
@@ -615,7 +616,7 @@ SUBROUTINE initialize_param_non_bonded
            pt ( it , jt ) = pt ( it , jt ) * rcut3 ( it , jt ) * tpi
 
            if ( ( natmi ( it ) .ne. 0 ) .and. ( natmi ( jt ) .ne. 0 ) ) &
-           utail = utail + ut ( it , jt ) * natmi ( it ) * natmi ( jt ) / simu_cell%omega
+           u_tail = u_tail + ut ( it , jt ) * natmi ( it ) * natmi ( jt ) / simu_cell%omega
            if ( ( natmi ( it ) .ne. 0 ) .and. ( natmi ( jt ) .ne. 0 ) ) &
            ptail = ptail + pt ( it , jt ) * natmi ( it ) * natmi ( jt ) / simu_cell%omega
 
@@ -625,8 +626,10 @@ SUBROUTINE initialize_param_non_bonded
 !#endif
     enddo
   enddo
-           ptail = ptail /press_unit/simu_cell%omega/3.0d0 ! virial to pressure
-           io_node write(stdout,'(a,e16.6)') 'long range correction (init) energy   ',utail
+           pvtail = ptail /simu_cell%omega / 3.0d0 ! virial 
+           ptail = pvtail /press_unit ! virial to pressure
+           io_node write(stdout,'(a,e16.6)') 'long range correction (init) energy   ',u_tail
+           io_node write(stdout,'(a,e16.6)') 'long range correction (init) pvirial  ',pvtail
            io_node write(stdout,'(a,e16.6)') 'long range correction (init) pressure ',ptail
  
 #ifdef debug_quadratic

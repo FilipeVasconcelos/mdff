@@ -39,6 +39,7 @@ MODULE thermodynamic
   
   real(kind=dp) :: e_kin          !< kinetic energy
   real(kind=dp) :: u_lj           !< potential energy from lennard_jones interaction
+  real(kind=dp) :: u_tail               !< long-range correction (energy) of short-range interaction 
   real(kind=dp) :: u_morse        !< potential energy from morse interaction
   real(kind=dp) :: u_bmhft        !< potential energy from bmhft interaction
   real(kind=dp) :: u_coul
@@ -52,6 +53,7 @@ MODULE thermodynamic
   real(kind=dp) :: e_kin_r        !< kinetic energy
   real(kind=dp) :: temp_r         !< temperature ( from kinetic energy )  
   real(kind=dp) :: u_lj_r         !< potential energy from lennard_jones interaction
+  real(kind=dp) :: u_tail_r       !< long-range correction (energy) of short-range interaction 
   real(kind=dp) :: u_morse_r      !< potential energy from morse interaction
   real(kind=dp) :: u_bmhft_r      !< potential energy from bmhft interaction
   real(kind=dp) :: u_coul_r       !< potential energy from coulombic interaction 
@@ -80,6 +82,7 @@ MODULE thermodynamic
   real(kind=dp) :: pvirial_bmhft_r!< virial correction to the pressure
   real(kind=dp) :: pvirial_coul_r !< virial correction to the pressure
 
+
   real(kind=dp) :: pressure_tot   !< total pressure
   real(kind=dp) :: pressure_lj    !< pressure from lj interactions
   real(kind=dp) :: pressure_morse !< pressure from lj interactions
@@ -90,6 +93,9 @@ MODULE thermodynamic
   real(kind=dp) :: pressure_morse_r  !< pressure from lj interactions
   real(kind=dp) :: pressure_bmhft_r  !< pressure from lj interactions
   real(kind=dp) :: pressure_coul_r!< pressure from coulombic interactions
+  
+  real(kind=dp)     :: ptail               !< long-range correction (pressure) of short-range interaction 
+  real(kind=dp)     :: pvtail              !< long-range correction (virial) of short-range interaction 
 
   TYPE (accu) acc_e_tot          !< total energy  ( potential + kinetic ) 
   TYPE (accu) acc_u_tot          !< total potential energy 
@@ -127,6 +133,7 @@ SUBROUTINE calc_thermo
  !!!! WARNING virials are wrong
 
   if (lreducedN) then
+    u_tail_r = u_tail        / REAL ( natm , kind = dp )
     u_lj_r   = u_lj         / REAL ( natm , kind = dp )
     u_morse_r= u_morse      / REAL ( natm , kind = dp )
     u_bmhft_r= u_bmhft      / REAL ( natm , kind = dp )
@@ -136,6 +143,7 @@ SUBROUTINE calc_thermo
     e_npt_r  = e_npt        / REAL ( natm , kind = dp )
     csvr_conint_r = csvr_conint / REAL ( natm , kind = dp )
   else
+    u_tail_r = u_tail
     u_lj_r   = u_lj  
     u_morse_r= u_morse  
     u_bmhft_r= u_bmhft
@@ -146,7 +154,7 @@ SUBROUTINE calc_thermo
     csvr_conint_r = csvr_conint 
   endif
  
-  u_tot    = u_lj_r + u_coul_r + u_morse_r + u_harm + u_bmhft_r
+  u_tot    = u_lj_r + u_coul_r + u_morse_r + u_harm + u_bmhft_r + u_tail_r
   e_tot    = u_tot  + e_kin_r
 
   vir_tot  = vir_lj + vir_coul_tot + vir_morse + vir_bmhft
@@ -154,8 +162,8 @@ SUBROUTINE calc_thermo
   pvirial_lj    = vir_lj       / omega 
   pvirial_morse = vir_morse    / omega 
   pvirial_bmhft = vir_bmhft    / omega 
-  pvirial_tot   = pvirial_lj + pvirial_coul + pvirial_morse + pvirial_bmhft
-  pressure_tot  = pvirial_tot +  temp_r * boltz_unit / omega
+  pvirial_tot   = pvirial_lj + pvirial_coul + pvirial_morse + pvirial_bmhft + pvtail
+  pressure_tot  = pvirial_tot +  REAL ( natm , kind = dp ) * temp_r * boltz_unit / omega + ptail
   pressure_lj   = pvirial_lj   
   pressure_morse= pvirial_morse
   pressure_bmhft= pvirial_bmhft
@@ -172,11 +180,11 @@ SUBROUTINE calc_thermo
     pvirial_bmhft_r = pvirial_bmhft 
   endif
   pvirial_tot_r   = pvirial_lj_r + pvirial_coul_r + pvirial_morse_r + pvirial_bmhft_r 
-  pressure_tot_r  = ( pvirial_tot_r + temp_r * boltz_unit / omega ) / press_unit
-  pressure_lj_r   = pvirial_lj_r    / press_unit
-  pressure_morse_r= pvirial_morse_r / press_unit   
-  pressure_bmhft_r= pvirial_bmhft_r / press_unit  
-  pressure_coul_r = pvirial_coul_r  / press_unit
+  pressure_tot_r  = ( pvirial_tot_r + REAL ( natm , kind = dp ) * temp_r * boltz_unit / omega ) / press_unit
+  !pressure_lj_r   = pvirial_lj_r    / press_unit
+  !pressure_morse_r= pvirial_morse_r / press_unit   
+  !pressure_bmhft_r= pvirial_bmhft_r / press_unit  
+  !pressure_coul_r = pvirial_coul_r  / press_unit
 
   ! conserved quantity extended Hamiltonian
   if ( any ( integrator .eq. nve_ensemble )) then 
@@ -332,7 +340,7 @@ END SUBROUTINE general_accumulator
 SUBROUTINE write_thermo ( step , kunit , key )
 
   USE constants,        ONLY :  time_unit
-  USE config,           ONLY :  simu_cell 
+  USE config,           ONLY :  simu_cell, natm 
   USE md,               ONLY :  dt
   USE io,               ONLY :  oszcall
 
@@ -343,7 +351,7 @@ SUBROUTINE write_thermo ( step , kunit , key )
   character(len=3) , intent (in)          :: key 
 
   ! local 
-  real(kind=dp) :: omega , acell ,bcell , ccell
+  real(kind=dp) :: omega , acell ,bcell , ccell, density
   real(kind=dp) :: u_vdw_r , pvirial_vdw_r,time
   
   omega = simu_cell%omega
@@ -351,6 +359,7 @@ SUBROUTINE write_thermo ( step , kunit , key )
   bcell = simu_cell%ANORM(2)
   ccell = simu_cell%ANORM(3)
 
+  density = REAL ( natm / omega, kind=dp) 
   u_vdw_r = u_lj_r + u_bmhft_r + u_morse_r
   pvirial_vdw_r   = pvirial_lj_r + pvirial_morse_r + pvirial_bmhft_r 
   time = REAL ( step * dt / time_unit , kind = dp )
@@ -376,7 +385,7 @@ SUBROUTINE write_thermo ( step , kunit , key )
         io_node WRITE ( kunit, 300)  step , time , &
                                      e_kin_r , temp_r , u_tot  , u_vdw_r , u_coul_r  , &
                                      pressure_tot_r , pvirial_vdw_r , pvirial_coul_r , pvirial_tot_r, omega ,    &
-                                     acell , bcell, ccell , e_tot, h_tot
+                                     acell , bcell, ccell , density, e_tot, h_tot
   endif
 
  ! OLD VERSION 
@@ -405,6 +414,7 @@ SUBROUTINE write_thermo ( step , kunit , key )
      &        '  a cell                = ',E19.12/ &
      &        '  b cell                = ',E19.12/ &
      &        '  c cell                = ',E19.12/ &
+     &        '  density               = ',E19.12/ &
      &        '  ---------------------------------------------'/ &
      &        '  Etot                  = ',E19.12/ &
      &        '  Htot                  = ',E19.12)
