@@ -323,7 +323,7 @@ SUBROUTINE multipole_ES_dir ( u_dir , ef_dir , efg_dir , fx_dir , fy_dir , fz_di
                   pair_thole_distance (ia) = d
 #ifdef debug_thole
                   io_print write(stdout,'(3a,2i5)') 'thole function for',atype(ia),atype(ja),ia,ja
-                  io_print write(stdout,'(a,e12.6,a,e12.6)') 's =', sthole,'  r =',d
+                  io_print write(stdout,'(a,e13.6,a,e13.6)') 's =', sthole,'  r =',d
 #endif
                   cthole = cthole + 1 
                   vthole = d / sthole
