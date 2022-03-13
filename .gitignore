@@ -71,6 +71,7 @@ examples/*/cp2k/
 examples/*/plot.*
 examples/*/stdout.*
 examples/*/runs
+examples/ex08/comp*
 examples/ex09/config/pot_mdff/tmp
 examples/ex09/config/pot_mdff/tmp1
 examples/ex09/config/DOALLC
